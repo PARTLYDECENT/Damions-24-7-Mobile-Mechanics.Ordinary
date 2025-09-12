@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Automotive Resource Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .search-bar {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .search-input {
+            width: 60%;
+            padding: 15px 25px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #333, #555);
+            border: none;
+            border-radius: 25px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .category {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.2);
+            border-color: rgba(255, 107, 53, 0.5);
+        }
+
+        .category h2 {
+            color: #ff6b35;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-icon {
+            font-size: 1.2em;
+        }
+
+        .website-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .website {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b35;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .website:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .website-name {
+            font-weight: bold;
+            color: #f7931e;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .website-description {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 8px;
+        }
+
+        .website-url {
+            font-size: 0.8em;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .website-url:hover {
+            text-decoration: underline;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .search-input {
+                width: 90%;
+            }
+            
+            .categories {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .quick-access {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .quick-btn {
+            display: block;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Ultimate Automotive Hub 🏁</h1>
+            <p>Your comprehensive resource for diagnostics, parts, and everything automotive</p>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Search for any automotive resource..." id="searchInput">
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All Resources</button>
+            <button class="filter-btn" data-filter="diagnostics">Diagnostics</button>
+            <button class="filter-btn" data-filter="parts">Parts & Supply</button>
+            <button class="filter-btn" data-filter="forums">Forums & Community</button>
+            <button class="filter-btn" data-filter="technical">Technical Info</button>
+            <button class="filter-btn" data-filter="tools">Tools & Equipment</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="totalSites">150+</div>
+                <div class="stat-label">Resources</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">15</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Access</div>
+            </div>
+        </div>
+
+        <div class="categories" id="categoriesContainer">
+            <!-- Diagnostic Tools & Software -->
+            <div class="category" data-category="diagnostics">
+                <h2><span class="category-icon">🔍</span>Diagnostic Tools & Software</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.autel.com')">
+                        <div class="website-name">Autel</div>
+                        <div class="website-description">Professional automotive diagnostic tools and scanners</div>
+                        <a href="https://www.autel.com" class="website-url" target="_blank">autel.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.launch-tech.com')">
+                        <div class="website-name">Launch Tech</div>
+                        <div class="website-description">Advanced diagnostic equipment and software solutions</div>
+                        <a href="https://www.launch-tech.com" class="website-url" target="_blank">launch-tech.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.snapon.com/diagnostics')">
+                        <div class="website-name">Snap-on Diagnostics</div>
+                        <div class="website-description">Professional-grade diagnostic tools and equipment</div>
+                        <a href="https://www.snapon.com/diagnostics" class="website-url" target="_blank">snapon.com/diagnostics</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.boschdiagnostics.com')">
+                        <div class="website-name">Bosch Diagnostics</div>
+                        <div class="website-description">OEM-quality diagnostic solutions</div>
+                        <a href="https://www.boschdiagnostics.com" class="website-url" target="_blank">boschdiagnostics.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.torque-bhp.com')">
+                        <div class="website-name">Torque Pro</div>
+                        <div class="website-description">OBD2 diagnostic app with real-time data</div>
+                        <a href="https://www.torque-bhp.com" class="website-url" target="_blank">torque-bhp.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.scantool.net')">
+                        <div class="website-name">ScanTool.net</div>
+                        <div class="website-description">OBD2 scanners and diagnostic software</div>
+                        <a href="https://www.scantool.net" class="website-url" target="_blank">scantool.net</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parts & Supply -->
+            <div class="category" data-category="parts">
+                <h2><span class="category-icon">🔧</span>Parts & Supply</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.rockauto.com')">
+                        <div class="website-name">RockAuto</div>
+                        <div class="website-description">Massive catalog of auto parts with competitive pricing</div>
+                        <a href="https://www.rockauto.com" class="website-url" target="_blank">rockauto.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.fcpeuro.com')">
+                        <div class="website-name">FCP Euro</div>
+                        <div class="website-description">European car parts with lifetime warranty</div>
+                        <a href="https://www.fcpeuro.com" class="website-url" target="_blank">fcpeuro.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.pelicanparts.com')">
+                        <div class="website-name">Pelican Parts</div>
+                        <div class="website-description">BMW, Mercedes, Porsche, Audi specialist parts</div>
+                        <a href="https://www.pelicanparts.com" class="website-url" target="_blank">pelicanparts.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.summitracing.com')">
+                        <div class="website-name">Summit Racing</div>
+                        <div class="website-description">Performance parts and racing equipment</div>
+                        <a href="https://www.summitracing.com" class="website-url" target="_blank">summitracing.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.jegs.com')">
+                        <div class="website-name">JEGS</div>
+                        <div class="website-description">High-performance automotive parts and accessories</div>
+                        <a href="https://www.jegs.com" class="website-url" target="_blank">jegs.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.autozone.com')">
+                        <div class="website-name">AutoZone</div>
+                        <div class="website-description">Auto parts, accessories, and maintenance supplies</div>
+                        <a href="https://www.autozone.com" class="website-url" target="_blank">autozone.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.advanceautoparts.com')">
+                        <div class="website-name">Advance Auto Parts</div>
+                        <div class="website-description">Professional and DIY automotive parts</div>
+                        <a href="https://www.advanceautoparts.com" class="website-url" target="_blank">advanceautoparts.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.1aauto.com')">
+                        <div class="website-name">1A Auto</div>
+                        <div class="website-description">Quality auto parts with how-to videos</div>
+                        <a href="https://www.1aauto.com" class="website-url" target="_blank">1aauto.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forums & Community -->
+            <div class="category" data-category="forums">
+                <h2><span class="category-icon">💬</span>Forums & Community</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.reddit.com/r/MechanicAdvice')">
+                        <div class="website-name">r/MechanicAdvice</div>
+                        <div class="website-description">Reddit community for automotive troubleshooting</div>
+                        <a href="https://www.reddit.com/r/MechanicAdvice" class="website-url" target="_blank">reddit.com/r/MechanicAdvice</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.reddit.com/r/Justrolledintotheshop')">
+                        <div class="website-name">r/Justrolledintotheshop</div>
+                        <div class="website-description">Stories and pics from automotive professionals</div>
+                        <a href="https://www.reddit.com/r/Justrolledintotheshop" class="website-url" target="_blank">reddit.com/r/Justrolledintotheshop</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.bimmerforums.com')">
+                        <div class="website-name">Bimmer Forums</div>
+                        <div class="website-description">BMW enthusiast community and technical discussions</div>
+                        <a href="https://www.bimmerforums.com" class="website-url" target="_blank">bimmerforums.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.mbworld.org')">
+                        <div class="website-name">MBWorld</div>
+                        <div class="website-description">Mercedes-Benz owners forum and community</div>
+                        <a href="https://www.mbworld.org" class="website-url" target="_blank">mbworld.org</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.audizine.com')">
+                        <div class="website-name">Audizine</div>
+                        <div class="website-description">Audi enthusiast forum and marketplace</div>
+                        <a href="https://www.audizine.com" class="website-url" target="_blank">audizine.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.corvetteforum.com')">
+                        <div class="website-name">CorvetteForum</div>
+                        <div class="website-description">Corvette owners community and technical help</div>
+                        <a href="https://www.corvetteforum.com" class="website-url" target="_blank">corvetteforum.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Information -->
+            <div class="category" data-category="technical">
+                <h2><span class="category-icon">📚</span>Technical Information</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.alldata.com')">
+                        <div class="website-name">ALLDATA</div>
+                        <div class="website-description">Professional automotive repair information</div>
+                        <a href="https://www.alldata.com" class="website-url" target="_blank">alldata.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.mitchell1.com')">
+                        <div class="website-name">Mitchell 1</div>
+                        <div class="website-description">Auto repair software and technical data</div>
+                        <a href="https://www.mitchell1.com" class="website-url" target="_blank">mitchell1.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.identifix.com')">
+                        <div class="website-name">IDENTIFIX</div>
+                        <div class="website-description">Real-world diagnostic and repair information</div>
+                        <a href="https://www.identifix.com" class="website-url" target="_blank">identifix.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.nastf.org')">
+                        <div class="website-name">NASTF</div>
+                        <div class="website-description">Automotive service information and standards</div>
+                        <a href="https://www.nastf.org" class="website-url" target="_blank">nastf.org</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.iatn.net')">
+                        <div class="website-name">iATN</div>
+                        <div class="website-description">Technical help network for automotive professionals</div>
+                        <a href="https://www.iatn.net" class="website-url" target="_blank">iatn.net</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.automotive-tech.com')">
+                        <div class="website-name">Automotive Tech Info</div>
+                        <div class="website-description">Technical articles and diagnostic procedures</div>
+                        <a href="https://www.automotive-tech.com" class="website-url" target="_blank">automotive-tech.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools & Equipment -->
+            <div class="category" data-category="tools">
+                <h2><span class="category-icon">🛠️</span>Tools & Equipment</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.harborfreight.com')">
+                        <div class="website-name">Harbor Freight</div>
+                        <div class="website-description">Affordable tools and automotive equipment</div>
+                        <a href="https://www.harborfreight.com" class="website-url" target="_blank">harborfreight.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.toolsource.com')">
+                        <div class="website-name">ToolSource</div>
+                        <div class="website-description">Professional automotive tools and equipment</div>
+                        <a href="https://www.toolsource.com" class="website-url" target="_blank">toolsource.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.matcotools.com')">
+                        <div class="website-name">Matco Tools</div>
+                        <div class="website-description">Professional-grade automotive tools</div>
+                        <a href="https://www.matcotools.com" class="website-url" target="_blank">matcotools.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.mactools.com')">
+                        <div class="website-name">Mac Tools</div>
+                        <div class="website-description">Premium automotive hand tools and equipment</div>
+                        <a href="https://www.mactools.com" class="website-url" target="_blank">mactools.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.cornwelltools.com')">
+                        <div class="website-name">Cornwell Tools</div>
+                        <div class="website-description">Quality tools for automotive professionals</div>
+                        <a href="https://www.cornwelltools.com" class="website-url" target="_blank">cornwelltools.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.craftsman.com')">
+                        <div class="website-name">Craftsman</div>
+                        <div class="website-description">Reliable tools for DIY and professional use</div>
+                        <a href="https://www.craftsman.com" class="website-url" target="_blank">craftsman.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance & Tuning -->
+            <div class="category" data-category="performance">
+                <h2><span class="category-icon">🏎️</span>Performance & Tuning</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.cobb-tuning.com')">
+                        <div class="website-name">COBB Tuning</div>
+                        <div class="website-description">Performance tuning solutions and hardware</div>
+                        <a href="https://www.cobb-tuning.com" class="website-url" target="_blank">cobb-tuning.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.apr.com')">
+                        <div class="website-name">APR</div>
+                        <div class="website-description">Audi, Porsche, VW performance software and hardware</div>
+                        <a href="https://www.apr.com" class="website-url" target="_blank">apr.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.turbosmart.com')">
+                        <div class="website-name">Turbosmart</div>
+                        <div class="website-description">Turbocharger and performance components</div>
+                        <a href="https://www.turbosmart.com" class="website-url" target="_blank">turbosmart.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.hptuners.com')">
+                        <div class="website-name">HP Tuners</div>
+                        <div class="website-description">Engine tuning software and hardware</div>
+                        <a href="https://www.hptuners.com" class="website-url" target="_blank">hptuners.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.sctflash.com')">
+                        <div class="website-name">SCT Performance</div>
+                        <div class="website-description">Ford, GM, Mopar tuning solutions</div>
+                        <a href="https://www.sctflash.com" class="website-url" target="_blank">sctflash.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specialty Resources -->
+            <div class="category" data-category="specialty">
+                <h2><span class="category-icon">🎯</span>Specialty Resources</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.classiccar.com')">
+                        <div class="website-name">Classic Car Database</div>
+                        <div class="website-description">Classic and vintage car information</div>
+                        <a href="https://www.classiccar.com" class="website-url" target="_blank">classiccar.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.dieselplace.com')">
+                        <div class="website-name">DieselPlace</div>
+                        <div class="website-description">Diesel truck community and tech info</div>
+                        <a href="https://www.dieselplace.com" class="website-url" target="_blank">dieselplace.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.motorcycleid.com')">
+                        <div class="website-name">Motorcycle ID</div>
+                        <div class="website-description">Motorcycle parts and accessories</div>
+                        <a href="https://www.motorcycleid.com" class="website-url" target="_blank">motorcycleid.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.carcomplaints.com')">
+                        <div class="website-name">Car Complaints</div>
+                        <div class="website-description">Vehicle problem database and recalls</div>
+                        <a href="https://www.carcomplaints.com" class="website-url" target="_blank">carcomplaints.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.nhtsa.gov')">
+                        <div class="website-name">NHTSA</div>
+                        <div class="website-description">Vehicle safety recalls and defect investigations</div>
+                        <a href="https://www.nhtsa.gov" class="website-url" target="_blank">nhtsa.gov</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YouTube Channels -->
+            <div class="category" data-category="youtube">
+                <h2><span class="category-icon">🎥</span>YouTube Channels</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/ScannerDanner')">
+                        <div class="website-name">ScannerDanner</div>
+                        <div class="website-description">Advanced automotive diagnostics training</div>
+                        <a href="https://www.youtube.com/c/ScannerDanner" class="website-url" target="_blank">youtube.com/c/ScannerDanner</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/ChrisFix')">
+                        <div class="website-name">ChrisFix</div>
+                        <div class="website-description">DIY car repair tutorials and tips</div>
+                        <a href="https://www.youtube.com/c/ChrisFix" class="website-url" target="_blank">youtube.com/c/ChrisFix</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/RichRebuilds')">
+                        <div class="website-name">Rich Rebuilds</div>
+                        <div class="website-description">EV rebuilds and automotive entertainment</div>
+                        <a href="https://www.youtube.com/c/RichRebuilds" class="website-url" target="_blank">youtube.com/c/RichRebuilds</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/DonutMedia')">
+                        <div class="website-name">Donut Media</div>
+                        <div class="website-description">Automotive education and entertainment</div>
+                        <a href="https://www.youtube.com/c/DonutMedia" class="website-url" target="_blank">youtube.com/c/DonutMedia</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/MotorTrend')">
+                        <div class="website-name">MotorTrend</div>
+                        <div class="website-description">Car reviews, tests, and automotive content</div>
+                        <a href="https://www.youtube.com/c/MotorTrend" class="website-url" target="_blank">youtube.com/c/MotorTrend</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OBD2 & Code Readers -->
+            <div class="category" data-category="diagnostics">
+                <h2><span class="category-icon">🔌</span>OBD2 & Code Readers</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.bluedriver.com')">
+                        <div class="website-name">BlueDriver</div>
+                        <div class="website-description">Professional OBD2 scanner with smartphone app</div>
+                        <a href="https://www.bluedriver.com" class="website-url" target="_blank">bluedriver.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.innova.com')">
+                        <div class="website-name">Innova Electronics</div>
+                        <div class="website-description">OBD2 scanners and diagnostic tools</div>
+                        <a href="https://www.innova.com" class="website-url" target="_blank">innova.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.obdlink.com')">
+                        <div class="website-name">OBDLink</div>
+                        <div class="website-description">Professional-grade OBD adapters and software</div>
+                        <a href="https://www.obdlink.com" class="website-url" target="_blank">obdlink.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.elm327.com')">
+                        <div class="website-name">ELM327</div>
+                        <div class="website-description">Original ELM327 OBD interface chips</div>
+                        <a href="https://www.elm327.com" class="website-url" target="_blank">elm327.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.scantool.net/obdlink-scan-tools/')">
+                        <div class="website-name">ScanTool OBDLink</div>
+                        <div class="website-description">Professional OBD scan tools and interfaces</div>
+                        <a href="https://www.scantool.net/obdlink-scan-tools/" class="website-url" target="_blank">scantool.net/obdlink</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wiring Diagrams & TSBs -->
+            <div class="category" data-category="technical">
+                <h2><span class="category-icon">⚡</span>Wiring Diagrams & TSBs</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.prodemand.com')">
+                        <div class="website-name">ProDemand</div>
+                        <div class="website-description">Professional repair information and wiring diagrams</div>
+                        <a href="https://www.prodemand.com" class="website-url" target="_blank">prodemand.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.alldatadiy.com')">
+                        <div class="website-name">ALLDATA DIY</div>
+                        <div class="website-description">Factory service information for DIYers</div>
+                        <a href="https://www.alldatadiy.com" class="website-url" target="_blank">alldatadiy.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://eautorepair.net')">
+                        <div class="website-name">eAutoRepair</div>
+                        <div class="website-description">Factory service manuals and wiring diagrams</div>
+                        <a href="https://eautorepair.net" class="website-url" target="_blank">eautorepair.net</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.manualsbase.com')">
+                        <div class="website-name">ManualsBase</div>
+                        <div class="website-description">Free automotive service manuals database</div>
+                        <a href="https://www.manualsbase.com" class="website-url" target="_blank">manualsbase.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.helminc.com')">
+                        <div class="website-name">Helm Incorporated</div>
+                        <div class="website-description">Official factory service manuals</div>
+                        <a href="https://www.helminc.com" class="website-url" target="_blank">helminc.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Used Parts & Salvage -->
+            <div class="category" data-category="parts">
+                <h2><span class="category-icon">♻️</span>Used Parts & Salvage</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.car-part.com')">
+                        <div class="website-name">Car-Part.com</div>
+                        <div class="website-description">Largest used auto parts search engine</div>
+                        <a href="https://www.car-part.com" class="website-url" target="_blank">car-part.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.lkqonline.com')">
+                        <div class="website-name">LKQ Online</div>
+                        <div class="website-description">Salvage yard parts locator and inventory</div>
+                        <a href="https://www.lkqonline.com" class="website-url" target="_blank">lkqonline.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.picknpull.com')">
+                        <div class="website-name">Pick-n-Pull</div>
+                        <div class="website-description">Self-service auto parts with online inventory</div>
+                        <a href="https://www.picknpull.com" class="website-url" target="_blank">picknpull.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.copart.com')">
+                        <div class="website-name">Copart</div>
+                        <div class="website-description">Vehicle auction and salvage parts</div>
+                        <a href="https://www.copart.com" class="website-url" target="_blank">copart.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.iaai.com')">
+                        <div class="website-name">Insurance Auto Auctions</div>
+                        <div class="website-description">Salvage vehicle auctions and parts</div>
+                        <a href="https://www.iaai.com" class="website-url" target="_blank">iaai.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fluids & Chemicals -->
+            <div class="category" data-category="parts">
+                <h2><span class="category-icon">🧪</span>Fluids & Chemicals</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.mobil1.com')">
+                        <div class="website-name">Mobil 1</div>
+                        <div class="website-description">Synthetic motor oils and automotive fluids</div>
+                        <a href="https://www.mobil1.com" class="website-url" target="_blank">mobil1.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.valvoline.com')">
+                        <div class="website-name">Valvoline</div>
+                        <div class="website-description">Motor oil and automotive fluids specialist</div>
+                        <a href="https://www.valvoline.com" class="website-url" target="_blank">valvoline.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.liquimoly.com')">
+                        <div class="website-name">Liqui Moly</div>
+                        <div class="website-description">German automotive chemicals and additives</div>
+                        <a href="https://www.liquimoly.com" class="website-url" target="_blank">liquimoly.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.redlineoil.com')">
+                        <div class="website-name">Red Line Oil</div>
+                        <div class="website-description">High-performance synthetic lubricants</div>
+                        <a href="https://www.redlineoil.com" class="website-url" target="_blank">redlineoil.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.royalpurple.com')">
+                        <div class="website-name">Royal Purple</div>
+                        <div class="website-description">High-performance synthetic lubricants</div>
+                        <a href="https://www.royalpurple.com" class="website-url" target="_blank">royalpurple.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Electrical & Electronics -->
+            <div class="category" data-category="technical">
+                <h2><span class="category-icon">⚡</span>Electrical & Electronics</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.dormanproducts.com')">
+                        <div class="website-name">Dorman Products</div>
+                        <div class="website-description">OE replacement and repair solutions</div>
+                        <a href="https://www.dormanproducts.com" class="website-url" target="_blank">dormanproducts.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.acdelco.com')">
+                        <div class="website-name">ACDelco</div>
+                        <div class="website-description">GM original equipment and aftermarket parts</div>
+                        <a href="https://www.acdelco.com" class="website-url" target="_blank">acdelco.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.delphi.com')">
+                        <div class="website-name">Delphi Technologies</div>
+                        <div class="website-description">Automotive electronics and fuel systems</div>
+                        <a href="https://www.delphi.com" class="website-url" target="_blank">delphi.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.continental-automotive.com')">
+                        <div class="website-name">Continental Automotive</div>
+                        <div class="website-description">OEM electronics and sensor technology</div>
+                        <a href="https://www.continental-automotive.com" class="website-url" target="_blank">continental-automotive.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.denso.com')">
+                        <div class="website-name">DENSO</div>
+                        <div class="website-description">OEM ignition, fuel, and electrical systems</div>
+                        <a href="https://www.denso.com" class="website-url" target="_blank">denso.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Car Databases & VIN -->
+            <div class="category" data-category="technical">
+                <h2><span class="category-icon">🔍</span>Vehicle Information & VIN</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.carfax.com')">
+                        <div class="website-name">Carfax</div>
+                        <div class="website-description">Vehicle history reports and VIN lookup</div>
+                        <a href="https://www.carfax.com" class="website-url" target="_blank">carfax.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.autocheck.com')">
+                        <div class="website-name">AutoCheck</div>
+                        <div class="website-description">Vehicle history and VIN decoder service</div>
+                        <a href="https://www.autocheck.com" class="website-url" target="_blank">autocheck.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.vindecoderz.com')">
+                        <div class="website-name">VIN Decoderz</div>
+                        <div class="website-description">Free VIN decoder and vehicle specifications</div>
+                        <a href="https://www.vindecoderz.com" class="website-url" target="_blank">vindecoderz.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.fueleconomy.gov')">
+                        <div class="website-name">FuelEconomy.gov</div>
+                        <div class="website-description">Official fuel economy ratings and comparisons</div>
+                        <a href="https://www.fueleconomy.gov" class="website-url" target="_blank">fueleconomy.gov</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.kbb.com')">
+                        <div class="website-name">Kelley Blue Book</div>
+                        <div class="website-description">Vehicle values, reviews, and specifications</div>
+                        <a href="https://www.kbb.com" class="website-url" target="_blank">kbb.com</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Racing & Motorsports -->
+            <div class="category" data-category="performance">
+                <h2><span class="category-icon">🏁</span>Racing & Motorsports</h2>
+                <div class="website-grid">
+                    <div class="website" onclick="openSite('https://www.speedwaymotors.com')">
+                        <div class="website-name">Speedway Motors</div>
+                        <div class="website-description">Racing parts and performance equipment</div>
+                        <a href="https://www.speedwaymotors.com" class="website-url" target="_blank">speedwaymotors.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.racinusa.com')">
+                        <div class="website-name">Racing USA</div>
+                        <div class="website-description">Circle track racing parts and accessories</div>
+                        <a href="https://www.racinusa.com" class="website-url" target="_blank">racinusa.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.pegasusautoracing.com')">
+                        <div class="website-name">Pegasus Auto Racing</div>
+                        <div class="website-description">Professional racing supplies and safety equipment</div>
+                        <a href="https://www.pegasusautoracing.com" class="website-url" target="_blank">pegasusautoracing.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.safetysolutions.com')">
+                        <div class="website-name">Safety Solutions</div>
+                        <div class="website-description">Racing safety equipment and gear</div>
+                        <a href="https://www.safetysolutions.com" class="website-url" target="_blank">safetysolutions.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.competitionproducts.com')">
+                        <div class="website-name">Competition Products</div>
+                        <div class="website-description">Drag racing and performance parts</div>
+                        <a href="https://www.competitionproducts.com" class="website-url" target="_blank">competitionproducts.com</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-access">
+            <button class="quick-btn" onclick="scrollToTop()" title="Back to Top">↑</button>
+            <button class="quick-btn" onclick="toggleDarkMode()" title="Toggle Theme">🌙</button>
+            <button class="quick-btn" onclick="showRandomSite()" title="Random Site">🎲</button>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const categories = document.querySelectorAll('.category');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const websites = document.querySelectorAll('.website');
+
+        // Search functionality
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            websites.forEach(website => {
+                const name = website.querySelector('.website-name').textContent.toLowerCase();
+                const description = website.querySelector('.website-description').textContent.toLowerCase();
+                const url = website.querySelector('.website-url').textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || description.includes(searchTerm) || url.includes(searchTerm)) {
+                    website.style.display = 'block';
+                    website.parentElement.parentElement.style.display = 'block';
+                } else {
+                    website.style.display = 'none';
+                }
+            });
+
+            // Hide empty categories
+            categories.forEach(category => {
+                const visibleWebsites = category.querySelectorAll('.website[style="display: block;"], .website:not([style])');
+                if (searchTerm === '' || visibleWebsites.length > 0) {
+                    category.style.display = 'block';
+                } else {
+                    category.style.display = 'none';
+                }
+            });
+        });
+
+        // Filter functionality
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                
+                categories.forEach(category => {
+                    if (filter === 'all' || category.dataset.category === filter) {
+                        category.style.display = 'block';
+                    } else {
+                        category.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Open website function
+        function openSite(url) {
+            window.open(url, '_blank');
+        }
+
+        // Scroll to top function
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Dark mode toggle (already dark, but adds extra effects)
+        function toggleDarkMode() {
+            document.body.style.filter = document.body.style.filter === 'invert(1) hue-rotate(180deg)' ? '' : 'invert(1) hue-rotate(180deg)';
+        }
+
+        // Random site function
+        function showRandomSite() {
+            const allWebsites = Array.from(websites);
+            const randomWebsite = allWebsites[Math.floor(Math.random() * allWebsites.length)];
+            const url = randomWebsite.querySelector('.website-url').href;
+            
+            // Highlight the random site
+            randomWebsite.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+            randomWebsite.style.transform = 'scale(1.05)';
+            
+            // Scroll to the site
+            randomWebsite.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reset highlight after 3 seconds
+            setTimeout(() => {
+                randomWebsite.style.background = '';
+                randomWebsite.style.transform = '';
+            }, 3000);
+            
+            // Ask if user wants to open it
+            if (confirm('Open this random site: ' + randomWebsite.querySelector('.website-name').textContent + '?')) {
+                window.open(url, '_blank');
+            }
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+            
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            }
+            
+            // R for random site
+            if (e.key === 'r' || e.key === 'R') {
+                showRandomSite();
+            }
+        });
+
+        // Add hover effects and animations
+        websites.forEach(website => {
+            website.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(10px) scale(1.02)';
+                this.style.boxShadow = '0 8px 25px rgba(255, 107, 53, 0.3)';
+            });
+            
+            website.addEventListener('mouseleave', function() {
+                if (!this.style.background.includes('linear-gradient(45deg, #ff6b35, #f7931e)')) {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                }
+            });
+        });
+
+        // Update total sites counter
+        document.getElementById('totalSites').textContent = websites.length + '+';
+
+        // Add loading animation
+        window.addEventListener('load', function() {
+            categories.forEach((category, index) => {
+                category.style.opacity = '0';
+                category.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    category.style.transition = 'all 0.5s ease';
+                    category.style.opacity = '1';
+                    category.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Add right-click context menu for websites
+        websites.forEach(website => {
+            website.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                const url = this.querySelector('.website-url').href;
+                const name = this.querySelector('.website-name').textContent;
+                
+                if (confirm(`Copy URL for ${name}?`)) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        // Show temporary notification
+                        const notification = document.createElement('div');
+                        notification.textContent = 'URL copied to clipboard!';
+                        notification.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: linear-gradient(45deg, #4CAF50, #45a049);
+                            color: white;
+                            padding: 15px 20px;
+                            border-radius: 10px;
+                            z-index: 10000;
+                            font-weight: bold;
+                            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+                        `;
+                        document.body.appendChild(notification);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 2000);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

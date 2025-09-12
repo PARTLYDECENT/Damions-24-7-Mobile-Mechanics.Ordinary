@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
+    <meta name="description" content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #2d3748;
+            --accent-color: #4299e1;
+            --accent-hover: #3182ce;
+            --text-light: #ffffff;
+            --text-dark: #2d3748;
+            --text-gray: #718096;
+            --bg-light: #f7fafc;
+            --bg-dark: #1a202c;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-tech: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .header.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: "🔧";
+            font-size: 1.8rem;
+        }
+
+        .phone-number {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .phone-number:hover {
+            color: var(--accent-hover);
+        }
+
+        .nav-button {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: var(--accent-color);
+            color: var(--text-light);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            margin-left: 20px; /* Adjust spacing as needed */
+        }
+
+        .nav-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            padding: 80px 0 20px;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0 20px;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--accent-color);
+            transform: translateX(5px);
+        }
+
+        .sidebar-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Quick Contact Sidebar */
+        .quick-contact {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 350px;
+            background: var(--bg-light);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            padding: 80px 20px 20px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-contact.active {
+            transform: translateX(0);
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 70px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #hero-slideshow-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1s ease-in-out;
+            z-index: 0;
+        }
+
+        #about-shader-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .glitch::before, .glitch::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            animation: glitch-effect 0.8s infinite alternate;
+        }
+
+        .glitch::before {
+            background-image: inherit;
+            left: 2px;
+            text-shadow: -2px 0 red;
+            clip-path: inset(60% 0 20% 0);
+        }
+
+        .glitch::after {
+            background-image: inherit;
+            left: -2px;
+            text-shadow: 2px 0 blue;
+            clip-path: inset(20% 0 60% 0);
+        }
+
+        @keyframes glitch-effect {
+            0% { opacity: 0.5; transform: translate(0, 0); }
+            20% { opacity: 0.8; transform: translate(-2px, 2px); }
+            40% { opacity: 0.6; transform: translate(2px, -2px); }
+            60% { opacity: 0.7; transform: translate(-1px, 1px); }
+            80% { opacity: 0.9; transform: translate(1px, -1px); }
+            100% { opacity: 0.5; transform: translate(0, 0); }
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--text-light);
+            color: var(--accent-color);
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-gray);
+            margin-bottom: 60px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Services Section */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .service-card {
+            background: var(--text-light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .service-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .service-card p {
+            color: var(--text-gray);
+            line-height: 1.6;
+        }
+
+        /* About Section */
+        .about {
+            background: var(--bg-light);
+        }
+
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .about-text h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .about-text p {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .about-features {
+            list-style: none;
+            margin-top: 30px;
+        }
+
+        .about-features li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .about-features li::before {
+            content: "✓";
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .about-image {
+            background: var(--gradient-secondary);
+            border-radius: 15px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--text-light);
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        .testimonials .section-title {
+            color: var(--text-light);
+        }
+
+        .testimonials .section-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .testimonial-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        /* Contact Section */
+        .contact {
+            background: var(--bg-light);
+        }
+
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+        }
+
+        .contact-info h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .contact-item::before {
+            content: "📞";
+            margin-right: 15px;
+            font-size: 1.3rem;
+        }
+
+        .contact-item.hours::before {
+            content: "🕒";
+        }
+
+        .contact-item.location::before {
+            content: "📍";
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary-color);
+            color: var(--text-light);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Floating Action Buttons */
+        .floating-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 999;
+        }
+
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-color);
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .floating-btn:hover {
+            background: var(--accent-hover);
+            transform: scale(1.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-container {
+                padding: 0 15px;
+            }
+            
+            .phone-number, .nav-button {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .about-content,
+            .contact-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                justify-content: center;
+            }
+
+            .quick-contact {
+                width: 100%;
+            }
+
+            .floating-buttons {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .section {
+                padding: 60px 0;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+
+            .service-card,
+            .testimonial-card {
+                padding: 20px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px); /* Increased for more impact */
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(50px); /* Default for fade-in-up effect */
+            transition: all 0.8s ease-out;
+        }
+
+        .animate-on-scroll.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .animate-on-scroll.slide-in-left {
+            transform: translateX(-50px);
+        }
+
+        .animate-on-scroll.slide-in-left.loaded {
+            transform: translateX(0);
+        }
+
+        .animate-on-scroll.slide-in-right {
+            transform: translateX(50px);
+        }
+
+        .animate-on-scroll.slide-in-right.loaded {
+            transform: translateX(0);
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Overlay for audio consent */
+        .audio-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+
+        .audio-overlay h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .audio-overlay button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: var(--accent-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .audio-overlay button:hover {
+            background-color: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="audio-overlay" id="audio-overlay">
+        <h2>Welcome to Damions 24/7 Mobile Mechanics</h2>
+        <button id="enter-button">Enter Site</button>
+    </div>
+    <header class="header" id="header">
+        <div class="nav-container">
+            <a href="#home" class="logo">Damions 24/7</a>
+            <div>
+                <a href="tel:724-964-2936" class="phone-number">724-964-2936</a>
+                <a href="resources.html" class="nav-button">Resources</a>
+                <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" class="nav-button" target="_blank">3D Garage</a>
+            </div>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebarClose">×</button>
+        <ul class="sidebar-nav">
+            <li><a href="#home" class="sidebar-link">Home</a></li>
+            <li><a href="#services" class="sidebar-link">Services</a></li>
+            <li><a href="#about" class="sidebar-link">About Us</a></li>
+            <li><a href="#testimonials" class="sidebar-link">Reviews</a></li>
+            <li><a href="#contact" class="sidebar-link">Contact</a></li>
+            <li><a href="resources.html" class="sidebar-link">Resources</a></li>
+            <li><a href="https://partlydecent.github.io/Ordinary-Garage-3d/" class="sidebar-link" target="_blank">3D Garage</a></li>
+        </ul>
+    </nav>
+
+    <div class="quick-contact" id="quickContact">
+        <button class="sidebar-close" id="quickContactClose">×</button>
+        <h3 style="margin-bottom: 20px; color: var(--primary-color);">Quick Contact</h3>
+        <form class="contact-form" onsubmit="handleFormSubmit(event)">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="service">Service Needed</label>
+                <select id="service" name="service" style="padding: 12px; border: 2px solid var(--border-color); border-radius: 8px;">
+                    <option value="">Select a service</option>
+                    <option value="emergency">Emergency Roadside Assistance</option>
+                    <option value="diagnostics">Diagnostics & Repair</option>
+                    <option value="battery">Battery Replacement</option>
+                    <option value="tires">Tire Services</option>
+                    <option value="oil">Oil Change</option>
+                    <option value="brakes">Brake Services</option>
+                    <option value="inspection">Pre-Purchase Inspection</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="4" placeholder="Describe your issue or service needs..."></textarea>
+            </div>
+            <button type="submit" class="cta-button" style="width: 100%; text-align: center;">Request Service</button>
+        </form>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <section class="hero" id="home">
+            <canvas id="hero-slideshow-canvas"></canvas>
+            <div class="hero-content">
+                <h1 class="animate-on-scroll">Your 24/7 Mobile Mechanic Solution</h1>
+                <p class="animate-on-scroll">Expert auto repair and maintenance, wherever you are. Professional service that comes to you.</p>
+                <a href="tel:724-964-2936" class="cta-button animate-on-scroll">Call Now: 724-964-2936</a>
+            </div>
+        </section>
+
+        <section class="section" id="services">
+            <div class="container">
+                <h2 class="section-title animate-on-scroll">Our Services</h2>
+                <p class="section-subtitle animate-on-scroll">Comprehensive mobile mechanic services available 24/7 throughout the area</p>
+                
+                <div class="services-grid">
+                    <div class="service-card animate-on-scroll slide-in-left">
+                        <div class="service-icon">🚨</div>
+                        <h3>Emergency Roadside Assistance</h3>
+                        <p>24/7 emergency support for breakdowns, jump starts, lockouts, and more. We're here when you need us most.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll">
+                        <div class="service-icon">🔍</div>
+                        <h3>On-site Diagnostics & Repair</h3>
+                        <p>Advanced diagnostic equipment brought to your location. We identify and fix issues without the need for a tow.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll slide-in-right">
+                        <div class="service-icon">🔋</div>
+                        <h3>Battery Replacement</h3>
+                        <p>Quick battery testing and replacement service. We carry quality batteries and provide installation on-site.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll slide-in-left">
+                        <div class="service-icon">🛞</div>
+                        <h3>Tire Repair & Replacement</h3>
+                        <p>Flat tire repairs, tire changes, and new tire installation. Mobile tire service that saves you time.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll">
+                        <div class="service-icon">🛢️</div>
+                        <h3>Oil Changes & Fluid Checks</h3>
+                        <p>Complete oil change service and fluid level checks performed at your location with quality products.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll slide-in-right">
+                        <div class="service-icon">🛑</div>
+                        <h3>Brake Services</h3>
+                        <p>Brake inspection, pad replacement, and brake system repairs. Safety is our top priority.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll slide-in-left">
+                        <div class="service-icon">📋</div>
+                        <h3>Pre-Purchase Inspections</h3>
+                        <p>Comprehensive vehicle inspections before you buy. Know what you're getting into with detailed reports.</p>
+                    </div>
+                    
+                    <div class="service-card animate-on-scroll">
+                        <div class="service-icon">🚛</div>
+                        <h3>Fleet Maintenance</h3>
+                        <p>Regular maintenance programs for business fleets. Keep your vehicles running and minimize downtime.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="video-section" style="position: relative;">
+            <canvas id="video-shader-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></canvas>
+            <div class="container">
+                <h2 class="section-title animate-on-scroll">Engine & Rebuild Services</h2>
+                <p class="section-subtitle animate-on-scroll">Expert engine diagnostics, repair, and full rebuilds to restore your vehicle's performance.</p>
+                <div class="video-and-info" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+                    <div id="video-player-container">
+                        <!-- Video player will be loaded here by videoplayer.js -->
+                    </div>
+                    <div class="engine-info">
+                        <h3>Expert Engine Services</h3>
+                        <p>Our mobile mechanics are equipped to handle a wide range of engine issues, right at your location. We provide comprehensive diagnostics to accurately identify the problem and offer efficient solutions to get you back on the road.</p>
+                        <h4>Our Engine Services Include:</h4>
+                        <ul>
+                            <li>On-site engine diagnostics</li>
+                            <li>Minor and major engine repairs</li>
+                            <li>Head gasket replacement</li>
+                            <li>Timing belt and chain replacement</li>
+                            <li>Engine component replacement (alternators, starters, etc.)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section about" id="about">
+            <div class="container">
+                <canvas id="about-shader-canvas"></canvas>
+                <div class="about-content">
+                    <div class="about-text animate-on-scroll slide-in-left">
+                        <h2>Why Choose Damions 24/7 Mobile Mechanics?</h2>
+                        <p>With years of experience in automotive repair and maintenance, Damions 24/7 Mobile Mechanics brings professional service directly to your location. We understand that car troubles don't follow a schedule, which is why we're available around the clock.</p>
+                        
+                        <p>Our mobile service eliminates the hassle of towing, waiting at repair shops, and dealing with transportation issues. We come equipped with professional tools and quality parts to handle most repairs on-site.</p>
+                        
+                        <ul class="about-features">
+                            <li>Certified and experienced technicians</li>
+                            <li>Fully equipped mobile service units</li>
+                            <li>Transparent pricing with no hidden fees</li>
+                            <li>Quality parts and workmanship guarantee</li>
+                            <li>Available 24/7 for emergencies</li>
+                            <li>Serving the entire local area</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="about-image animate-on-scroll slide-in-right">
+                        🔧
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section contact" id="contact">
+            <div class="container">
+                <h2 class="section-title animate-on-scroll">Get In Touch</h2>
+                <p class="section-subtitle animate-on-scroll">Ready to experience the convenience of mobile mechanic services? Contact us today!</p>
+                
+                <div class="contact-content">
+                    <div class="contact-info animate-on-scroll slide-in-left">
+                        <h3>Contact Information</h3>
+                        
+                        <div class="contact-item">
+                            <strong><a href="tel:724-964-2936" style="text-decoration: none; color: inherit;">724-964-2936</a></strong>
+                        </div>
+                        
+                        <div class="contact-item hours">
+                            <span>Available 24/7 for emergencies</span>
+                        </div>
+                        
+                        <div class="contact-item location">
+                            <span>Serving the entire local area</span>
+                        </div>
+                        
+                        <p style="margin-top: 30px; font-size: 1.1rem; color: var(--text-gray);">
+                            Call us anytime for immediate assistance or to schedule a convenient appointment. 
+                            Our mobile units are ready to come to your location - home, office, or roadside.
+                        </p>
+                    </div>
+                    
+                    <div class="contact-form-container animate-on-scroll slide-in-right">
+                        <h3 style="margin-bottom: 20px; color: var(--primary-color);">Request Service Online</h3>
+                        <form class="contact-form" onsubmit="handleFormSubmit(event)">
+                            <div class="form-group">
+                                <label for="contact-name">Name</label>
+                                <input type="text" id="contact-name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-email">Email</label>
+                                <input type="email" id="contact-email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-phone">Phone</label>
+                                <input type="tel" id="contact-phone" name="phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-message">Describe Your Issue</label>
+                                <textarea id="contact-message" name="message" rows="4" placeholder="Tell us about your vehicle and the service you need..." required></textarea>
+                            </div>
+                            <button type="submit" class="cta-button" style="width: 100%; text-align: center;">Send Request</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <p>&copy; 2024 Damions 24/7 Mobile Mechanics. All rights reserved.</p>
+                </div>
+                <ul class="footer-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <div class="floating-buttons">
+        <button class="floating-btn" onclick="toggleQuickContact()" title="Quick Contact">💬</button>
+        <button class="floating-btn" onclick="window.location.href='tel:724-964-2936'" title="Call Now">📞</button>
+    </div>
+
+    <audio id="background-audio" src="./videos/rare1.mp3" preload="auto" muted></audio>
+    <audio id="impact-audio" src="./videos/impact.mp3" preload="auto" muted loop></audio>
+    <script src="videoplayer.js"></script>
+    <script src="hero_slideshow.js"></script>
+    <script src="video_shader_2.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const enterButton = document.getElementById('enter-button');
+            const audioOverlay = document.getElementById('audio-overlay');
+            const backgroundAudio = document.getElementById('background-audio');
+
+            if (enterButton && audioOverlay && backgroundAudio) {
+                enterButton.addEventListener('click', () => {
+                    audioOverlay.style.display = 'none';
+                    backgroundAudio.muted = false;
+                    backgroundAudio.play().catch(error => {
+                        console.error("Audio playback failed:", error);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+</html>
