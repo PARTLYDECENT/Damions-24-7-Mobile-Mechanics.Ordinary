@@ -518,6 +518,429 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+<div style="max-width: 900px; margin: 0 auto; padding: 25px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);">
+  <div style="background: rgba(255,255,255,0.96); padding: 35px; border-radius: 15px; backdrop-filter: blur(15px);">
+    <h2 style="color: #4c63d2; margin-bottom: 30px; font-size: 32px; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+      🎵 AI Sound Syndrome Analyzer
+    </h2>
+    <p style="text-align: center; color: #666; margin-bottom: 30px; font-style: italic;">Revolutionary AI-powered automotive diagnostics through sound pattern recognition</p>
+    
+    <!-- Sound Input Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px;">
+      <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); padding: 20px; border-radius: 12px;">
+        <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #fff;">🔊 Describe the Sound:</label>
+        <textarea id="soundDescription" 
+                  placeholder="e.g., metallic grinding when braking, high-pitched whine during acceleration, clicking from engine bay..."
+                  style="width: 100%; height: 80px; padding: 12px; border: none; border-radius: 8px; font-size: 14px; resize: vertical; box-sizing: border-box;"
+                  oninput="analyzeSymptoms()"></textarea>
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 12px;">
+        <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">⚙️ When Does It Occur:</label>
+        <select id="occurrence" style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; margin-bottom: 10px; box-sizing: border-box;" onchange="analyzeSymptoms()">
+          <option value="">Select timing...</option>
+          <option value="startup">Cold startup</option>
+          <option value="idle">While idling</option>
+          <option value="acceleration">During acceleration</option>
+          <option value="braking">When braking</option>
+          <option value="turning">While turning</option>
+          <option value="constant">Constant while driving</option>
+          <option value="shifting">When shifting gears</option>
+          <option value="parking">When parking/maneuvering</option>
+        </select>
+        
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">🌡️ Temperature Correlation:</label>
+        <select id="temperature" style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 14px; box-sizing: border-box;" onchange="analyzeSymptoms()">
+          <option value="">Select condition...</option>
+          <option value="cold">Only when cold</option>
+          <option value="warm">Only when warm/hot</option>
+          <option value="both">Both cold and warm</option>
+          <option value="weather">Weather dependent</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Advanced Pattern Matching -->
+    <div style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+      <h3 style="margin-top: 0; color: #d63384; font-size: 18px;">🧠 AI Pattern Recognition Filters:</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div>
+          <label style="display: block; font-weight: bold; color: #333; margin-bottom: 5px;">Sound Frequency:</label>
+          <select id="frequency" onchange="analyzeSymptoms()" style="width: 100%; padding: 8px; border: none; border-radius: 6px;">
+            <option value="">Any frequency</option>
+            <option value="low">Low (rumble, thump)</option>
+            <option value="mid">Mid (knock, clank)</option>
+            <option value="high">High (squeal, whine)</option>
+            <option value="variable">Variable pitch</option>
+          </select>
+        </div>
+        
+        <div>
+          <label style="display: block; font-weight: bold; color: #333; margin-bottom: 5px;">Sound Pattern:</label>
+          <select id="pattern" onchange="analyzeSymptoms()" style="width: 100%; padding: 8px; border: none; border-radius: 6px;">
+            <option value="">Any pattern</option>
+            <option value="rhythmic">Rhythmic/pulsing</option>
+            <option value="continuous">Continuous</option>
+            <option value="intermittent">Intermittent</option>
+            <option value="speed-related">Speed-related</option>
+          </select>
+        </div>
+        
+        <div>
+          <label style="display: block; font-weight: bold; color: #333; margin-bottom: 5px;">Intensity:</label>
+          <select id="intensity" onchange="analyzeSymptoms()" style="width: 100%; padding: 8px; border: none; border-radius: 6px;">
+            <option value="">Any intensity</option>
+            <option value="subtle">Barely noticeable</option>
+            <option value="moderate">Clearly audible</option>
+            <option value="loud">Very loud/concerning</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI Analysis Results -->
+    <div id="analysisResult" style="padding: 25px; background: #f8f9fa; border-radius: 12px; border-left: 5px solid #28a745; min-height: 120px; transition: all 0.4s ease;">
+      <div style="text-align: center; color: #666;">
+        <div style="font-size: 48px; margin-bottom: 15px;">🤖</div>
+        <p style="font-style: italic; margin: 0;">AI Sound Analysis Engine ready... Describe your vehicle's sounds above to begin pattern recognition.</p>
+      </div>
+    </div>
+    
+    <!-- Confidence Meter -->
+    <div id="confidenceMeter" style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #e0c3fc 0%, #9bb5ff 100%); border-radius: 10px; display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-weight: bold; color: #333;">AI Confidence Level:</span>
+        <span id="confidenceText" style="font-weight: bold; color: #4c63d2;"></span>
+      </div>
+      <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 10px; overflow: hidden;">
+        <div id="confidenceBar" style="height: 100%; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #0abde3); transition: width 0.8s ease; border-radius: 10px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const soundPatterns = {
+  // Brake-related sounds
+  brake_grinding: {
+    keywords: ['grinding', 'scraping', 'metal on metal', 'scratching'],
+    occurrence: ['braking'],
+    frequency: ['low', 'mid'],
+    diagnosis: 'Brake Pad Wear Syndrome',
+    description: 'Worn brake pads grinding against rotors',
+    urgency: 'CRITICAL',
+    solutions: ['Replace brake pads immediately', 'Inspect rotors for damage', 'Check brake fluid level'],
+    cost_estimate: '$150-400',
+    danger_level: 95
+  },
+  
+  brake_squeal: {
+    keywords: ['squealing', 'screeching', 'high pitched', 'squeak'],
+    occurrence: ['braking'],
+    frequency: ['high'],
+    diagnosis: 'Brake Pad Indicator Syndrome',
+    description: 'Brake pad wear indicators activating',
+    urgency: 'HIGH',
+    solutions: ['Schedule brake inspection', 'Replace brake pads soon', 'Clean brake components'],
+    cost_estimate: '$120-300',
+    danger_level: 70
+  },
+  
+  // Engine sounds
+  engine_knock: {
+    keywords: ['knocking', 'pinging', 'rattling', 'metallic tapping'],
+    occurrence: ['acceleration', 'constant'],
+    frequency: ['mid'],
+    pattern: ['rhythmic'],
+    diagnosis: 'Combustion Detonation Syndrome',
+    description: 'Pre-ignition or carbon knock in engine cylinders',
+    urgency: 'HIGH',
+    solutions: ['Use higher octane fuel', 'Check timing', 'Clean carbon deposits', 'Replace spark plugs'],
+    cost_estimate: '$200-800',
+    danger_level: 80
+  },
+  
+  bearing_whine: {
+    keywords: ['whining', 'whirring', 'humming', 'droning'],
+    occurrence: ['constant', 'acceleration'],
+    frequency: ['high', 'variable'],
+    pattern: ['speed-related'],
+    diagnosis: 'Bearing Deterioration Syndrome',
+    description: 'Wheel bearing or differential bearing wear',
+    urgency: 'MEDIUM',
+    solutions: ['Inspect wheel bearings', 'Check differential', 'Replace worn bearings'],
+    cost_estimate: '$300-600',
+    danger_level: 60
+  },
+  
+  // Transmission sounds
+  cvt_whine: {
+    keywords: ['continuous whine', 'belt noise', 'transmission whine'],
+    occurrence: ['acceleration', 'constant'],
+    frequency: ['high'],
+    diagnosis: 'CVT Resonance Syndrome',
+    description: 'CVT transmission belt or pulley resonance',
+    urgency: 'MEDIUM',
+    solutions: ['Check CVT fluid', 'Update transmission software', 'Inspect belt/pulley system'],
+    cost_estimate: '$400-1200',
+    danger_level: 50
+  },
+  
+  // Startup sounds
+  cold_ticking: {
+    keywords: ['ticking', 'clicking', 'tapping'],
+    occurrence: ['startup', 'idle'],
+    temperature: ['cold'],
+    frequency: ['mid', 'high'],
+    pattern: ['rhythmic'],
+    diagnosis: 'Hydraulic Lifter Syndrome',
+    description: 'Oil pressure buildup delay in hydraulic lifters',
+    urgency: 'LOW',
+    solutions: ['Use proper oil viscosity', 'Check oil level', 'Consider oil additive'],
+    cost_estimate: '$50-200',
+    danger_level: 20
+  },
+  
+  // Suspension sounds
+  strut_clunk: {
+    keywords: ['clunking', 'thudding', 'banging'],
+    occurrence: ['turning', 'parking'],
+    frequency: ['low'],
+    diagnosis: 'Suspension Component Syndrome',
+    description: 'Worn strut mounts or sway bar links',
+    urgency: 'MEDIUM',
+    solutions: ['Inspect strut mounts', 'Check sway bar links', 'Replace worn components'],
+    cost_estimate: '$200-500',
+    danger_level: 40
+  },
+  
+  // Belt/pulley sounds
+  serpentine_squeal: {
+    keywords: ['squealing', 'chirping', 'belt noise'],
+    occurrence: ['startup', 'acceleration'],
+    temperature: ['cold'],
+    frequency: ['high'],
+    diagnosis: 'Drive Belt Tension Syndrome',
+    description: 'Serpentine belt slipping or misaligned',
+    urgency: 'MEDIUM',
+    solutions: ['Inspect belt condition', 'Adjust belt tension', 'Check pulley alignment'],
+    cost_estimate: '$100-300',
+    danger_level: 30
+  }
+};
+
+function analyzeSymptoms() {
+  const description = document.getElementById('soundDescription').value.toLowerCase();
+  const occurrence = document.getElementById('occurrence').value;
+  const temperature = document.getElementById('temperature').value;
+  const frequency = document.getElementById('frequency').value;
+  const pattern = document.getElementById('pattern').value;
+  const intensity = document.getElementById('intensity').value;
+  
+  if (description.length < 10) {
+    document.getElementById('analysisResult').innerHTML = `
+      <div style="text-align: center; color: #666;">
+        <div style="font-size: 48px; margin-bottom: 15px;">🤖</div>
+        <p style="font-style: italic; margin: 0;">AI Sound Analysis Engine ready... Describe your vehicle's sounds above to begin pattern recognition.</p>
+      </div>
+    `;
+    document.getElementById('confidenceMeter').style.display = 'none';
+    return;
+  }
+  
+  let bestMatch = null;
+  let maxScore = 0;
+  let confidence = 0;
+  
+  // AI Pattern Matching Algorithm
+  Object.keys(soundPatterns).forEach(key => {
+    const pattern = soundPatterns[key];
+    let score = 0;
+    
+    // Keyword matching (40% weight)
+    const keywordMatches = pattern.keywords.filter(keyword => 
+      description.includes(keyword)
+    ).length;
+    score += (keywordMatches / pattern.keywords.length) * 40;
+    
+    // Occurrence matching (25% weight)
+    if (occurrence && pattern.occurrence && pattern.occurrence.includes(occurrence)) {
+      score += 25;
+    }
+    
+    // Temperature matching (15% weight)
+    if (temperature && pattern.temperature && pattern.temperature.includes(temperature)) {
+      score += 15;
+    }
+    
+    // Frequency matching (10% weight)
+    if (frequency && pattern.frequency && pattern.frequency.includes(frequency)) {
+      score += 10;
+    }
+    
+    // Pattern matching (10% weight)
+    if (pattern.pattern && pattern.pattern.includes(pattern)) {
+      score += 10;
+    }
+    
+    if (score > maxScore) {
+      maxScore = score;
+      bestMatch = pattern;
+      confidence = Math.min(score, 95); // Cap at 95%
+    }
+  });
+  
+  displayResults(bestMatch, confidence, description);
+}
+
+function displayResults(match, confidence, originalDescription) {
+  const result = document.getElementById('analysisResult');
+  const confidenceMeter = document.getElementById('confidenceMeter');
+  
+  if (!match || confidence < 20) {
+    result.innerHTML = `
+      <div style="text-align: center;">
+        <h3 style="color: #6c757d; margin: 0 0 15px 0;">🔍 Insufficient Pattern Recognition</h3>
+        <p style="margin-bottom: 15px; color: #666;">The AI couldn't identify a strong pattern match. Try being more specific about:</p>
+        <div style="background: #e9ecef; padding: 15px; border-radius: 8px; text-align: left;">
+          <ul style="margin: 0; color: #495057;">
+            <li>Exact sound description (grinding, squealing, clicking, etc.)</li>
+            <li>When it occurs (braking, acceleration, idle, etc.)</li>
+            <li>Sound frequency (high-pitched, low rumble, etc.)</li>
+          </ul>
+        </div>
+      </div>
+    `;
+    confidenceMeter.style.display = 'none';
+    return;
+  }
+  
+  const urgencyColor = match.urgency === 'CRITICAL' ? '#dc3545' : 
+                      match.urgency === 'HIGH' ? '#fd7e14' :
+                      match.urgency === 'MEDIUM' ? '#ffc107' : '#28a745';
+  
+  result.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="color: #4c63d2; margin: 0; font-size: 22px;">🎯 ${match.diagnosis}</h3>
+        <span style="background: ${urgencyColor}; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">
+          ${match.urgency} PRIORITY
+        </span>
+      </div>
+      <p style="font-size: 16px; color: #333; margin: 0 0 20px 0; background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3;">
+        <strong>AI Analysis:</strong> ${match.description}
+      </p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+      <div>
+        <h4 style="color: #dc3545; margin: 0 0 10px 0; font-size: 16px;">🔧 Recommended Actions:</h4>
+        <ul style="margin: 0; padding-left: 20px; color: #555;">
+          ${match.solutions.map(solution => `<li style="margin-bottom: 8px;">${solution}</li>`).join('')}
+        </ul>
+      </div>
+      
+      <div>
+        <h4 style="color: #28a745; margin: 0 0 10px 0; font-size: 16px;">💰 Cost Analysis:</h4>
+        <div style="background: #d4edda; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb;">
+          <p style="margin: 0; font-size: 18px; font-weight: bold; color: #155724;">
+            Estimated: ${match.cost_estimate}
+          </p>
+          <div style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span style="font-size: 12px; color: #155724;">Danger Level:</span>
+              <span style="font-size: 12px; font-weight: bold; color: #155724;">${match.danger_level}%</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; overflow: hidden;">
+              <div style="height: 100%; width: ${match.danger_level}%; background: linear-gradient(90deg, #28a745, #ffc107, #dc3545); border-radius: 10px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; color: white; text-align: center;">
+      <p style="margin: 0; font-size: 14px;">
+        <strong>🤖 AI Recommendation:</strong> ${getAIRecommendation(match.urgency, match.danger_level)}
+      </p>
+    </div>
+  `;
+  
+  // Update confidence meter
+  confidenceMeter.style.display = 'block';
+  document.getElementById('confidenceText').textContent = `${Math.round(confidence)}%`;
+  document.getElementById('confidenceBar').style.width = `${confidence}%`;
+  
+  result.style.borderColor = urgencyColor;
+}
+
+function getAIRecommendation(urgency, dangerLevel) {
+  if (urgency === 'CRITICAL' || dangerLevel > 80) {
+    return 'Stop driving immediately and seek professional diagnosis. This condition poses serious safety risks.';
+  } else if (urgency === 'HIGH' || dangerLevel > 60) {
+    return 'Schedule immediate inspection within 24-48 hours. Avoid aggressive driving until resolved.';
+  } else if (urgency === 'MEDIUM' || dangerLevel > 40) {
+    return 'Plan for professional inspection within 1-2 weeks. Monitor for worsening symptoms.';
+  } else {
+    return 'Schedule routine maintenance check. Continue normal driving with awareness of the issue.';
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  const textarea = document.getElementById('soundDescription');
+  textarea.addEventListener('focus', function() {
+    this.style.boxShadow = '0 0 0 3px rgba(76, 99, 210, 0.25)';
+  });
+  
+  textarea.addEventListener('blur', function() {
+    this.style.boxShadow = 'none';
+  });
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
 <div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
   <div style="background: rgba(255,255,255,0.95); padding: 30px; border-radius: 12px; backdrop-filter: blur(10px);">
     <h2 style="color: #1e3c72; margin-bottom: 25px; font-size: 28px; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
