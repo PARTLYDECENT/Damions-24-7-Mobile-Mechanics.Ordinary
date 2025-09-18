@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
     <meta name="description" content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
     <style>
         /* Modern 2026+ CSS Overhaul */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Exo+2:wght@700;800&display=swap');
@@ -85,6 +86,12 @@
         }
         .logo span {
             color: var(--accent-color);
+        }
+
+        .logo-img {
+            height: 40px; /* Adjust as needed */
+            margin-left: 15px;
+            border-radius: 5px;
         }
 
         .nav-links a {
@@ -332,6 +339,12 @@
             font-size: 0.9rem;
         }
 
+        .footer-banner {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
         /* --- Responsive Design --- */
         @media (max-width: 992px) {
             .hero h1 { font-size: 3.5rem; }
@@ -349,6 +362,136 @@
             .section-title { font-size: 2rem; }
             .service-card, .news-content { padding: 25px; }
         }
+
+        /* --- Enter Overlay --- */
+        #enter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease;
+        }
+
+        #enter-btn {
+            font-size: 1.5rem;
+            padding: 20px 50px;
+        }
+
+        #enter-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            animation: glitch 5s infinite;
+        }
+
+        @keyframes glitch {
+          0%, 20%, 22%, 25%, 53%, 55%, 100% {
+            opacity: 1;
+            transform: none;
+          }
+          21% {
+            opacity: 0.8;
+            transform: translate(-10px, 5px) skewX(-15deg);
+          }
+          24% {
+            opacity: 0.7;
+            transform: translate(10px, -5px) skewX(15deg);
+          }
+          54% {
+            opacity: 0.8;
+            transform: translate(-5px, 10px) skewX(-10deg) scale(1.02);
+          }
+        }
+
+        /* --- Blood Rain Animation --- */
+        #blood-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9998; /* Below the enter overlay, but above everything else */
+            pointer-events: none; /* Make sure it doesn't interfere with clicks */
+            overflow: hidden;
+        }
+
+        .raindrop {
+            position: absolute;
+            bottom: 100%;
+            width: 2px;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255, 0, 0, 0), rgba(139, 0, 0, 0.8));
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* --- Info Popup --- */
+        .info-popup {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            animation: fadeIn 0.5s;
+        }
+
+        .popup-content {
+            background-color: var(--secondary-color);
+            margin: 15% auto;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 15px;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .close-btn {
+            color: var(--text-gray);
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: var(--text-light);
+        }
+
+        #popup-title {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0}
+            to {opacity: 1}
+        }
         
         /* Keeping original utility classes & sidebars for script compatibility */
         .sidebar, .quick-contact, .sidebar-overlay, .floating-buttons, .audio-overlay {
@@ -360,9 +503,16 @@
     </style>
 </head>
 <body>
+    <div id="enter-overlay">
+        <img src="enter.png" alt="Enter" id="enter-bg">
+        <button id="enter-btn" class="cta-button">Enter Site</button>
+    </div>
+
+    <div id="blood-rain"></div>
+
     <header class="header" id="header">
         <div class="nav-container">
-            <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
+            <a href="#home" class="logo">DAMIONS<span>24/7</span><img src="v8.png" alt="V8 Engine" class="logo-img"></a>
             <nav class="nav-links">
                 <a href="#services">Services</a>
                 <a href="#why-us">Why Us</a>
@@ -453,7 +603,18 @@
             </div>
         </section>
 
-        
+        <section class="section" id="video-promo">
+            <div class="container">
+                <h2 class="section-title">A Glimpse Into Our Work</h2>
+                <p class="section-subtitle">Watch our expert technicians in action, providing top-tier service on the go.</p>
+                <div class="video-container" style="text-align: center;">
+                    <video width="80%" controls autoplay muted loop style="border-radius: 15px; box-shadow: var(--shadow-lg);">
+                        <source src="videos/vid1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </section>
 
         <section class="section" id="news">
             <div class="container">
@@ -502,17 +663,138 @@
                 <li><a href="#news">News</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
+            <img src="banner.png" alt="Banner" class="footer-banner">
             <p class="copyright">&copy; 2025 Damions 24/7 Mobile Mechanics. All Rights Reserved.</p>
         </div>
     </footer>
 
+    <div id="info-popup" class="info-popup">
+        <div class="popup-content">
+            <span class="close-btn">&times;</span>
+            <h3 id="popup-title"></h3>
+            <p id="popup-text"></p>
+        </div>
+    </div>
+
     <audio id="background-audio" src="./videos/rare1.mp3" preload="auto" muted></audio>
-    <audio id="impact-audio" src="./videos/impact.mp3" preload="auto" muted loop></audio>
+    <audio id="background-music" src="./videos/impact.mp3" preload="auto" loop></audio>
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Enter Site Button ---
+            const enterOverlay = document.getElementById('enter-overlay');
+            const enterBtn = document.getElementById('enter-btn');
+            const backgroundMusic = document.getElementById('background-music');
+
+            enterBtn.addEventListener('click', () => {
+                enterOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    enterOverlay.style.display = 'none';
+                }, 1000); // Match this to the transition duration
+
+                // Play background music
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play().catch(error => {
+                        console.log("Autoplay was prevented. User will need to interact more to play audio.");
+                    });
+                }
+            });
+
+            // --- Blood Rain Animation ---
+            const bloodRainContainer = document.getElementById('blood-rain');
+
+            function createRaindrop() {
+                const drop = document.createElement('div');
+                drop.classList.add('raindrop');
+                drop.style.left = `${Math.random() * 100}vw`;
+                drop.style.animationDuration = `${Math.random() * 1 + 0.5}s`; // Random duration
+                
+                bloodRainContainer.appendChild(drop);
+
+                // Remove the drop after it falls
+                drop.addEventListener('animationend', () => {
+                    drop.remove();
+                });
+            }
+
+            function rainBurst() {
+                const burstSize = Math.floor(Math.random() * 5) + 1; // 1 to 5 drops per burst
+                for (let i = 0; i < burstSize; i++) {
+                    setTimeout(createRaindrop, Math.random() * 1000); // create drops within a 1 second window
+                }
+            }
+
+            function generateRain() {
+                rainBurst();
+                setTimeout(generateRain, Math.random() * 5000 + 3000); // new burst every 3 to 8 seconds
+            }
+
+            generateRain();
+
+            // --- Random Info Popup ---
+            const infoPopup = document.getElementById('info-popup');
+            const closeBtn = document.querySelector('.close-btn');
+            const popupTitle = document.getElementById('popup-title');
+            const popupText = document.getElementById('popup-text');
+
+            const mechanicTips = [
+                {
+                    title: "Anywhere, Anytime Repairs",
+                    text: "With a fully-equipped mobile workshop, we can perform complex repairs in a parking lot, your driveway, or on the side of the road. No tow truck needed."
+                },
+                {
+                    title: "Digital Field Guides",
+                    text: "Our technicians use tablets with access to comprehensive digital field guides for every make and model, ensuring accurate and efficient service."
+                },
+                {
+                    title: "On-the-Go Diagnostics",
+                    text: "We plug directly into your vehicle's OBD-II port to read error codes and diagnose issues with the same accuracy as a dealership."
+                },
+                {
+                    title: "Battery Problems Solved",
+                    text: "A dead battery is one of the most common roadside issues. We can test your battery, charging system, and replace it on the spot if needed."
+                },
+                {
+                    title: "The Power of Portability",
+                    text: "Modern, lightweight tools and portable power sources allow us to bring the garage to you, from air compressors to welding equipment."
+                },
+                {
+                    title: "Night-time Repairs",
+                    text: "Breakdowns don't just happen in the daytime. Our mobile units are equipped with powerful LED lighting for safe and effective night-time repairs."
+                }
+            ];
+
+            function showRandomTip() {
+                const randomIndex = Math.floor(Math.random() * mechanicTips.length);
+                const tip = mechanicTips[randomIndex];
+                popupTitle.textContent = tip.title;
+                popupText.textContent = tip.text;
+                infoPopup.style.display = 'block';
+            }
+
+            function scheduleRandomPopup() {
+                const randomInterval = Math.random() * (30000 - 15000) + 15000; // 15 to 30 seconds
+                setTimeout(() => {
+                    showRandomTip();
+                    scheduleRandomPopup();
+                }, randomInterval);
+            }
+
+            closeBtn.addEventListener('click', () => {
+                infoPopup.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == infoPopup) {
+                    infoPopup.style.display = 'none';
+                }
+            });
+
+            // Start the random popup scheduler after a delay
+            setTimeout(scheduleRandomPopup, 10000); // First popup after 10 seconds
 
             // --- Header Scroll Effect ---
             const header = document.getElementById('header');
