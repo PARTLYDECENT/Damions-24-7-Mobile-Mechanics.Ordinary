@@ -42,7 +42,7 @@
             line-height: 1.7;
             color: var(--text-light);
             background-color: var(--bg-dark);
-            overflow-x: hidden;
+            overflow-x: auto;
         }
 
         /* --- Header & Navigation --- */
@@ -51,16 +51,16 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(18, 18, 18, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
+            background: rgba(18, 18, 18, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 1000;
             transition: all 0.3s ease;
         }
 
         .header.scrolled {
-            background: rgba(18, 18, 18, 0.95);
-            box-shadow: var(--shadow);
+            background: rgba(26, 31, 44, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         .nav-container {
@@ -166,7 +166,7 @@
         .cta-button:hover {
             background: var(--accent-hover);
             transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);
+            box-shadow: 0 0 40px rgba(0, 170, 255, 0.8);
         }
 
         /* --- General Section Styling --- */
@@ -187,7 +187,10 @@
             font-size: 2.8rem;
             font-weight: 700;
             margin-bottom: 20px;
-            color: var(--text-light);
+            background-image: linear-gradient(45deg, var(--accent-color), #fff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
         }
         .section-subtitle {
             text-align: center;
@@ -210,11 +213,11 @@
             padding: 35px;
             border-radius: 15px;
             border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: var(--shadow);
         }
         .service-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-10px) scale(1.02);
             box-shadow: var(--shadow-lg);
             border-color: var(--accent-color);
         }
@@ -269,11 +272,11 @@
             border-radius: 15px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
          .news-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-lg);
         }
         .news-image {
             height: 200px;
@@ -450,47 +453,104 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.6);
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(5px);
             animation: fadeIn 0.5s;
         }
 
         .popup-content {
-            background-color: var(--secondary-color);
-            margin: 15% auto;
-            padding: 30px;
-            border: 1px solid var(--border-color);
-            width: 80%;
-            max-width: 500px;
-            border-radius: 15px;
+            background: linear-gradient(145deg, var(--secondary-color), var(--primary-color));
+            margin: 10% auto;
+            padding: 40px;
+            border: 1px solid var(--accent-color);
+            width: 90%;
+            max-width: 550px;
+            border-radius: 20px;
             position: relative;
-            box-shadow: var(--shadow-lg);
-            text-align: center;
+            box-shadow: 0 8px 40px rgba(0, 170, 255, 0.2);
+            text-align: left;
+            transform: scale(0.95);
+            opacity: 0;
+            animation: popup-scale-in 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .popup-icon {
+            font-size: 2.5rem;
+            margin-right: 20px;
+            color: var(--accent-color);
+        }
+
+        #popup-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        #popup-text {
+            font-size: 1.1rem;
+            color: var(--text-gray);
+            line-height: 1.8;
         }
 
         .close-btn {
             color: var(--text-gray);
             position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 28px;
+            top: 15px;
+            right: 25px;
+            font-size: 35px;
             font-weight: bold;
             cursor: pointer;
+            transition: color 0.3s, transform 0.3s;
         }
 
         .close-btn:hover {
-            color: var(--text-light);
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+        
+        .popup-footer {
+            margin-top: 30px;
+            text-align: right;
         }
 
-        #popup-title {
-            font-family: var(--font-display);
-            font-size: 1.8rem;
-            color: var(--accent-color);
-            margin-bottom: 15px;
+        .dont-show-btn {
+            background: none;
+            border: none;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .dont-show-btn:hover {
+            color: var(--accent-hover);
         }
 
         @keyframes fadeIn {
-            from {opacity: 0}
-            to {opacity: 1}
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes popup-scale-in {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes popup-scale-out {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(0.95); opacity: 0; }
         }
         
         /* Keeping original utility classes & sidebars for script compatibility */
@@ -500,6 +560,83 @@
         }
         .animate-on-scroll { opacity: 0; transition: all 0.8s ease-out; }
         .animate-on-scroll.loaded { opacity: 1; }
+
+        /* --- Rolling Banner --- */
+        .rolling-banner {
+            position: fixed;
+            top: 70px; /* Height of the header */
+            left: 0;
+            right: 0;
+            background-color: var(--accent-color);
+            color: var(--text-dark);
+            padding: 10px 0;
+            z-index: 999;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .rolling-banner-text {
+            display: inline-block;
+            animation: rolling-banner 20s linear infinite;
+        }
+
+        .rolling-banner-text span {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin-right: 50px;
+        }
+
+        @keyframes rolling-banner {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* --- Dropdown Menu --- */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            color: var(--text-light);
+            text-decoration: none;
+            margin-left: 25px;
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--secondary-color);
+            min-width: 160px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1;
+            border-radius: 10px;
+            padding: 10px 0;
+        }
+
+        .dropdown-content a {
+            color: var(--text-light);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            margin: 0;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--primary-color);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -521,10 +658,29 @@
                 <a href="resources.html">Resources</a>
                 <a href="s2.html">S2</a>
                 <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank">3D Garage</a>
+                <div class="dropdown">
+                  <a href="#" class="dropbtn">Games</a>
+                  <div class="dropdown-content">
+                    <a href="videos/game1.html">Game 1</a>
+                    <a href="videos/game2.html">Game 2</a>
+                    <a href="videos/game3.html">Game 3</a>
+                    <a href="videos/game4.html">Game 4</a>
+                    <a href="videos/game5.html">Game 5</a>
+                  </div>
+                </div>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
         </div>
     </header>
+
+    <div class="rolling-banner">
+      <div class="rolling-banner-text">
+        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+      </div>
+    </div>
 
     <main class="main-content">
         <section class="hero" id="home">
@@ -650,6 +806,22 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </section>
+        
+        <section class="section" id="slideshow-section">
+            <div class="container">
+                <h2 class="section-title">Background Slideshow</h2>
+                <p class="section-subtitle">A slideshow of background images.</p>
+                <canvas id="hero-slideshow-canvas" style="width: 100%; height: 400px;"></canvas>
+            </div>
+        </section>
+
+        <section class="section" id="videoplayer-section">
+            <div class="container">
+                <h2 class="section-title">Video Player</h2>
+                <p class="section-subtitle">A selection of our videos.</p>
+                <div id="video-player-container"></div>
             </div>
         </section>
         
@@ -784,16 +956,17 @@
     <div id="info-popup" class="info-popup">
         <div class="popup-content">
             <span class="close-btn">&times;</span>
-            <h3 id="popup-title"></h3>
+            <div class="popup-header">
+                <span class="popup-icon">💡</span>
+                <h3 id="popup-title"></h3>
+            </div>
             <p id="popup-text"></p>
+
         </div>
     </div>
 
     <audio id="background-audio" src="./videos/rare1.mp3" preload="auto" muted></audio>
     <audio id="background-music" src="./videos/impact.mp3" preload="auto" loop></audio>
-    <script src="videoplayer.js"></script>
-    <script src="hero_slideshow.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -847,45 +1020,66 @@
 
             generateRain();
 
-            // --- Random Info Popup ---
+            // --- Upgraded Info Popup Logic ---
             const infoPopup = document.getElementById('info-popup');
+            const popupContent = document.querySelector('.popup-content');
             const closeBtn = document.querySelector('.close-btn');
             const popupTitle = document.getElementById('popup-title');
             const popupText = document.getElementById('popup-text');
-
             const mechanicTips = [
                 {
-                    title: "Anywhere, Anytime Repairs",
-                    text: "With a fully-equipped mobile workshop, we can perform complex repairs in a parking lot, your driveway, or on the side of the road. No tow truck needed."
+                    title: "Beyond the Jump Start",
+                    text: "Our emergency services cover more than just batteries. We can diagnose starter failures, alternator issues, and fuel delivery problems on the spot, often getting you running without a tow.",
+                    icon: "🚨"
                 },
                 {
-                    title: "Digital Field Guides",
-                    text: "Our technicians use tablets with access to comprehensive digital field guides for every make and model, ensuring accurate and efficient service."
+                    title: "The Mobile Command Center",
+                    text: "Our diagnostic tablets are dealership-level tools. We can reprogram keys, diagnose complex CAN bus communication errors, and analyze live sensor data right at your curb.",
+                    icon: "🔍"
                 },
                 {
-                    title: "On-the-Go Diagnostics",
-                    text: "We plug directly into your vehicle's OBD-II port to read error codes and diagnose issues with the same accuracy as a dealership."
+                    title: "The Myth of 'Squeaky' Brakes",
+                    text: "While squeaking can indicate worn pads, it can also be caused by moisture or dust. We measure pad thickness and check for rotor warping to give you an accurate and honest assessment.",
+                    icon: "🛑"
                 },
                 {
-                    title: "Battery Problems Solved",
-                    text: "A dead battery is one of the most common roadside issues. We can test your battery, charging system, and replace it on the spot if needed."
+                    title: "The Heart of the Machine",
+                    text: "Modern engines are complex. We carry specialized tools like digital borescopes to inspect cylinder walls and thermal cameras to spot hidden heat issues, preventing catastrophic failures.",
+                    icon: "⚙️"
                 },
                 {
-                    title: "The Power of Portability",
-                    text: "Modern, lightweight tools and portable power sources allow us to bring the garage to you, from air compressors to welding equipment."
+                    title: "Chasing the Gremlins",
+                    text: "Electrical issues can be frustrating. We use advanced circuit testers and wiring diagrams to trace parasitic draws that kill your battery and fix faulty connections that other shops might miss.",
+                    icon: "🔋"
                 },
                 {
-                    title: "Night-time Repairs",
-                    text: "Breakdowns don't just happen in the daytime. Our mobile units are equipped with powerful LED lighting for safe and effective night-time repairs."
+                    title: "Uptime is Everything",
+                    text: "For our fleet clients, we create a custom digital profile for each vehicle, tracking maintenance history and predicting future needs to maximize reliability and minimize costly downtime.",
+                    icon: "🚛"
                 }
             ];
 
             function showRandomTip() {
+                if (popupsDisabled) return;
+
                 const randomIndex = Math.floor(Math.random() * mechanicTips.length);
                 const tip = mechanicTips[randomIndex];
+
                 popupTitle.textContent = tip.title;
                 popupText.textContent = tip.text;
+                document.querySelector('.popup-icon').textContent = tip.icon;
+                
                 infoPopup.style.display = 'block';
+            }
+
+            function hidePopup() {
+                popupContent.style.animation = 'popup-scale-out 0.5s forwards cubic-bezier(0.165, 0.84, 0.44, 1)';
+                infoPopup.style.animation = 'fadeOut 0.5s forwards';
+                setTimeout(() => {
+                    infoPopup.style.display = 'none';
+                    popupContent.style.animation = 'popup-scale-in 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    infoPopup.style.animation = 'fadeIn 0.5s forwards';
+                }, 500);
             }
 
             function scheduleRandomPopup() {
@@ -896,14 +1090,19 @@
                 }, randomInterval);
             }
 
-            closeBtn.addEventListener('click', () => {
-                infoPopup.style.display = 'none';
-            });
+            closeBtn.addEventListener('click', hidePopup);
 
             window.addEventListener('click', (event) => {
                 if (event.target == infoPopup) {
-                    infoPopup.style.display = 'none';
+                    hidePopup();
                 }
+            });
+
+            dontShowBtn.addEventListener('click', () => {
+                popupsDisabled = true;
+                localStorage.setItem('popupsDisabled', 'true');
+                dontShowBtn.textContent = "Popups Disabled";
+                hidePopup();
             });
 
             // Start the random popup scheduler after a delay
@@ -927,113 +1126,11 @@
             document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
 
             // --- New WebGL Hero Shader ---
-            const canvas = document.getElementById('hero-shader-canvas');
-            const gl = canvas.getContext('webgl');
-            if (!gl) {
-                console.error("WebGL not supported!");
-                document.querySelector('.hero').style.backgroundColor = '#121212';
-            } else {
-                const vertexShaderSource = `
-                    attribute vec2 a_position;
-                    void main() {
-                        gl_Position = vec4(a_position, 0.0, 1.0);
-                    }
-                `;
-                const fragmentShaderSource = `
-                    precision highp float;
-                    uniform vec2 u_resolution;
-                    uniform float u_time;
-                    
-                    float random(vec2 st) {
-                        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-                    }
-                    
-                    float noise(vec2 st) {
-                        vec2 i = floor(st);
-                        vec2 f = fract(st);
-                        float a = random(i);
-                        float b = random(i + vec2(1.0, 0.0));
-                        float c = random(i + vec2(0.0, 1.0));
-                        float d = random(i + vec2(1.0, 1.0));
-                        vec2 u = f * f * (3.0 - 2.0 * f);
-                        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.y * u.x;
-                    }
-
-                    void main() {
-                        vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-                        
-                        vec3 color = vec3(0.0);
-                        
-                        float t = u_time * 0.1;
-                        
-                        uv *= 1.5;
-
-                        for(float i = 1.0; i < 5.0; i++){
-                            uv.x += 0.4 / i * sin(i * 1.5 * uv.y + t);
-                            uv.y += 0.4 / i * cos(i * 1.5 * uv.x + t);
-                        }
-                        
-                        float n = noise(uv * 2.0);
-                        
-                        vec3 baseColor = vec3(0.0, 0.2, 0.4); // Dark blue base
-                        vec3 accentColor = vec3(0.0, 0.6, 1.0); // Accent blue (var(--accent-color))
-
-                        color = mix(baseColor, accentColor, pow(n, 2.0));
-                        color += smoothstep(0.9, 1.0, n) * 0.5; // Highlights
-
-                        gl_FragColor = vec4(color, 1.0);
-                    }
-                `;
-
-                const createShader = (gl, type, source) => {
-                    const shader = gl.createShader(type);
-                    gl.shaderSource(shader, source);
-                    gl.compileShader(shader);
-                    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                        console.error('Shader compile error:', gl.getShaderInfoLog(shader));
-                        gl.deleteShader(shader);
-                        return null;
-                    }
-                    return shader;
-                };
-
-                const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-                const program = gl.createProgram();
-                gl.attachShader(program, vertexShader);
-                gl.attachShader(program, fragmentShader);
-                gl.linkProgram(program);
-
-                gl.useProgram(program);
-
-                const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-                const resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-                const timeUniformLocation = gl.getUniformLocation(program, "u_time");
-
-                const positionBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
-                
-                gl.enableVertexAttribArray(positionAttributeLocation);
-                gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-
-                const render = (time) => {
-                    canvas.width = canvas.clientWidth;
-                    canvas.height = canvas.clientHeight;
-                    gl.viewport(0, 0, canvas.width, canvas.height);
-                    
-                    gl.uniform2f(resolutionUniformLocation, canvas.width, canvas.height);
-                    gl.uniform1f(timeUniformLocation, time * 0.001);
-                    
-                    gl.drawArrays(gl.TRIANGLES, 0, 6);
-                    requestAnimationFrame(render);
-                }
-                requestAnimationFrame(render);
-            }
+            // This code has been moved to shader.js
         });
     </script>
-
-
-    
+    <script src="videoplayer.js"></script>
+    <script src="hero_slideshow.js"></script>
+    <script src="shader.js"></script>
 </body>
 </html>

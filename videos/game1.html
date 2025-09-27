@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garage Master 3D</title>
+    <!-- Added three.js library for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Added Tone.js for procedural audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --background-color: #111; /* Darker base for the 3D scene */
+            --container-bg: #34495e;
+            --text-color: #ecf0f1;
+            --accent-color: #f39c12; /* Brighter orange */
+            --success-color: #2ecc71;
+            --fail-color: #e74c3c;
+            --border-color: #95a5a6;
+            --garage-wall: #7f8c8d;
+            --garage-floor: #95a5a6;
+        }
+
+        html {
+            background-color: var(--background-color);
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: transparent !important; /* This ensures we see the canvas */
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            overflow: hidden;
+            /* The old CSS shader is removed from here */
+        }
+        
+        /* Canvas for the 3D background */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Puts it behind all other content */
+        }
+
+        #game-container {
+            /* Made more transparent to see the 3D background */
+            background-color: rgba(44, 62, 80, 0.75); 
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); /* For Safari */
+            padding: 2em;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 800px;
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            /* Removed the old 2D shader from the container */
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 0.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+        }
+        
+        #car-wrapper {
+            position: relative;
+            height: 120px;
+        }
+
+        #car-display {
+            font-size: 6rem;
+            filter: drop-shadow(0 0 10px var(--accent-color));
+            position: absolute;
+            width: 100%;
+            left: 0;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        /* --- Animations --- */
+        .drive-in { animation: driveIn 1s ease-out forwards; }
+        .drive-out { animation: driveOut 1s ease-in forwards; }
+        .shake { animation: shake 0.5s; }
+        .success-jiggle { animation: successJiggle 0.6s ease-in-out; }
+        
+        @keyframes driveIn {
+            from { transform: translateX(-150%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes driveOut {
+            from { transform: translateX(0); }
+            to { transform: translateX(150%); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px) rotate(-2deg); }
+            20%, 40%, 60%, 80% { transform: translateX(10px) rotate(2deg); }
+        }
+        @keyframes successJiggle {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            25% { transform: translateY(-10px) rotate(2deg); }
+            75% { transform: translateY(5px) rotate(-2deg); }
+        }
+
+        #problem-description {
+            font-size: 1.2rem;
+            margin: 1.5em 0;
+            min-height: 40px;
+            border: 1px dashed var(--border-color);
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        #toolbox {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 80px;
+        }
+
+        .tool {
+            background-color: var(--background-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .tool svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 5px;
+            pointer-events: none;
+        }
+
+        .tool:hover:not(:disabled) {
+            background-color: var(--accent-color);
+            color: var(--background-color);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tool:active:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        
+        .tool:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #score {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        
+        #message-overlay.hidden {
+            display: none;
+            opacity: 0;
+        }
+
+        #message-overlay h2 {
+            font-size: 3rem;
+            margin: 0;
+            text-shadow: 3px 3px 5px #000;
+        }
+        
+        #message-overlay p {
+            font-size: 1.2rem;
+            max-width: 80%;
+        }
+
+        #restart-button {
+            margin-top: 1em;
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+        }
+
+        #restart-button:hover {
+            background-color: #d35400;
+        }
+
+        /* --- New Traffic styles --- */
+        #road {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #222; /* Black asphalt color */
+            border-top: 5px dashed var(--accent-color); /* Yellow stripes */
+            z-index: 15; /* Above background but below game */
+            overflow: hidden;
+        }
+
+        .traffic-car {
+            position: absolute;
+            font-size: 2rem;
+            will-change: transform; /* Performance optimization */
+        }
+
+        @keyframes traffic-flow-lr {
+            from { transform: translateX(-100px) scaleX(-1); }
+            to { transform: translateX(100vw) scaleX(-1); }
+        }
+
+        @keyframes traffic-flow-rl {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-100px); }
+        }
+
+
+    </style>
+</head>
+<body>
+
+<!-- This canvas will render the 3D background -->
+<canvas id="background-canvas"></canvas>
+
+<div id="game-container">
+    <div id="score">Score: 0</div>
+    <h1>Garage Master 3D</h1>
+    <div id="car-wrapper">
+        <div id="car-display">🚗</div>
+    </div>
+    <div id="problem-description">A new car is arriving...</div>
+    <div id="toolbox">
+        <!-- Tools will be generated by JavaScript -->
+    </div>
+    
+    <div id="message-overlay" class="hidden">
+        <h2 id="message-title"></h2>
+        <p id="message-text"></p>
+        <button id="restart-button">Next Car</button>
+    </div>
+</div>
+
+<!-- New Road element for traffic -->
+<div id="road"></div>
+
+<script>
+    // --- EXISTING GAME LOGIC ---
+    const toolIcons = {
+        "Lug Wrench": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+        "Oil Can": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10M4 10h12M8 10V6a2 2 0 1 1 4 0v4m4-4.5 3.5-3.5"></path></svg>`,
+        "Hammer": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 12-8.373 8.373a1 1 0 1 1-1.414-1.414L12.586 12l-2.373-2.373a1 1 0 0 1 0-1.414l3-3a1 1 0 0 1 1.414 0l3 3a1 1 0 0 1 0 1.414L15 12Z"></path></svg>`,
+        "Wrench": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`,
+        "Screwdriver": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path><path d="m12 12-2-2"></path></svg>`,
+        "Pliers": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 12.5 10 10l4 4 2.5-2.5-4-4 2.5-2.5L10 10m-5 5L10 10"/><path d="m14 14 6 6"/><path d="M3.5 8.5 8 4"/><path d="M3 21l3-3"/><path d="M18 11.5 20 13"/></svg>`,
+        "Voltmeter": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m12 12-2 4 4 0-2-4"></path><path d="M8.5 9.5 7 12l1.5 2.5"></path><path d="m15.5 9.5 1.5 2.5-1.5 2.5"></path></svg>`,
+        "Welder": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M16.2 9.4c1.1.1 2.1.6 3.1 1.2 2.4 1.7 4.7 4.4 4.7 7.4 0 0-2-2.1-4.2-3.3s-4.3-1.2-4.3-1.2"/><path d="M3.8 9.4c-1.1.1-2.1.6-3.1 1.2C-1.7 12.3.6 15 .6 18c0 0 2-2.1 4.2-3.3S9.1 13.5 9.1 13.5"/><path d="M12 17a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2v12Z"/><path d="M12 5V2"/><path d="M7 5H2"/><path d="M17 5h5"/></svg>`,
+        "Air Freshener": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0-7-7c0-2 1-4 2-5 1.5-1.5 3.5-3.5 5-3.5s3.5 2 5 3.5c1 1 2 3 2 5a7 7 0 0 0-7 7Z"/><path d="M12 15a2.5 2.5 0 0 0-2.5-2.5c0-2 1.5-3.5 2.5-3.5S14.5 10.5 14.5 12.5A2.5 2.5 0 0 0 12 15Z"/><path d="M5 8H3"/><path d="M19 8h2"/><path d="M8.5 4.5 7 3"/><path d="m15.5 4.5 1.5-1.5"/></svg>`,
+        "Duct Tape": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 0 0 10-10h-2a8 8 0 0 1-8 8v2Z"/><path d="M12 14a2 2 0 0 0-2 2h4a2 2 0 0 0-2-2Z"/><path d="M2 12a10 10 0 0 0 10 10v-2a8 8 0 0 1-8-8H2Z"/><path d="M14 12a2 2 0 0 0 2-2V2h-4v8a2 2 0 0 0 2 2Z"/></svg>`,
+        "Zip Tie": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14v1a2 2 0 0 0 2 2h3.5a2.5 2.5 0 1 0 0-5H12a2 2 0 0 1-2-2V9"/><path d="M13 18h-2a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h2"/><path d="m15 11-3-3 3-3"/></svg>`,
+        "Buffer": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12a10 10 0 1 0-20 0Z"/><path d="M2 12h8"/><path d="M14 12h8"/><path d="M12 2v8"/><path d="M12 14v8"/></svg>`,
+        "Antifreeze": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>`
+    };
+    const problems = [
+        { description: "The tire is flat. It needs to be changed.", carState: "🚗💨", correctTool: "Lug Wrench", tools: ["Screwdriver", "Hammer", "Lug Wrench", "Oil Can"] },
+        { description: "The engine oil is critically low.", carState: "🚗💧", correctTool: "Oil Can", tools: ["Wrench", "Oil Can", "Pliers", "Hammer"] },
+        { description: "A panel is loose. It needs to be hammered back.", carState: "🚗💥", correctTool: "Hammer", tools: ["Pliers", "Hammer", "Screwdriver", "Wrench"] },
+        { description: "The battery terminal is loose.", carState: "🚗⚡️", correctTool: "Wrench", tools: ["Wrench", "Oil Can", "Hammer", "Screwdriver"] },
+        { description: "The headlight casing needs to be removed.", carState: "🚗🔦", correctTool: "Screwdriver", tools: ["Pliers", "Screwdriver", "Wrench", "Hammer"] },
+        { description: "The car won't start. Check the battery voltage.", carState: "🚗🔋", correctTool: "Voltmeter", tools: ["Voltmeter", "Hammer", "Duct Tape", "Oil Can"] },
+        { description: "The frame is cracked and needs a permanent fix.", carState: "🚗💔", correctTool: "Welder", tools: ["Screwdriver", "Welder", "Zip Tie", "Pliers"] },
+        { description: "A mysterious bad smell is coming from the vents.", carState: "🚗🤢", correctTool: "Air Freshener", tools: ["Air Freshener", "Antifreeze", "Wrench", "Hammer"] },
+        { description: "The side mirror is barely hanging on.", carState: "🚗ミラー", correctTool: "Duct Tape", tools: ["Lug Wrench", "Pliers", "Duct Tape", "Voltmeter"] },
+        { description: "A bundle of wires is hanging loose under the dash.", carState: "🚗🔌", correctTool: "Zip Tie", tools: ["Oil Can", "Zip Tie", "Hammer", "Wrench"] },
+        { description: "The paint job has a long, ugly scratch.", carState: "🚗✨", correctTool: "Buffer", tools: ["Buffer", "Welder", "Screwdriver", "Duct Tape"] },
+        { description: "The engine is overheating!", carState: "🚗🌡️", correctTool: "Antifreeze", tools: ["Pliers", "Antifreeze", "Air Freshener", "Lug Wrench"] }
+    ];
+    let currentProblem;
+    let score = 0;
+    const carDisplay = document.getElementById('car-display');
+    const problemDescription = document.getElementById('problem-description');
+    const toolbox = document.getElementById('toolbox');
+    const scoreDisplay = document.getElementById('score');
+    const messageOverlay = document.getElementById('message-overlay');
+    const messageTitle = document.getElementById('message-title');
+    const messageText = document.getElementById('message-text');
+    const restartButton = document.getElementById('restart-button');
+
+    // --- NEW AUDIO SETUP ---
+    let audioInitialized = false;
+    let clickSound, successSound, failSound, engineSound;
+
+    function initAudio() {
+        // Create synths and effects
+        clickSound = new Tone.MembraneSynth({
+            octaves: 4,
+            pitchDecay: 0.1,
+            volume: -12
+        }).toDestination();
+
+        successSound = new Tone.PolySynth(Tone.Synth, {
+            volume: -8,
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
+        }).toDestination();
+
+        failSound = new Tone.MonoSynth({
+            volume: -4,
+            frequency: "C2",
+            envelope: { attack: 0.05, decay: 0.4, sustain: 0, release: 0.1 },
+            filter: { Q: 2, type: "lowpass", rolloff: -12 },
+            filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1, baseFrequency: 100, octaves: 2 }
+        }).toDestination();
+
+        engineSound = new Tone.NoiseSynth({
+            noise: { type: 'brown' },
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.3 },
+            volume: -10
+        }).toDestination();
+        
+        audioInitialized = true;
+    }
+
+
+    function setupNewProblem() {
+        messageOverlay.classList.add('hidden');
+        toolbox.innerHTML = ""; 
+        problemDescription.textContent = "Figuring out the problem...";
+        carDisplay.className = 'drive-in';
+
+        if(audioInitialized) {
+            engineSound.triggerAttackRelease("0.5s");
+        }
+
+        setTimeout(() => {
+            currentProblem = problems[Math.floor(Math.random() * problems.length)];
+            carDisplay.textContent = currentProblem.carState;
+            problemDescription.textContent = currentProblem.description;
+            currentProblem.tools.sort(() => Math.random() - 0.5).forEach(toolName => {
+                const toolElement = document.createElement('button');
+                toolElement.classList.add('tool');
+                toolElement.innerHTML = `${toolIcons[toolName] || ''}<span>${toolName}</span>`;
+                toolElement.onclick = () => selectTool(toolName, toolElement);
+                toolbox.appendChild(toolElement);
+            });
+        }, 1000);
+    }
+
+    async function selectTool(selectedTool, toolElement) {
+        // Initialize audio on the first user interaction, now waits for it to be ready
+        if (!audioInitialized) {
+            await Tone.start();
+            initAudio();
+            console.log("Audio Initialized.");
+        }
+        
+        // This sound will now play reliably on the first click
+        clickSound.triggerAttackRelease("C3", "32n");
+
+        document.querySelectorAll('.tool').forEach(b => b.disabled = true);
+        if (selectedTool === currentProblem.correctTool) {
+            score++;
+            scoreDisplay.textContent = `Score: ${score}`;
+            carDisplay.classList.add('success-jiggle');
+            setTimeout(() => { 
+                successSound.triggerAttackRelease(["C4", "E4", "G4"], "8n");
+                showMessage(true, `SUCCESS!`, `Good job! You fixed the problem.`); 
+            }, 800);
+        } else {
+            carDisplay.classList.add('shake');
+            setTimeout(() => { 
+                failSound.triggerAttackRelease("8n");
+                showMessage(false, 'FAIL!', `That wasn't the right tool.`); 
+            }, 800);
+        }
+    }
+    
+    function showMessage(isSuccess, title, text) {
+        messageTitle.textContent = title;
+        messageText.textContent = text;
+        messageTitle.style.color = isSuccess ? 'var(--success-color)' : 'var(--fail-color)';
+        messageOverlay.classList.remove('hidden');
+    }
+
+    function startNextRound() {
+        if(audioInitialized) {
+            clickSound.triggerAttackRelease("C4", "32n");
+            engineSound.triggerAttackRelease("0.5s");
+        }
+        carDisplay.className = 'drive-out';
+        setTimeout(setupNewProblem, 1000);
+    }
+    
+    restartButton.addEventListener('click', startNextRound);
+    
+    // --- NEW 3D BACKGROUND SCRIPT ---
+    const init3DBackground = () => {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('background-canvas'), 
+            antialias: true 
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        // This GLSL code creates the flowing energy effect
+        const fragmentShader = `
+            uniform float u_time;
+            varying vec2 vUv;
+
+            // Simplex noise function for a more organic look
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+            float snoise(vec2 v) {
+                const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+                                    0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+                                    -0.577350269189626, // -1.0 + 2.0 * C.x
+                                    0.024390243902439); // 1.0 / 41.0
+                vec2 i  = floor(v + dot(v, C.yy) );
+                vec2 x0 = v -   i + dot(i, C.xx);
+                vec2 i1;
+                i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+                vec4 x12 = x0.xyxy + C.xxzz;
+                x12.xy -= i1;
+                i = mod289(i);
+                vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+                    + i.x + vec3(0.0, i1.x, 1.0 ));
+                vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+                m = m*m;
+                m = m*m;
+                vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                vec3 h = abs(x) - 0.5;
+                vec3 ox = floor(x + 0.5);
+                vec3 a0 = x - ox;
+                m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+                vec3 g;
+                g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+                return 130.0 * dot(m, g);
+            }
+
+            void main() {
+                vec2 uv = vUv * 2.0 - 1.0; // Center the coordinates
+
+                vec3 finalColor = vec3(0.0);
+                
+                // --- Animated Grid ---
+                vec2 gridUv = uv;
+                gridUv.y += u_time * 0.2; // Move the grid towards the camera
+                
+                // Perspective
+                float perspective = 1.0 / (gridUv.y + 2.0);
+                gridUv.x *= perspective;
+
+                // Create the grid lines
+                vec2 grid = abs(fract(gridUv * 5.0) - 0.5);
+                float line = pow(1.0 - min(grid.x, grid.y), 40.0);
+                
+                vec3 gridColor = vec3(0.1, 0.5, 1.0); // Cool blue color for the grid
+                finalColor += gridColor * line * perspective * 2.0;
+
+                // --- Background stars/nebula ---
+                vec2 noiseUv = uv;
+                noiseUv.y += u_time * 0.05;
+                float noise = snoise(noiseUv * 3.0) * 0.5 + 0.5;
+                noise = pow(noise, 3.0); // Increase contrast
+
+                vec3 nebulaColor = vec3(0.8, 0.2, 0.9) * (1.0 - uv.y); // Purple/pink fade
+                finalColor += nebulaColor * noise * 0.1;
+
+                // Vignette effect to darken the edges
+                float vignette = 1.0 - length(uv) * 0.7;
+                finalColor *= vignette;
+
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        const uniforms = {
+            u_time: { value: 0.0 }
+        };
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        camera.position.z = 1;
+
+        const clock = new THREE.Clock();
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            uniforms.u_time.value = clock.getElapsedTime();
+            renderer.render(scene, camera);
+        };
+
+        const onWindowResize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+
+        window.addEventListener('resize', onWindowResize);
+
+        animate();
+    };
+
+    // --- NEW TRAFFIC SCRIPT ---
+    const initTraffic = () => {
+        const road = document.getElementById('road');
+        const cars = ['🚓', '🚑', '🚚', '🚗', '🚕', '🚙'];
+        const numCars = 10;
+
+        for (let i = 0; i < numCars; i++) {
+            const car = document.createElement('div');
+            car.classList.add('traffic-car');
+            car.textContent = cars[Math.floor(Math.random() * cars.length)];
+            
+            const goingRight = Math.random() > 0.5;
+            if (goingRight) {
+                car.style.animationName = 'traffic-flow-lr';
+                car.style.top = `${Math.random() * 25}px`; // Top lane
+                // car.style.transform = 'scaleX(-1)'; // Flip the car emoji - MOVED TO CSS
+            } else {
+                car.style.animationName = 'traffic-flow-rl';
+                car.style.top = `${30 + Math.random() * 25}px`; // Bottom lane
+                // NO FLIP NEEDED
+            }
+
+            car.style.animationDuration = `${5 + Math.random() * 10}s`;
+            car.style.animationDelay = `${Math.random() * 15}s`;
+            car.style.animationIterationCount = 'infinite';
+            car.style.animationTimingFunction = 'linear';
+            
+            road.appendChild(car);
+        }
+    };
+
+    window.onload = () => {
+        setupNewProblem();
+        init3DBackground(); // Initialize the 3D background
+        initTraffic(); // Initialize the road traffic
+    };
+
+</script>
+
+</body>
+</html>
+
+
+
+

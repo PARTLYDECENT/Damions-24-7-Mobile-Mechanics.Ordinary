@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Prototype Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .header {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+        }
+
+        .title {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px 40px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        #loading-progress {
+            margin-top: 10px;
+            font-size: 1.2rem;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #00aaff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* lil-gui custom styling */
+        :root {
+            --lil-gui-background-color: rgba(10, 10, 15, 0.8);
+            --lil-gui-text-color: #eee;
+            --lil-gui-title-background-color: rgba(0, 122, 255, 0.7);
+            --lil-gui-widget-color: #ddd;
+            --lil-gui-hover-color: rgba(255, 255, 255, 0.2);
+            --lil-gui-focus-color: rgba(0, 122, 255, 0.8);
+            --lil-gui-number-color: #2cc5e4;
+            --lil-gui-string-color: #b4d882;
+        }
+
+        .lil-gui {
+            z-index: 101;
+            max-height: 95vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="overlay">
+        <div class="header">
+            <div class="title">S2 PROTOTYPE</div>
+            <div class="subtitle">INTERACTIVE DESIGN VISUALIZER</div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Initializing Viewer...</p>
+        <p id="loading-progress">0%</p>
+    </div>
+
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/",
+            "three/addons/postprocessing/GlitchPass.js": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/postprocessing/GlitchPass.js",
+            "three/addons/helpers/VertexNormalsHelper.js": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/helpers/VertexNormalsHelper.js",
+            "three/addons/exporters/GLTFExporter.js": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/exporters/GLTFExporter.js"
+        }
+    }
+    </script>
+
+    <script type="module" src="tools.js"></script>
+</body>
+</html>
+<!-- Gemini Final Correction Test 2 -->
