@@ -637,6 +637,67 @@
         .dropdown:hover .dropdown-content {
             display: block;
         }
+
+        /* --- Interactive Engine Bay --- */
+        .engine-history, .interactive-engine-diagram, .engine-quiz {
+            background: var(--secondary-color);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .engine-v8 {
+            position: relative;
+            text-align: center;
+        }
+
+        .engine-v8 img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .engine-info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--primary-color);
+            border-radius: 10px;
+            color: var(--text-gray);
+            min-height: 50px;
+        }
+
+        #quiz .question {
+            margin-bottom: 20px;
+        }
+
+        #quiz .options {
+            list-style: none;
+            padding: 0;
+        }
+
+        #quiz .options li {
+            margin-bottom: 10px;
+        }
+
+        #submit-quiz {
+            background: var(--accent-color);
+            color: var(--text-dark);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background 0.3s ease;
+        }
+
+        #submit-quiz:hover {
+            background: var(--accent-hover);
+        }
+
+        #quiz-results {
+            margin-top: 20px;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -827,43 +888,6 @@
         
     </main>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <section class="section" id="facts">
             <div class="container">
                 <h2 class="section-title">Automotive Facts & Repairability Insights</h2>
@@ -893,52 +917,38 @@
             </div>
         </section>
 
+        <section class="section" id="engine-bay">
+            <div class="container">
+                <h2 class="section-title">The Interactive Engine Bay</h2>
+                <p class="section-subtitle">Explore the heart of the machine and uncover the secrets of the internal combustion engine.</p>
+                
+                <div class="engine-history">
+                    <h3>A Spark of Genius: The Internal Combustion Story</h3>
+                    <p>The internal combustion engine (ICE) is a heat engine that converts chemical energy into mechanical energy. The story of the ICE is a fascinating journey of innovation, with key contributions from inventors like Nicolaus Otto, who in 1876, created the first successful four-stroke engine, and Karl Benz, who developed the first automobile powered by an ICE in 1886. This invention revolutionized transportation and paved the way for the modern world.</p>
+                </div>
 
+                <div class="interactive-engine-diagram">
+                    <h3>Explore the V8</h3>
+                    <div class="engine-v8">
+                        <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
+                        <map name="v8map">
+                            <area shape="rect" coords="150,100,250,150" href="#" alt="Cylinder Head" title="Cylinder Head" data-info="The cylinder head sits above the cylinders and houses the valvetrain, including the valves and spark plugs.">
+                            <area shape="rect" coords="100,150,300,250" href="#" alt="Engine Block" title="Engine Block" data-info="The engine block is the main structure of the engine, containing the cylinders and other major components.">
+                            <area shape="rect" coords="180,250,220,300" href="#" alt="Crankshaft" title="Crankshaft" data-info="The crankshaft converts the linear motion of the pistons into rotational motion.">
+                        </map>
+                        <p class="engine-info-box"></p>
+                    </div>
+                </div>
 
+                <div class="engine-quiz">
+                    <h3>Engine Fun Facts Quiz</h3>
+                    <div id="quiz"></div>
+                    <button id="submit-quiz">Submit Answers</button>
+                    <div id="quiz-results"></div>
+                </div>
+            </div>
+        </section>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     <footer class="footer">
         <div class="container">
             <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
@@ -1124,6 +1134,93 @@
             }, { threshold: 0.1 });
 
             document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+            // --- Interactive Engine Bay ---
+            const engineAreas = document.querySelectorAll('#engine-bay map area');
+            const engineInfoBox = document.querySelector('#engine-bay .engine-info-box');
+
+            engineAreas.forEach(area => {
+                area.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    engineInfoBox.textContent = area.dataset.info;
+                });
+            });
+
+            // --- Engine Quiz ---
+            const quizContainer = document.getElementById('quiz');
+            const resultsContainer = document.getElementById('quiz-results');
+            const submitButton = document.getElementById('submit-quiz');
+
+            const myQuestions = [
+                {
+                    question: "What does ICE stand for?",
+                    answers: {
+                        a: "Internal Combustion Engine",
+                        b: "Internal Cooling Engine",
+                        c: "Icy Cool Engine"
+                    },
+                    correctAnswer: "a"
+                },
+                {
+                    question: "Who is credited with inventing the first successful four-stroke engine?",
+                    answers: {
+                        a: "Karl Benz",
+                        b: "Henry Ford",
+                        c: "Nicolaus Otto"
+                    },
+                    correctAnswer: "c"
+                },
+                {
+                    question: "What is the purpose of a crankshaft?",
+                    answers: {
+                        a: "To open and close the valves",
+                        b: "To convert linear motion to rotational motion",
+                        c: "To ignite the fuel"
+                    },
+                    correctAnswer: "b"
+                }
+            ];
+
+            function buildQuiz(){
+                const output = [];
+                myQuestions.forEach((currentQuestion, questionNumber) => {
+                    const answers = [];
+                    for(letter in currentQuestion.answers){
+                        answers.push(
+                            `<label>
+                                <input type="radio" name="question${questionNumber}" value="${letter}">
+                                ${letter} :
+                                ${currentQuestion.answers[letter]}
+                            </label>`
+                        );
+                    }
+                    output.push(
+                        `<div class="question"> ${currentQuestion.question} </div>
+                        <div class="answers"> ${answers.join('')} </div>`
+                    );
+                });
+                quizContainer.innerHTML = output.join('');
+            }
+
+            function showResults(){
+                const answerContainers = quizContainer.querySelectorAll('.answers');
+                let numCorrect = 0;
+                myQuestions.forEach((currentQuestion, questionNumber) => {
+                    const answerContainer = answerContainers[questionNumber];
+                    const selector = `input[name=question${questionNumber}]:checked`;
+                    const userAnswer = (answerContainer.querySelector(selector) || {}).value;
+                    if(userAnswer === currentQuestion.correctAnswer){
+                        numCorrect++;
+                        answerContainers[questionNumber].style.color = 'lightgreen';
+                    } else {
+                        answerContainers[questionNumber].style.color = 'red';
+                    }
+                });
+                resultsContainer.innerHTML = `${numCorrect} out of ${myQuestions.length}`;
+            }
+
+            buildQuiz();
+            submitButton.addEventListener('click', showResults);
 
             // --- New WebGL Hero Shader ---
             // This code has been moved to shader.js

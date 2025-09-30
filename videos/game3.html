@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turbo Garage Tycoon</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        @keyframes move-shader {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .shader-background {
+          background-color: #020617; /* Fallback for a very dark blue */
+          background-image: 
+            radial-gradient(at 20% 20%, hsla(212, 90%, 25%, 0.3) 0px, transparent 50%),
+            radial-gradient(at 80% 20%, hsla(280, 80%, 30%, 0.3) 0px, transparent 50%),
+            radial-gradient(at 20% 80%, hsla(180, 70%, 28%, 0.3) 0px, transparent 50%),
+            radial-gradient(at 80% 80%, hsla(340, 80%, 35%, 0.25) 0px, transparent 50%);
+          background-size: 300% 300%;
+          animation: move-shader 25s ease infinite;
+        }
+
+        @keyframes fade-up {
+          0% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-60px); filter: blur(5px); }
+        }
+        .particle-animation { animation: fade-up 2s ease-out forwards; }
+        @keyframes slide-in-left {
+          0% { transform: translateX(-100%); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .car-arrival-animation { animation: slide-in-left 0.5s cubic-bezier(0.250, 0.460, 0.450, 0.940) both; }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 8px rgba(234, 88, 12, 0.5); }
+          50% { box-shadow: 0 0 20px rgba(234, 88, 12, 1); }
+        }
+        .pulse-glow-animation { animation: pulse-glow 2s infinite; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+          20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+        .impatient-shake { animation: shake 0.5s infinite; }
+        @keyframes ticker-in {
+          from { transform: translateY(-100%); }
+          to { transform: translateY(0); }
+        }
+        .event-ticker { animation: ticker-in 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-900">
+    <div id="root"></div>
+
+    <!-- Scripts moved to the end of the body for proper loading order -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <script type="text/babel">
+      window.addEventListener('load', function() {
+        const { useState, useEffect, useCallback, useRef } = React;
+        
+        // --- SVG Icon Components (replaces lucide-react) ---
+        const Wrench = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> );
+        const DollarSign = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> );
+        const Star = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> );
+        const Zap = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2z"/></svg> );
+        const Settings = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> );
+        const TrendingUp = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> );
+        const Clock = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> );
+        const PackagePlus = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 16h6v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2h6"/><path d="M12 12v8"/><path d="M16 12h-8"/><path d="M12 2v4"/><path d="M12 6L8 8.5v3L12 14l4-2.5v-3L12 6z"/><path d="M8 8.5l4 2.5l4-2.5"/></svg> );
+        const Fuel = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="4" y2="22"/><line x1="14" y1="9" x2="14" y2="22"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M10 14v-4"/><path d="M10 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M10 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></svg> );
+        const Crown = (props) => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg> );
+
+
+        // --- GAME CONFIGURATION ---
+        const CAR_TYPES = [
+          { name: 'Sedan', colorClass: 'text-blue-500', speed: 1, pay: 50 },
+          { name: 'SUV', colorClass: 'text-green-600', speed: 0.8, pay: 80 },
+          { name: 'Sports Car', colorClass: 'text-red-500', speed: 1.2, pay: 120 },
+          { name: 'Truck', colorClass: 'text-yellow-600', speed: 0.6, pay: 100 },
+          { name: 'Luxury', colorClass: 'text-purple-600', speed: 0.7, pay: 200 }
+        ];
+
+        const PROBLEMS = [
+          { name: 'Oil Change', time: 3, difficulty: 1, icon: <Fuel size={18} /> },
+          { name: 'Brake Pads', time: 5, difficulty: 2, icon: '🛑' },
+          { name: 'Engine Tune', time: 8, difficulty: 3, icon: '⚙️' },
+          { name: 'Transmission', time: 12, difficulty: 4, icon: <Settings size={18} /> },
+          { name: 'Full Rebuild', time: 20, difficulty: 5, icon: '🔥' }
+        ];
+
+        const UPGRADES = [
+          { id: 'tools', name: 'Better Tools', cost: 200, effect: 'Repair 20% faster', speedBoost: 0.2, icon: <Wrench/> },
+          { id: 'bay', name: 'Extra Bay', cost: 500, effect: 'Add another repair slot', slots: 1, icon: <PackagePlus/> },
+          { id: 'lift', name: 'Hydraulic Lift', cost: 800, effect: 'Repair 40% faster', speedBoost: 0.4, icon: '⚡' },
+          { id: 'scanner', name: 'Diagnostic Scanner', cost: 1000, effect: 'Diagnoses are now free', diagBoost: true, icon: '🔍' },
+          { id: 'team', name: 'Hire Mechanic', cost: 1500, effect: 'Adds a slow auto-repair boost', autoSpeed: 0.3, icon: '👨‍🔧' }
+        ];
+
+        const SPECIAL_EVENTS = [
+            { id: 'rush_hour', name: 'Rush Hour!', duration: 30, effect: 'More cars & 1.5x pay!', payMultiplier: 1.5, spawnRate: 0.3 },
+            { id: 'vip', name: 'VIP Customer!', duration: 20, effect: 'A high-value car needs urgent repair!', isVIP: true },
+            { id: 'parts_shortage', name: 'Parts Shortage', duration: 25, effect: 'All repairs are 30% slower.', speedMultiplier: -0.3 },
+        ];
+
+        // --- SOUND UTILITY ---
+        const useSounds = (isReady) => {
+            const synths = useRef(null);
+
+            useEffect(() => {
+                if (isReady && window.Tone && !synths.current) {
+                    synths.current = {
+                        cash: new window.Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+                        complete: new window.Tone.PluckSynth().toDestination(),
+                        click: new window.Tone.MembraneSynth().toDestination(),
+                        upgrade: new window.Tone.FMSynth().toDestination(),
+                        error: new window.Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination(),
+                    };
+                }
+            }, [isReady]);
+
+            const playSound = useCallback((sound) => {
+                if (!isReady || !synths.current || !synths.current[sound]) return;
+                if (window.Tone.context.state !== 'running') {
+                    window.Tone.context.resume();
+                }
+                
+                switch(sound) {
+                    case 'cash': synths.current.cash.triggerAttackRelease('C5', '8n'); break;
+                    case 'complete': synths.current.complete.triggerAttackRelease('G5', '8n', window.Tone.now() + 0.1); break;
+                    case 'click': synths.current.click.triggerAttackRelease('C2', '8n'); break;
+                    case 'upgrade': synths.current.upgrade.triggerAttackRelease('C4', '4n'); setTimeout(() => synths.current.upgrade.triggerAttackRelease('G4', '4n'), 120); break;
+                    case 'error': synths.current.error.triggerAttackRelease('G2', '8n'); break;
+                    default: break;
+                }
+            }, [isReady]);
+
+            return playSound;
+        };
+
+        // --- UI SUB-COMPONENTS ---
+        const AnimatedNumber = ({ value }) => {
+            const [displayValue, setDisplayValue] = useState(value);
+            const ref = useRef(value);
+
+            useEffect(() => {
+                const start = ref.current;
+                const end = value;
+                const diff = end - start;
+                let startTime = null;
+                const duration = 500;
+
+                const animate = (time) => {
+                    if (!startTime) startTime = time;
+                    const elapsed = time - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const t = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+                    setDisplayValue(Math.floor(start + diff * t));
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else ref.current = end;
+                };
+                requestAnimationFrame(animate);
+                return () => { ref.current = value; };
+            }, [value]);
+
+            return <span>${Math.floor(displayValue)}</span>;
+        };
+
+        const Stat = ({ icon, value, label, colorClass, children }) => (
+          <div className={`flex items-center gap-2 bg-black/40 px-4 py-2 rounded-lg shadow-md`}>
+            <div className={colorClass}>{icon}</div>
+            {children || <span className="font-bold text-lg">{value}</span>}
+            {label && <span className="text-sm text-gray-300">{label}</span>}
+          </div>
+        );
+
+        const CarVisual = ({ colorClass, isVip, carName }) => {
+            const gradientId = `vipGradient-${useRef(Math.random().toString(36).substr(2, 9)).current}`;
+
+            const carShapes = {
+                'Sedan': "M 5,38 Q 0,38 0,33 L 0,25 C 10,15 20,15 30,20 L 70,20 C 80,15 90,15 100,25 L 100,33 Q 100,38 95,38 Z",
+                'SUV': "M 0,40 Q 0,35, 5,35 L 15,20 Q 20,15 25,15 L 75,15 Q 80,15 85,20 L 95,35 Q 100,35 100,40 Z",
+                'Sports Car': "M 0,38 L 10,25 C 20,15 30,15 40,20 L 80,20 Q 95,22 100,38 Z",
+                'Truck': "M 0,40 L 0,25 Q 5,20 10,20 L 60,20 L 60,10 L 95,10 Q 100,10 100,15 L 100,40 Z",
+                'Luxury': "M 0,38 Q 5,20 15,20 L 85,20 Q 95,20 100,38 Z"
+            };
+
+            const carPath = carShapes[carName] || carShapes['Sedan'];
+
+            return (
+                <div className="relative w-24 h-12 flex-shrink-0">
+                    {isVip && <Crown size={16} className="absolute -top-1 right-2 text-yellow-400 z-10 animate-pulse" />}
+                    <svg viewBox="0 0 100 50" className="w-full h-full drop-shadow-lg">
+                        {isVip && (
+                            <defs>
+                                <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style={{ stopColor: '#FBBF24' }} />
+                                    <stop offset="100%" style={{ stopColor: '#D97706' }} />
+                                </linearGradient>
+                            </defs>
+                        )}
+                        <circle cx="25" cy="40" r="8" fill="#1f2937" />
+                        <circle cx="75" cy="40" r="8" fill="#1f2937" />
+                        <circle cx="25" cy="40" r="4" fill="#4b5563" />
+                        <circle cx="75" cy="40" r="4" fill="#4b5563" />
+                        <path
+                            d={carPath}
+                            style={{ fill: isVip ? `url(#${gradientId})` : 'currentColor' }}
+                            className={!isVip ? colorClass : ''}
+                            stroke="#111827"
+                            strokeWidth="2"
+                        />
+                        <path
+                            d={carName === 'Sports Car' ? "M 35,21 L 45,13 L 65,13 L 75,21 Z" : "M 32,21 L 45,12 L 60,12 L 70,21 Z"}
+                            fill="#60a5fa"
+                            fillOpacity="0.4"
+                            stroke="#1f2937"
+                            strokeWidth="1.5"
+                        />
+                    </svg>
+                </div>
+            );
+        };
+
+        const CarInQueue = ({ car, onDiagnose, onStartRepair, hasDiagnostic, canStartRepair }) => (
+          <div className={`bg-gray-800/50 backdrop-blur-sm rounded-lg p-3 border-2 transition-all car-arrival-animation ${car.isVip ? 'border-yellow-500' : 'border-gray-700 hover:border-orange-500'} ${car.patience < 25 ? 'impatient-shake' : ''}`}>
+            <div className="flex items-center justify-between mb-2">
+              <CarVisual colorClass={car.colorClass} isVip={car.isVip} carName={car.name} />
+              <span className="text-sm font-bold text-right">{car.name}</span>
+            </div>
+            <div className="mb-2">
+              <div className="flex justify-between text-xs mb-1 text-gray-300">
+                <span>Patience</span>
+                <span>{Math.round(car.patience)}%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-900 rounded"><div className={`h-full rounded transition-all ${car.patience > 50 ? 'bg-green-500' : car.patience > 25 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${car.patience}%` }}></div></div>
+            </div>
+            {!car.diagnosed ? (
+              <button onClick={() => onDiagnose(car.id)} className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-bold transition-colors text-sm">🔍 Diagnose {hasDiagnostic ? '(Free)' : '($10)'}</button>
+            ) : (
+              <div>
+                <div className="text-xs mb-2 p-2 bg-gray-900/50 rounded">
+                  <div className="flex items-center gap-2 font-semibold">{car.problem.icon}<span>{car.problem.name}</span></div>
+                  <div className="text-green-400 font-bold">Pay: ${car.pay}</div>
+                </div>
+                <button onClick={() => onStartRepair(car.id)} disabled={!canStartRepair} className={`w-full py-2 rounded font-bold transition-colors text-sm ${!canStartRepair ? 'bg-slate-600 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700 pulse-glow-animation'}`}>🔧 Start Repair</button>
+              </div>
+            )}
+          </div>
+        );
+
+        const RepairBay = ({ bay, onBoost }) => (
+          <div onClick={onBoost} className={`bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-lg p-6 border-2 border-gray-700 min-h-48 flex flex-col justify-between shadow-lg transition-all ${bay ? 'cursor-pointer hover:border-orange-500' : ''}`}>
+            {bay ? (
+              <div>
+                <div className="flex items-center justify-between mb-4"><CarVisual colorClass={bay.colorClass} isVip={bay.isVip} carName={bay.name} /><span className="text-lg font-bold">{bay.name}</span></div>
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 mb-2"><div className="text-2xl">{bay.problem.icon}</div><span className="font-bold">{bay.problem.name}</span></div>
+                  <div className="w-full h-6 bg-gray-900 rounded overflow-hidden border border-gray-600"><div className="h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-100 flex items-center justify-center text-xs font-bold" style={{ width: `${bay.progress}%` }}>{bay.progress >= 10 && `${Math.round(bay.progress)}%`}</div></div>
+                </div>
+                <div className="text-green-400 font-bold mt-2">Payout: ${bay.pay}</div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500"><div className="text-center"><Wrench className="w-12 h-12 mx-auto mb-2 opacity-30" /><div>Bay Empty</div></div></div>
+            )}
+          </div>
+        );
+
+        const UpgradeCard = ({ upgrade, onBuy, money, purchased }) => (
+            <div className={`bg-gray-800/60 backdrop-blur-sm p-6 rounded-lg border-2 transition-all ${purchased ? 'border-green-500 opacity-60' : 'border-gray-700 hover:border-purple-500'}`}>
+              <div className="flex items-start justify-between mb-2"><h3 className="text-xl font-bold">{upgrade.name}</h3><div className="text-2xl">{upgrade.icon}</div></div>
+              <p className="text-sm text-gray-300 mb-4 h-10">{upgrade.effect}</p>
+              <button onClick={() => onBuy(upgrade)} disabled={money < upgrade.cost || purchased} className="w-full bg-green-600 hover:bg-green-700 disabled:bg-slate-600 disabled:cursor-not-allowed py-2 rounded font-bold transition-colors">{purchased ? '✓ OWNED' : `Buy - $${upgrade.cost}`}</button>
+            </div>
+        );
+
+        const EventTicker = ({ event }) => {
+            if (!event) return null;
+            return (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-2 text-center shadow-lg event-ticker z-20">
+                    <p className="font-bold text-lg">{event.name}</p>
+                    <p className="text-sm">{event.effect}</p>
+                </div>
+            );
+        };
+
+        // --- MAIN GAME COMPONENT ---
+        function App() {
+          const [money, setMoney] = useState(100);
+          const [reputation, setReputation] = useState(0);
+          const [level, setLevel] = useState(1);
+          const [queue, setQueue] = useState([]);
+          const [activeBays, setActiveBays] = useState(Array(2).fill(null));
+          const [maxBays, setMaxBays] = useState(2);
+          const [speedMultiplier, setSpeedMultiplier] = useState(1);
+          const [autoRepairSpeed, setAutoRepairSpeed] = useState(0);
+          const [hasDiagnostic, setHasDiagnostic] = useState(false);
+          const [purchases, setPurchases] = useState(new Set());
+          const [combo, setCombo] = useState(0);
+          const [showUpgrades, setShowUpgrades] = useState(false);
+          const [particles, setParticles] = useState([]);
+          const [activeEvent, setActiveEvent] = useState(null);
+          const [isToneLoaded, setIsToneLoaded] = useState(true); // Assume loaded in HTML
+          const playSound = useSounds(isToneLoaded);
+
+          const addParticle = useCallback((text, x, y, className = 'text-green-400') => {
+            const id = Date.now() + Math.random();
+            setParticles(p => [...p, { id, text, x, y, className }]);
+            setTimeout(() => setParticles(p => p.filter(particle => particle.id !== id)), 2000);
+          }, []);
+          
+          const generateCar = useCallback((isVip = false) => {
+            const carPool = isVip ? [CAR_TYPES[CAR_TYPES.length - 1]] : CAR_TYPES.slice(0, Math.min(2 + Math.floor(level / 2), CAR_TYPES.length));
+            const car = carPool[Math.floor(Math.random() * carPool.length)];
+            const problemPool = isVip ? PROBLEMS.slice(Math.floor(PROBLEMS.length / 2)) : PROBLEMS.slice(0, Math.min(2 + Math.floor(level / 3), PROBLEMS.length));
+            const problem = problemPool[Math.floor(Math.random() * problemPool.length)];
+            const payMultiplier = (activeEvent && activeEvent.id === 'rush_hour') ? activeEvent.payMultiplier : 1;
+            
+            return {
+              id: Date.now() + Math.random(), ...car, problem,
+              pay: Math.floor(car.pay * payMultiplier * (isVip ? 3 : 1)),
+              totalTime: (problem.time / car.speed) * (isVip ? 0.8 : 1), 
+              progress: 0, diagnosed: false, 
+              patience: isVip ? 50 : 100,
+              isVip,
+            };
+          }, [level, activeEvent]);
+
+          const completeCar = useCallback((car, bayIndex) => {
+            const bonus = Math.floor(car.pay * (1 + combo * 0.1));
+            const repGain = car.problem.difficulty * 2 * (car.isVip ? 2 : 1);
+            setMoney(m => m + bonus);
+            setReputation(r => r + repGain);
+            setCombo(c => c + 1);
+            addParticle(`+$${bonus}`, 400 + bayIndex * 300, 200);
+            playSound('cash');
+            setTimeout(() => playSound('complete'), 100);
+            
+            if (reputation + repGain >= level * 100) {
+              setLevel(l => l + 1);
+              setReputation(0);
+              addParticle('⭐ LEVEL UP! ⭐', window.innerWidth / 2, 100, 'text-yellow-400 text-3xl');
+              playSound('upgrade');
+            }
+          }, [combo, reputation, level, addParticle, playSound]);
+
+          useEffect(() => {
+            const spawnRate = (activeEvent && activeEvent.spawnRate) ? activeEvent.spawnRate : 0;
+            const interval = setInterval(() => {
+              if (Math.random() < 0.15 + level * 0.01 + spawnRate && queue.length < 5) {
+                setQueue(q => [generateCar(), ...q]);
+              }
+            }, 2500);
+            return () => clearInterval(interval);
+          }, [level, queue.length, generateCar, activeEvent]);
+
+          useEffect(() => {
+            const interval = setInterval(() => {
+              const eventSpeedMultiplier = (activeEvent && activeEvent.speedMultiplier) ? activeEvent.speedMultiplier : 0;
+              setActiveBays(bays => bays.map((bay, index) => {
+                if (!bay) return null;
+                let speedBoost = speedMultiplier + autoRepairSpeed + eventSpeedMultiplier;
+                if(bay.manualBoost && Date.now() < bay.manualBoost) speedBoost += 2;
+                const newProgress = bay.progress + (100 / (bay.totalTime * 10)) * speedBoost;
+                if (newProgress >= 100) {
+                  completeCar(bay, index);
+                  return null;
+                }
+                return { ...bay, progress: newProgress };
+              }));
+
+              setQueue(q => q.map(car => ({ ...car, patience: Math.max(0, car.patience - 0.5) })).filter(car => {
+                if (car.patience <= 0) {
+                  setReputation(r => Math.max(0, r - 10)); setCombo(0);
+                  addParticle('😡 Left!', Math.random() * 300, 150, 'text-red-500');
+                  playSound('error');
+                  return false;
+                }
+                return true;
+              }));
+            }, 100);
+            return () => clearInterval(interval);
+          }, [speedMultiplier, autoRepairSpeed, completeCar, addParticle, playSound, activeEvent]);
+
+          useEffect(() => {
+            const eventInterval = setInterval(() => {
+                if(activeEvent) return;
+                const newEvent = SPECIAL_EVENTS[Math.floor(Math.random() * SPECIAL_EVENTS.length)];
+                setActiveEvent(newEvent);
+                if(newEvent.isVIP) setQueue(q => [generateCar(true), ...q]);
+                setTimeout(() => setActiveEvent(null), newEvent.duration * 1000);
+            }, 45 * 1000);
+            return () => clearInterval(eventInterval);
+          }, [activeEvent, generateCar]);
+
+          const diagnoseCar = (carId) => {
+            playSound('click');
+            const car = queue.find(c => c.id === carId);
+            if (!car || car.diagnosed || (money < 10 && !hasDiagnostic)) { playSound('error'); return; }
+            setMoney(m => m - (hasDiagnostic ? 0 : 10));
+            setQueue(q => q.map(c => c.id === carId ? { ...c, diagnosed: true } : c));
+            addParticle('🔍', Math.random() * 300, 150, 'text-blue-400');
+          };
+
+          const startRepair = (carId) => {
+            playSound('click');
+            const car = queue.find(c => c.id === carId);
+            const emptyBayIndex = activeBays.findIndex(bay => !bay);
+            if (!car || !car.diagnosed || emptyBayIndex === -1) { playSound('error'); return; }
+            const newBays = [...activeBays]; newBays[emptyBayIndex] = car; setActiveBays(newBays);
+            setQueue(q => q.filter(c => c.id !== carId));
+          };
+
+          const buyUpgrade = (upgrade) => {
+            if (money < upgrade.cost || purchases.has(upgrade.id)) { playSound('error'); return; }
+            playSound('upgrade');
+            setMoney(m => m - upgrade.cost); setPurchases(p => new Set(p).add(upgrade.id));
+            if (upgrade.speedBoost) setSpeedMultiplier(s => s + upgrade.speedBoost);
+            if (upgrade.slots) { setMaxBays(b => b + upgrade.slots); setActiveBays(bays => [...bays, null]); }
+            if (upgrade.diagBoost) setHasDiagnostic(true);
+            if (upgrade.autoSpeed) setAutoRepairSpeed(s => s + upgrade.autoSpeed);
+            addParticle('⚡ UPGRADE!', window.innerWidth / 2, window.innerHeight / 2, 'text-purple-400 text-2xl');
+          };
+
+          const boostRepair = (bayIndex) => {
+            const bay = activeBays[bayIndex];
+            if (!bay || (bay.manualBoost && Date.now() < bay.manualBoost)) return;
+            playSound('click');
+            addParticle('🔧', 450 + bayIndex * 400, 300, 'text-xl text-orange-400');
+            setActiveBays(bays => bays.map((b, i) => i === bayIndex ? { ...b, progress: b.progress + 2, manualBoost: Date.now() + 2000 } : b));
+          };
+          
+          const currentRep = reputation % (level * 100);
+          const nextLevelRep = level * 100;
+
+          return (
+            <div className="w-full h-screen text-white overflow-hidden relative shader-background">
+              <EventTicker event={activeEvent} />
+              {particles.map(p => (<div key={p.id} className={`absolute font-black text-2xl pointer-events-none z-50 particle-animation ${p.className}`} style={{ left: p.x, top: p.y }}>{p.text}</div>))}
+              <header className="bg-black/20 backdrop-blur-sm p-3 border-b border-gray-700">
+                <div className="flex justify-between items-center max-w-7xl mx-auto">
+                  <div className="flex items-center gap-3"><Wrench className="w-8 h-8 text-orange-500" /><h1 className="text-2xl font-black tracking-tighter">TURBO GARAGE</h1></div>
+                  <div className="flex gap-4 items-center">
+                    <Stat icon={<DollarSign size={20} />} colorClass="text-green-400"><AnimatedNumber value={money} /></Stat>
+                    <Stat icon={<Star size={20} />} value={level} label="/ REP" colorClass="text-yellow-400" />
+                    <div className="w-32"><div className="w-full h-2 bg-gray-900 rounded"><div className="h-full bg-purple-500 rounded transition-all" style={{ width: `${(currentRep/nextLevelRep)*100}%`}}></div></div></div>
+                    <Stat icon={<Zap size={20} />} value={`x${combo}`} label="COMBO" colorClass="text-orange-400" />
+                  </div>
+                </div>
+              </header>
+              <main className="flex h-[calc(100vh-65px)]">
+                <aside className="w-80 bg-black/10 p-4 border-r border-gray-700 flex flex-col">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2 flex-shrink-0"><Clock className="w-5 h-5" />Waiting Cars ({queue.length}/5)</h2>
+                  <div className="space-y-3 overflow-y-auto h-full pr-2">{queue.map(car => (<CarInQueue key={car.id} car={car} onDiagnose={diagnoseCar} onStartRepair={startRepair} hasDiagnostic={hasDiagnostic} canStartRepair={activeBays.some(b => !b)} />))}</div>
+                </aside>
+                <section className="flex-1 p-6 overflow-y-auto">
+                  <div className="mb-6 flex justify-between items-center">
+                    <h2 className="text-3xl font-bold tracking-tight">{showUpgrades ? "Garage Upgrades" : `Repair Bays (${activeBays.filter(b => b).length}/${maxBays})`}</h2>
+                    <button onClick={() => { setShowUpgrades(!showUpgrades); playSound('click'); }} className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg hover:shadow-purple-500/50"><Settings className="w-5 h-5" />{showUpgrades ? 'Back to Bays' : 'Upgrades'}</button>
+                  </div>
+                  {showUpgrades ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{UPGRADES.map(upgrade => <UpgradeCard key={upgrade.id} upgrade={upgrade} onBuy={buyUpgrade} money={money} purchased={purchases.has(upgrade.id)} />)}</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{activeBays.map((bay, i) => <RepairBay key={i} bay={bay} onBoost={() => boostRepair(i)} />)}</div>
+                  )}
+                  <div className="mt-8 bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700">
+                    <h3 className="font-bold mb-2 flex items-center gap-2 text-orange-400"><TrendingUp className="w-4 h-4" /> Pro Tips</h3>
+                    <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside">
+                      <li>Click active repairs to boost their progress! Every bit helps during a rush.</li>
+                      <li>Keep an eye out for random events. They can offer big rewards or new challenges.</li>
+                      <li>VIPs pay well but are impatient. Prioritize them when they arrive!</li>
+                    </ul>
+                  </div>
+                </section>
+              </main>
+            </div>
+          );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+      });
+    </script>
+</body>
+</html>
+
