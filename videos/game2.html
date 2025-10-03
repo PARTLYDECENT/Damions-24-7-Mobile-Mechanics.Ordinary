@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/Damions-24-7-Mobile-Mechanics.Ordinary/">
     <title>Backrooms Escape - Enhanced Realism</title>
     <style>
         * {
@@ -257,12 +258,12 @@
         const wallRough = textureLoader.load('https://cdn3.struffel.net/file/ambientCG/media/sphere/1024-JPG/Wallpaper010_Roughness.jpg', (tex) => {
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
         });
-        const floorTexture = textureLoader.load('/assets/textures/floor.png', (tex) => {
+        const floorTexture = textureLoader.load('assets/textures/floor.png', (tex) => {
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
         });
 
         const gltfLoader = new THREE.GLTFLoader();
-        gltfLoader.load('/assets/models/pistol.glb', (gltf) => {
+        gltfLoader.load('assets/models/pistol.glb', (gltf) => {
             gameState.pistol = gltf.scene;
             gameState.pistol.scale.set(0.1, 0.1, 0.1);
             gameState.pistol.position.set(0.3, -0.3, -0.5);
@@ -289,7 +290,7 @@
                     this.masterGain.connect(this.ctx.destination);
                     this.isInitialized = true;
                     console.log("Audio Engine Initialized.");
-                    this.loadAmbientSound('/assets/sounds/ambient1.mp3');
+                    this.loadAmbientSound('assets/sounds/ambient.wav');
                 } catch (e) { console.error("Web Audio API is not supported in this browser", e); }
             },
             loadAmbientSound(url) {
