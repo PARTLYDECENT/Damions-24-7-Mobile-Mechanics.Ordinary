@@ -785,7 +785,7 @@
             group.add(ceiling);
 
             // Populate walls with seeded randomness so chunk is repeatable
-            const step = 4; // spacing
+            const step = 12; // spacing
             gameState.flickeringLights = gameState.flickeringLights || [];
             // collectible list for this chunk
             group.userData.collectibles = [];
@@ -794,16 +794,19 @@
             for (let ox = -chunkSize/2; ox < chunkSize/2; ox += step) {
                 for (let oz = -chunkSize/2; oz < chunkSize/2; oz += step) {
                     const r = seededRandom(cx + Math.floor(ox), cz + Math.floor(oz));
-                    if (r > 0.55) {
-                        const w = Math.max(1, Math.floor(1 + seededRandom(cx+ox, cz+oz) * 3));
-                        const h = 2 + Math.floor(seededRandom(cx+oz, cz+ox) * 4);
-                        const wallGeo = new THREE.BoxGeometry(step, h, step);
+                    if (r > 0.8) {
+                        const w = 2 + seededRandom(cx + ox, cz + oz, 3) * (step - 4);
+                        const d = 2 + seededRandom(cx + oz, cz + ox, 4) * (step - 4);
+                        const h = 4 + Math.floor(seededRandom(cx + oz, cz + ox) * 8);
+                        const wallGeo = new THREE.BoxGeometry(w, h, d);
                         const wall = new THREE.Mesh(wallGeo, baseWallMat.clone());
-                        wall.position.set(ox + step * (seededRandom(cx,cz) - 0.5), h/2, oz + step * (seededRandom(cz,cx) - 0.5));
-                        // small random rotation and scale for variety
-                        wall.rotation.y = (seededRandom(ox, oz) - 0.5) * 0.4;
-                        const scaleMod = 0.7 + seededRandom(cx+oz, cz+ox) * 0.8;
-                        wall.scale.x *= scaleMod; wall.scale.z *= scaleMod;
+                        
+                        const xPos = ox + (seededRandom(cx + ox, cz + oz, 1) - 0.5) * (step - w);
+                        const zPos = oz + (seededRandom(cz + oz, cx + ox, 2) - 0.5) * (step - d);
+                        wall.position.set(xPos, h / 2, zPos);
+
+                        // small random rotation
+                        wall.rotation.y = (seededRandom(ox, oz) - 0.5) * Math.PI * 0.25;
                         wall.castShadow = true;
                         group.add(wall);
                     }

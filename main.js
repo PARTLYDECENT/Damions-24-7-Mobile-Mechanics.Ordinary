@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoPopup = document.getElementById('info-popup');
     const popupContent = document.querySelector('.popup-content');
     const closeBtn = document.querySelector('.close-btn');
+    const dontShowBtn = document.getElementById('dont-show-btn');
+    let popupsDisabled = localStorage.getItem('popupsDisabled') === 'true';
     const popupTitle = document.getElementById('popup-title');
     const popupText = document.getElementById('popup-text');
     const mechanicTips = [
@@ -271,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
         { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
         { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
-        { id: 'engine-bay-canvas', options: { color: [0.3, 0.5, 0.8], speed: 0.6 } },
     ];
 
     panelCanvases.forEach(panel => {
