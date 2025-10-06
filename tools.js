@@ -106,7 +106,7 @@ function init() {
     ground.receiveShadow = true;
     scene.add(ground);
     
-    loadModel('s2.glb');
+    loadModel('assets/models/zombie.glb');
     createSparkles();
     setupPostProcessing();
     createGUI();

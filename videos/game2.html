@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="/Damions-24-7-Mobile-Mechanics.Ordinary/">
     <title>Backrooms Escape - Enhanced Realism</title>
     <style>
         * {
@@ -193,6 +192,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
@@ -209,12 +209,12 @@
         const scene = new THREE.Scene();
         scene.fog = new THREE.Fog(0x0a0a0a, 1, 40);
         
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 400);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 400);
         camera.position.set(0, 1.6, 0);
         
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -241,28 +241,28 @@
             railgun: null, tentacle: null, pistol: null, isSwinging: false, swingStartTime: 0,
             isWhipping: false, whipStartTime: 0, flickeringLights: [],
             recoil: 0, lastRecoilTime: 0,
-            // chunked world data (infinite-ish)
-            chunks: {}, chunkSize: 60, chunkRadius: 2
+            chunks: {}, chunkSize: 60, chunkRadius: 2,
+            collected: 0
         };
-        gameState.collected = 0;
 
         const shaderModes = ['NORMAL', 'CREEPY', 'CRIMSON', 'VOID', 'GLITCH', 'RAGE', 'RAINBOW', 'WATER'];
 
-        const textureLoader = new THREE.TextureLoader();
-        const wallTexture = textureLoader.load('https://cdn3.struffel.net/file/ambientCG/media/sphere/1024-JPG/Wallpaper010_Color.jpg', (tex) => {
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        });
-        const wallNormal = textureLoader.load('https://cdn3.struffel.net/file/ambientCG/media/sphere/1024-JPG-GL/Wallpaper010_NormalGL.jpg', (tex) => {
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        });
-        const wallRough = textureLoader.load('https://cdn3.struffel.net/file/ambientCG/media/sphere/1024-JPG/Wallpaper010_Roughness.jpg', (tex) => {
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        });
-        const floorTexture = textureLoader.load('assets/textures/floor.png', (tex) => {
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        let zombieModel = null;
+        let zombieAnimations = [];
+        let floorTexture = null;
+
+        const loadingManager = new THREE.LoadingManager();
+        const gltfLoader = new THREE.GLTFLoader(loadingManager);
+        const textureLoader = new THREE.TextureLoader(loadingManager);
+
+        floorTexture = textureLoader.load('assets/textures/floor.png', (tex) => { tex.wrapS = tex.wrapT = THREE.RepeatWrapping; });
+
+        gltfLoader.load('assets/models/zombie.glb', (gltf) => {
+            zombieModel = gltf.scene;
+            zombieAnimations = gltf.animations;
+            console.log("Zombie model loaded.");
         });
 
-        const gltfLoader = new THREE.GLTFLoader();
         gltfLoader.load('assets/models/pistol.glb', (gltf) => {
             gameState.pistol = gltf.scene;
             gameState.pistol.scale.set(0.1, 0.1, 0.1);
@@ -270,11 +270,14 @@
             gameState.pistol.rotation.y = Math.PI;
             camera.add(gameState.pistol);
             gameState.pistol.visible = (gameState.activeWeapon === 'gun');
-            console.log("Pistol model loaded.");
-        }, undefined, (error) => {
-            console.error('An error happened while loading the pistol model', error);
+            console.log("Pistol model loaded for weapon switching.");
         });
 
+        loadingManager.onLoad = () => {
+            console.log("All assets loaded, starting game.");
+            initGame();
+            animate();
+        };
 
         const AudioEngine = {
             ctx: null, isInitialized: false, masterGain: null,
@@ -300,13 +303,6 @@
                 request.responseType = 'arraybuffer';
                 const self = this;
 
-                request.onprogress = function(event) {
-                    if (event.lengthComputable) {
-                        const percentComplete = (event.loaded / event.total) * 100;
-                        console.log(`Loading sound: ${url} - ${Math.round(percentComplete)}%`);
-                    }
-                };
-
                 request.onload = function() {
                     if (request.status === 200) {
                         self.ctx.decodeAudioData(request.response, function(buffer) {
@@ -327,10 +323,7 @@
                 
                 request.send();
             },
-            // speak supports two-call signatures:
-            // speak(text, options, onEndCallback) OR speak(text, onEndCallback)
             speak(text, options, onEndCallback) {
-                // allow speak(text, callback)
                 if (typeof options === 'function') { onEndCallback = options; options = {}; }
                 options = options || {};
                 if (!('speechSynthesis' in window) || window.speechSynthesis.speaking) {
@@ -340,12 +333,10 @@
                 utterance.pitch = (typeof options.pitch === 'number') ? options.pitch : 0.95;
                 utterance.rate = (typeof options.rate === 'number') ? options.rate : 0.95;
                 utterance.volume = (typeof options.volume === 'number') ? options.volume : 1.0;
-                // try to pick a matching voice if provided, otherwise choose a best-fit
                 const voices = window.speechSynthesis.getVoices();
                 if (options.voice) {
                     utterance.voice = voices.find(voice => voice.name === options.voice) || utterance.voice;
                 } else if (options.preferDeep) {
-                    // try to prefer deep male voices where available
                     utterance.voice = voices.find(v => /male|david|daniel|alex|mark|john/i.test(v.name)) || voices.find(v => /en/i.test(v.lang)) || utterance.voice;
                 } else if (options.preferSoft) {
                     utterance.voice = voices.find(v => /female|susan|katherine|zira|alloy/i.test(v.name)) || voices.find(v => /en/i.test(v.lang)) || utterance.voice;
@@ -354,15 +345,10 @@
                 try { window.speechSynthesis.speak(utterance); }
                 catch (e) { if(onEndCallback) onEndCallback(); }
             },
-
-            // Friendly speech helper (brighter voice)
             speakFriendly(text, onEndCallback) {
                 this.speak(text, { pitch: 1.05, rate: 1.0, volume: 1.0, preferSoft: true }, onEndCallback);
             },
-
-            // Enemy speech: lower pitch, a bit slower, and play an underlying growl to make it creepier
             speakEnemy(text, onEndCallback) {
-                // play a short growl under the speech
                 if (this.isInitialized) this._play(this.sounds.enemyGrowl);
                 this.speak(text, { pitch: 0.45, rate: 0.9, volume: 1.0, preferDeep: true }, onEndCallback);
             },
@@ -373,10 +359,8 @@
                 this.ambientSource = ctx.createBufferSource();
                 this.ambientSource.buffer = this.ambientBuffer;
                 this.ambientSource.loop = true;
-                
                 this.ambientGain = ctx.createGain();
                 this.ambientGain.gain.setValueAtTime(0.1, ctx.currentTime);
-
                 this.ambientSource.connect(this.ambientGain);
                 this.ambientGain.connect(this.masterGain);
                 this.ambientSource.start(0);
@@ -396,378 +380,34 @@
                 walk: (ctx, dest) => { const n = ctx.createBufferSource(), bs = ctx.sampleRate * 0.1, b = ctx.createBuffer(1, bs, ctx.sampleRate); let d = b.getChannelData(0); for (let i = 0; i < bs; i++) d[i] = Math.random() * 2 - 1; n.buffer = b; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(300, ctx.currentTime); const g = ctx.createGain(); g.gain.setValueAtTime(0.2, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1); n.connect(f); f.connect(g); g.connect(dest); n.start(ctx.currentTime); n.stop(ctx.currentTime + 0.1); },
                 reload: (ctx, dest) => { const c = (f, d) => { setTimeout(() => { if (!ctx || ctx.state === 'closed') return; const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(dest); o.type = 'square'; o.frequency.setValueAtTime(f, ctx.currentTime); g.gain.setValueAtTime(0.1, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.05); }, d); }; c(1500, 0); c(1200, 150); },
                 entityHit: (ctx, dest) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(dest); o.type = 'sawtooth'; o.frequency.setValueAtTime(200, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.2); g.gain.setValueAtTime(0.3, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2); },
-                railgun: (ctx, destination) => {
-                    const osc = ctx.createOscillator();
-                    const gainNode = ctx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(2000, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-                    osc.connect(gainNode);
-                    gainNode.connect(destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.5);
-                },
+                railgun: (ctx, destination) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(2000, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1); g.gain.setValueAtTime(0.4, ctx.currentTime); g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5); o.connect(g); g.connect(destination); o.start(); o.stop(ctx.currentTime + 0.5); },
                 nextLevel: (ctx, dest) => { [261.63, 329.63, 392.00, 523.25].forEach((f, i) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(dest); o.type = 'sine'; o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.1); g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.1); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.1); o.start(ctx.currentTime + i * 0.1); o.stop(ctx.currentTime + i * 0.1 + 0.15); }); },
                 pickup: (ctx, dest) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(dest); o.type = 'sine'; o.frequency.setValueAtTime(880, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.15); g.gain.setValueAtTime(0.15, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2); o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2); },
-                // low growl to underscore enemy speech
-                enemyGrowl: (ctx, dest) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    const lf = ctx.createOscillator();
-                    // low sub oscillator
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(60, ctx.currentTime);
-                    // slight wobble
-                    lf.type = 'sine'; lf.frequency.setValueAtTime(0.8, ctx.currentTime);
-                    const shaper = ctx.createWaveShaper();
-                    // mild distortion curve
-                    const curve = new Float32Array(256);
-                    for (let i = 0; i < 256; i++) { const x = i * 2 / 256 - 1; curve[i] = Math.tanh(x * 2); }
-                    shaper.curve = curve; shaper.oversample = '2x';
-                    lf.connect(gain.gain);
-                    osc.connect(shaper); shaper.connect(gain);
-                    gain.connect(dest);
-                    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0);
-                    osc.start(ctx.currentTime); lf.start(ctx.currentTime);
-                    osc.stop(ctx.currentTime + 1.0); lf.stop(ctx.currentTime + 1.0);
-                },
+                enemyGrowl: (ctx, dest) => { const o = ctx.createOscillator(), g = ctx.createGain(), lf = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(60, ctx.currentTime); lf.type = 'sine'; lf.frequency.setValueAtTime(0.8, ctx.currentTime); const shaper = ctx.createWaveShaper(), curve = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i * 2 / 256 - 1; curve[i] = Math.tanh(x * 2); } shaper.curve = curve; shaper.oversample = '2x'; lf.connect(g.gain); o.connect(shaper); shaper.connect(g); g.connect(dest); g.gain.setValueAtTime(0.001, ctx.currentTime); g.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0); o.start(ctx.currentTime); lf.start(ctx.currentTime); o.stop(ctx.currentTime + 1.0); lf.stop(ctx.currentTime + 1.0); },
             },
             play(soundName) { if (!this.isInitialized || !this.sounds[soundName]) return; this._play(this.sounds[soundName]); }
         };
         
-        const wallShaders = [
-            // Normal
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 }, wallTex: { value: wallTexture } },
-                vertexShader: `
-                    uniform float time;
-                    uniform float sanity;
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        vec3 pos = position;
-                        float breathing = sin(time * 0.5) * sin(pos.y * 0.5) * (1.0 - sanity) * 0.05;
-                        pos.x += breathing;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-                    }`,
-                fragmentShader: `
-                    uniform float time;
-                    uniform float sanity;
-                    uniform sampler2D wallTex;
-                    varying vec2 vUv;
-
-                    float random(vec2 st) {
-                        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-                    }
-
-                    float noise(vec2 st) {
-                        vec2 i = floor(st);
-                        vec2 f = fract(st);
-                        float a = random(i);
-                        float b = random(i + vec2(1.0, 0.0));
-                        float c = random(i + vec2(0.0, 1.0));
-                        float d = random(i + vec2(1.0, 1.0));
-                        vec2 u = f * f * (3.0 - 2.0 * f);
-                        return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-                    }
-
-                    void main() {
-                        vec3 color = texture2D(wallTex, vUv * vec2(1.0, 0.5)).rgb;
-                        color *= vec3(1.0, 0.95, 0.7); // Tint to yellow
-
-                        float sanityFactor = 1.0 - sanity;
-                        
-                        float mold = noise(vUv * 10.0 + time * 0.05);
-                        mold = smoothstep(0.6, 0.8, mold);
-                        color = mix(color, color * vec3(0.2, 0.3, 0.1), mold * sanityFactor * 0.5);
-
-                        color *= mix(1.0, 0.4, sanityFactor);
-                        
-                        color -= random(vUv * 200.0) * 0.05;
-
-                        gl_FragColor = vec4(color, 1.0);
-                    }`
-            },
-            // CREEPY
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 }, wallTex: { value: wallTexture } },
-                vertexShader: `
-                    uniform float time;
-                    uniform float sanity;
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        vec3 pos = position;
-                        float breathing = sin(time * 0.8) * sin(pos.y * 0.8 + pos.x * 0.2) * (1.0 - sanity) * 0.1;
-                        pos.z += breathing;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-                    }`,
-                fragmentShader: `
-                    uniform float time;
-                    uniform float sanity;
-                    uniform sampler2D wallTex;
-                    varying vec2 vUv;
-                    float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); }
-                    float noise(vec2 st) {
-                        vec2 i = floor(st); vec2 f = fract(st);
-                        float a = random(i); float b = random(i + vec2(1.0, 0.0));
-                        float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0));
-                        vec2 u = f * f * (3.0 - 2.0 * f);
-                        return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-                    }
-                    void main() {
-                        vec3 color = texture2D(wallTex, vUv * vec2(1.0, 0.5)).rgb;
-                        color *= vec3(0.8, 0.7, 0.4);
-
-                        float sanityFactor = 1.0 - sanity;
-                        
-                        float eyeNoise = noise(vUv * 5.0 + sin(time * 0.2));
-                        float eyes = smoothstep(0.9, 0.95, eyeNoise) * (1.0 - smoothstep(0.96, 1.0, eyeNoise));
-                        color = mix(color, vec3(1.0, 0.1, 0.1), eyes * sanityFactor);
-
-                        color *= mix(1.0, 0.2, sanityFactor);
-                        
-                        gl_FragColor = vec4(color, 1.0);
-                    }`
-            },
-            // Crimson
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; varying vec3 vPos; void main() { vUv = uv; vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; uniform float sanity; varying vec2 vUv; varying vec3 vPos; float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); } void main() { vec3 color = vec3(0.6, 0.1, 0.1); float pulse = sin(time * 2.0 + vPos.y * 0.5) * 0.5 + 0.5; color += vec3(0.4, 0.0, 0.0) * pulse; float grain = random(vUv * 100.0 + time) * 0.1; color += grain; color *= 0.8 + (1.0 - sanity) * 0.5; gl_FragColor = vec4(color, 1.0); }`
-            },
-            // Void
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; varying vec3 vPos; void main() { vUv = uv; vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; uniform float sanity; varying vec2 vUv; void main() { vec3 color = vec3(0.05, 0.05, 0.15); float stars = step(0.98, fract(sin(dot(vUv * 50.0, vec2(12.9898, 78.233))) * 43758.5453)); color += stars * vec3(0.5, 0.5, 1.0); float wave = sin(vUv.x * 5.0 + time) * 0.1; color.rb += wave; gl_FragColor = vec4(color, 1.0); }`
-            },
-            // Glitch
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; varying vec2 vUv; float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); } void main() { vec2 uv = vUv; if (random(vec2(time * 5.0, floor(vUv.y * 20.0))) > 0.95) { uv.x += (random(vec2(time * 10.0)) - 0.5) * 0.2; } vec3 color = vec3(0.2, 0.9, 0.2) * (0.5 + 0.5 * sin(uv.y * 30.0 + time * 3.0)); gl_FragColor = vec4(color, 1.0); }`
-            },
-            // RAGE
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; uniform float sanity; varying vec2 vUv; float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); } void main() { vec3 color = vec3(1.0, 0.0, 0.0); float line = abs(sin(vUv.y * 20.0 - time * 5.0)) * 0.8 + 0.2; color *= line; color.g += random(vUv + time) * 0.2; gl_FragColor = vec4(color, 1.0); }`
-            },
-            // Rainbow
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; varying vec2 vUv; void main() { vec3 color = 0.5 + 0.5 * cos(time + vUv.xyx + vec3(0, 2, 4)); gl_FragColor = vec4(color, 1.0); }`
-            },
-            // Water
-            {
-                uniforms: { time: { value: 0 }, sanity: { value: 1.0 } },
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float time; varying vec2 vUv; void main() { vec2 p = -1.0 + 2.0 * vUv; float len = length(p); vec2 uv = vUv + (p/len)*cos(len*12.0-time*4.0)*0.03; float a = atan(uv.y,uv.x); float r = length(uv); float sx = 0.2*sin(20.0*a+time*5.0); float sy = 0.3*sin(15.0*a+time*6.0); r += 0.1*sx*sy; vec3 color = 0.5 + 0.5 * cos(time + r*3.14*2.0*vec3(1.0, 0.5, 0.2) + vec3(0, 2, 4)); gl_FragColor = vec4(color, 1.0); }`
-            }
-        ];
-
-        // Next-level gorgeous procedural sky: volumetric-feel via layered 3D FBM + curl flow, scattering, twinkling stars and moving comets
-        const skyUniforms = {
-            time: { value: 0 },
-            baseTop: { value: new THREE.Color(0x0b1230) },
-            baseBottom: { value: new THREE.Color(0x00101a) },
-            nebulaA: { value: new THREE.Color(0xff5aa8) },
-            nebulaB: { value: new THREE.Color(0x5b3bff) },
-            accentA: { value: new THREE.Color(0x00ffe1) },
-            accentB: { value: new THREE.Color(0xffcc66) },
-            starColor: { value: new THREE.Color(0xffffff) },
-            starDensity: { value: 1.0 },
-            nebulaDetail: { value: 1.0 },
-            flowStrength: { value: 1.6 },
-            speed: { value: 0.3 },
-            cometSeed: { value: Math.random() * 1000.0 }
-        };
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.8, metalness: 0.2 });
 
         const skyMaterial = new THREE.ShaderMaterial({
             side: THREE.BackSide,
             depthWrite: false,
-            uniforms: skyUniforms,
+            uniforms: { time: { value: 0 }, baseTop: { value: new THREE.Color(0x0b1230) }, baseBottom: { value: new THREE.Color(0x00101a) }, nebulaA: { value: new THREE.Color(0xff5aa8) }, nebulaB: { value: new THREE.Color(0x5b3bff) }, accentA: { value: new THREE.Color(0x00ffe1) }, accentB: { value: new THREE.Color(0xffcc66) }, starColor: { value: new THREE.Color(0xffffff) }, starDensity: { value: 1.0 }, nebulaDetail: { value: 1.0 }, flowStrength: { value: 1.6 }, speed: { value: 0.3 }, cometSeed: { value: Math.random() * 1000.0 } },
             vertexShader: `varying vec3 vPos; void main(){ vPos = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-            fragmentShader: `
-                precision highp float;
-                varying vec3 vPos;
-                uniform float time; uniform float speed; uniform float flowStrength; uniform float nebulaDetail; uniform float cometSeed;
-                uniform vec3 baseTop; uniform vec3 baseBottom; uniform vec3 nebulaA; uniform vec3 nebulaB; uniform vec3 accentA; uniform vec3 accentB; uniform vec3 starColor; uniform float starDensity;
-
-                // hashed permutations
-                float hash1(float n) { return fract(sin(n) * 43758.5453123); }
-                float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453123); }
-                float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1,311.7, 74.7))) * 43758.5453123); }
-
-                // 3D value noise
-                float noise3(vec3 x) {
-                    vec3 p = floor(x);
-                    vec3 f = fract(x);
-                    f = f*f*(3.0-2.0*f);
-                    float n000 = hash3(p + vec3(0.0));
-                    float n100 = hash3(p + vec3(1.0,0.0,0.0));
-                    float n010 = hash3(p + vec3(0.0,1.0,0.0));
-                    float n110 = hash3(p + vec3(1.0,1.0,0.0));
-                    float n001 = hash3(p + vec3(0.0,0.0,1.0));
-                    float n101 = hash3(p + vec3(1.0,0.0,1.0));
-                    float n011 = hash3(p + vec3(0.0,1.0,1.0));
-                    float n111 = hash3(p + vec3(1.0,1.0,1.0));
-                    float nx00 = mix(n000,n100,f.x);
-                    float nx10 = mix(n010,n110,f.x);
-                    float nx01 = mix(n001,n101,f.x);
-                    float nx11 = mix(n011,n111,f.x);
-                    float nxy0 = mix(nx00,nx10,f.y);
-                    float nxy1 = mix(nx01,nx11,f.y);
-                    return mix(nxy0,nxy1,f.z);
-                }
-
-                float fbm3(vec3 p) {
-                    float amp = 0.5;
-                    float sum = 0.0;
-                    for(int i=0;i<6;i++){
-                        sum += amp * noise3(p);
-                        p *= 2.0;
-                        amp *= 0.5;
-                    }
-                    return sum;
-                }
-
-                // curl noise approximation for flow
-                vec3 curl(vec3 p) {
-                    float e = 0.01;
-                    float a = fbm3(p + vec3(0.0, 0.0, 0.0));
-                    float bx = fbm3(p + vec3(e, 0.0, 0.0));
-                    float by = fbm3(p + vec3(0.0, e, 0.0));
-                    float bz = fbm3(p + vec3(0.0, 0.0, e));
-                    float cx = fbm3(p + vec3(e, e, 0.0));
-                    float cy = fbm3(p + vec3(0.0, e, e));
-                    float cz = fbm3(p + vec3(e, 0.0, e));
-                    vec3 c = normalize(vec3(cy - bz, bz - cx, cx - by));
-                    return c;
-                }
-
-                // color ramp (soft blend between two nebula colors and accents)
-                vec3 nebulaPalette(float t) {
-                    vec3 a = nebulaA;
-                    vec3 b = nebulaB;
-                    return mix(a, b, smoothstep(0.0,1.0,t));
-                }
-
-                // comet / streak painter (returns intensity)
-                float comet(vec2 uv, vec2 center, vec2 dir, float length, float thickness) {
-                    vec2 rel = uv - center;
-                    float proj = dot(rel, dir);
-                    float side = dot(rel, vec2(-dir.y, dir.x));
-                    float t = smoothstep(0.0, 1.0, proj / length);
-                    float line = exp(-pow(side / (thickness * (1.0 - t*0.8) + 0.0001), 2.0) * 4.0);
-                    line *= (1.0 - smoothstep(0.0, 1.0, proj / length));
-                    return line * (0.6 + 0.4 * (1.0 - t));
-                }
-
-                void main(){
-                    vec3 dir = normalize(vPos);
-                    float up = smoothstep(-0.3, 1.0, dir.y);
-
-                    // base gradient
-                    vec3 base = mix(baseBottom, baseTop, up);
-
-                    // sample position in 3D - use spherical coordinates to avoid repetition
-                    vec2 sph = vec2(atan(dir.z, dir.x), asin(dir.y));
-                    vec3 p = vec3(dir * 2.0);
-
-                    // advect with curl flow and accumulate layered volumetric density
-                    vec3 flow = curl(p * 0.7 + time * 0.12) * flowStrength;
-                    float density = 0.0;
-                    float scl = 1.0;
-                    for(int i=0;i<5;i++){
-                        float v = fbm3((p + flow * float(i) * 0.18 + vec3(time * 0.06 * float(i))) * scl);
-                        v = smoothstep(0.18, 0.75, v);
-                        density += v * (0.55 / float(i + 1));
-                        scl *= 1.9;
-                    }
-                    density = clamp(density * nebulaDetail, 0.0, 1.0);
-
-                    // color the nebula and accents
-                    vec3 neb = nebulaPalette(density) * density * 1.6;
-                    vec3 accents = mix(accentA, accentB, fract(density * 1.3)) * density * 0.9;
-                    vec3 color = base + neb + accents;
-
-                    // soft scattering rim and horizon glow
-                    float rim = pow(max(0.0, 1.0 - abs(dir.y - 0.22) * 3.0), 2.2);
-                    color += vec3(0.12, 0.06, 0.18) * rim * 1.4;
-
-                    // starfield with twinkle - two scales
-                    vec2 uv = vec2(sph.x / 6.2831853 + 0.5, sph.y / 3.14159 + 0.5);
-                    float micro = pow(max(0.0, 1.0 - length(fract(uv * 8192.0) - 0.5) * 2.0), 40.0);
-                    float tw = 0.5 + 0.5 * sin(time * 6.0 + hash2(uv) * 50.0);
-                    float starsSmall = micro * tw * starDensity * 0.9;
-                    float cluster = pow(fbm3(vec3(uv * 80.0, time * 0.02)), 6.0) * 0.9 * starDensity;
-                    float stars = clamp(starsSmall + cluster, 0.0, 1.0);
-                    color += starColor * stars * 1.8;
-
-                    // moving comets (3) - deterministic using cometSeed
-                    float cometSum = 0.0;
-                    for(int i = 0; i < 3; i++){
-                        float ci = float(i);
-                        float seed = fract(sin(cometSeed + ci * 12.9898) * 43758.5453);
-                        float speedOff = 0.02 + seed * 0.06;
-                        // center moves across uv over time
-                        vec2 center = vec2(fract(seed * 7.0 + time * speedOff), fract(seed * 13.0 - time * speedOff * 0.4));
-                        // direction based on seed
-                        float a = seed * 6.28318;
-                        vec2 dir2 = normalize(vec2(cos(a*1.3), sin(a*0.9)));
-                        float len = 0.25 + seed * 0.6;
-                        cometSum += comet(uv, center, dir2, len, 0.002 + seed * 0.01) * (0.6 + seed * 0.8);
-                    }
-                    color += vec3(1.0,0.9,0.7) * cometSum * 1.5;
-
-                    // final tone mapping and gentle saturation lift
-                    color = pow(color, vec3(0.92));
-                    color = mix(color, vec3(dot(color, vec3(0.3,0.59,0.11))), 0.02);
-
-                    gl_FragColor = vec4(color, 1.0);
-                }
-            `
+            fragmentShader: `precision highp float; varying vec3 vPos; uniform float time; uniform float speed; uniform float flowStrength; uniform float nebulaDetail; uniform float cometSeed; uniform vec3 baseTop; uniform vec3 baseBottom; uniform vec3 nebulaA; uniform vec3 nebulaB; uniform vec3 accentA; uniform vec3 accentB; uniform vec3 starColor; uniform float starDensity; float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453123); } float fbm3(vec3 p) { float amp = 0.5; float sum = 0.0; for(int i=0;i<6;i++){ sum += amp * fract(sin(dot(p, vec3(127.1,311.7, 74.7) * float(i+1))) * 43758.5453); p *= 2.0; amp *= 0.5; } return sum; } vec3 curl(vec3 p) { float e = 0.01; float a = fbm3(p); float bx = fbm3(p + vec3(e, 0.0, 0.0)); float by = fbm3(p + vec3(0.0, e, 0.0)); float bz = fbm3(p + vec3(0.0, 0.0, e)); return normalize(vec3(by - bz, bz - bx, bx - by)); } vec3 nebulaPalette(float t) { return mix(nebulaA, nebulaB, smoothstep(0.0,1.0,t)); } float comet(vec2 uv, vec2 center, vec2 dir, float length, float thickness) { vec2 rel = uv - center; float proj = dot(rel, dir); float side = dot(rel, vec2(-dir.y, dir.x)); float t = smoothstep(0.0, 1.0, proj / length); float line = exp(-pow(side / (thickness * (1.0 - t*0.8) + 0.0001), 2.0) * 4.0); line *= (1.0 - smoothstep(0.0, 1.0, proj / length)); return line * (0.6 + 0.4 * (1.0 - t)); } void main(){ vec3 dir = normalize(vPos); float up = smoothstep(-0.3, 1.0, dir.y); vec3 base = mix(baseBottom, baseTop, up); vec2 sph = vec2(atan(dir.z, dir.x), asin(dir.y)); vec3 p = vec3(dir * 2.0); vec3 flow = curl(p * 0.7 + time * 0.12) * flowStrength; float density = 0.0; float scl = 1.0; for(int i=0;i<5;i++){ float v = fbm3((p + flow * float(i) * 0.18 + vec3(time * 0.06 * float(i))) * scl); v = smoothstep(0.18, 0.75, v); density += v * (0.55 / float(i + 1)); scl *= 1.9; } density = clamp(density * nebulaDetail, 0.0, 1.0); vec3 neb = nebulaPalette(density) * density * 1.6; vec3 accents = mix(accentA, accentB, fract(density * 1.3)) * density * 0.9; vec3 color = base + neb + accents; float rim = pow(max(0.0, 1.0 - abs(dir.y - 0.22) * 3.0), 2.2); color += vec3(0.12, 0.06, 0.18) * rim * 1.4; vec2 uv = vec2(sph.x / 6.2831853 + 0.5, sph.y / 3.14159 + 0.5); float micro = pow(max(0.0, 1.0 - length(fract(uv * 8192.0) - 0.5) * 2.0), 40.0); float tw = 0.5 + 0.5 * sin(time * 6.0 + hash2(uv) * 50.0); float starsSmall = micro * tw * starDensity * 0.9; float cluster = pow(fbm3(vec3(uv * 80.0, time * 0.02)), 6.0) * 0.9 * starDensity; float stars = clamp(starsSmall + cluster, 0.0, 1.0); color += starColor * stars * 1.8; float cometSum = 0.0; for(int i = 0; i < 3; i++){ float ci = float(i); float seed = fract(sin(cometSeed + ci * 12.9898) * 43758.5453); float speedOff = 0.02 + seed * 0.06; vec2 center = vec2(fract(seed * 7.0 + time * speedOff), fract(seed * 13.0 - time * speedOff * 0.4)); float a = seed * 6.28318; vec2 dir2 = normalize(vec2(cos(a*1.3), sin(a*0.9))); float len = 0.25 + seed * 0.6; cometSum += comet(uv, center, dir2, len, 0.002 + seed * 0.01) * (0.6 + seed * 0.8); } color += vec3(1.0,0.9,0.7) * cometSum * 1.5; color = pow(color, vec3(0.92)); color = mix(color, vec3(dot(color, vec3(0.3,0.59,0.11))), 0.02); gl_FragColor = vec4(color, 1.0); }`
         });
         const skyGeo = new THREE.SphereGeometry(300, 56, 56);
         const sky = new THREE.Mesh(skyGeo, skyMaterial);
         scene.add(sky);
         
-        // Small seeded pseudo-random function based on chunk coordinates so each chunk is stable
-        function seededRandom(cx, cz, salt = 1234567) {
-            // 32-bit integer mix
-            let n = (cx * 374761393) ^ (cz * 668265263) ^ salt;
-            n = (n ^ (n >>> 13)) >>> 0;
-            return (n % 10000) / 10000;
-        }
+        function seededRandom(cx, cz, salt = 1234567) { let n = (cx * 374761393) ^ (cz * 668265263) ^ salt; n = (n ^ (n >>> 13)) >>> 0; return (n % 10000) / 10000; }
 
-        // Create a single chunk at chunk coordinates (cx, cz)
         function createChunk(cx, cz) {
             const group = new THREE.Group();
             const chunkSize = gameState.chunkSize;
             group.position.set(cx * chunkSize, 0, cz * chunkSize);
 
-            // Choose wall material per current shader mode (clone so uniforms differ)
-            const useShader = true;
-            let baseWallMat;
-            if (useShader) {
-                const shaderIndex = Math.min(gameState.shaderMode, wallShaders.length - 1);
-                const mat = new THREE.ShaderMaterial(Object.assign({}, wallShaders[shaderIndex]));
-                if (wallShaders[shaderIndex].uniforms && wallShaders[shaderIndex].uniforms.wallTex) {
-                    mat.uniforms = THREE.UniformsUtils.clone(wallShaders[shaderIndex].uniforms);
-                    mat.uniforms.wallTex = { value: wallTexture };
-                }
-                baseWallMat = mat;
-            } else {
-                baseWallMat = new THREE.MeshStandardMaterial({ map: wallTexture, normalMap: wallNormal, roughnessMap: wallRough });
-            }
-
-            // Floor for this chunk
             const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture });
             floorMaterial.map.repeat.set(4, 4);
             const floorGeo = new THREE.PlaneGeometry(chunkSize, chunkSize);
@@ -777,19 +417,15 @@
             floor.position.y = 0;
             group.add(floor);
 
-            // Ceiling
             const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 0.95 });
             const ceiling = new THREE.Mesh(floorGeo, ceilingMaterial);
             ceiling.rotation.x = Math.PI / 2;
             ceiling.position.y = 4;
             group.add(ceiling);
 
-            // Populate walls with seeded randomness so chunk is repeatable
-            const step = 12; // spacing
+            const step = 12;
             gameState.flickeringLights = gameState.flickeringLights || [];
-            // collectible list for this chunk
             group.userData.collectibles = [];
-            // props list
             group.userData.props = [];
             for (let ox = -chunkSize/2; ox < chunkSize/2; ox += step) {
                 for (let oz = -chunkSize/2; oz < chunkSize/2; oz += step) {
@@ -799,18 +435,14 @@
                         const d = 2 + seededRandom(cx + oz, cz + ox, 4) * (step - 4);
                         const h = 4 + Math.floor(seededRandom(cx + oz, cz + ox) * 8);
                         const wallGeo = new THREE.BoxGeometry(w, h, d);
-                        const wall = new THREE.Mesh(wallGeo, baseWallMat.clone());
-                        
+                        const wall = new THREE.Mesh(wallGeo, wallMaterial);
                         const xPos = ox + (seededRandom(cx + ox, cz + oz, 1) - 0.5) * (step - w);
                         const zPos = oz + (seededRandom(cz + oz, cx + ox, 2) - 0.5) * (step - d);
                         wall.position.set(xPos, h / 2, zPos);
-
-                        // small random rotation
                         wall.rotation.y = (seededRandom(ox, oz) - 0.5) * Math.PI * 0.25;
                         wall.castShadow = true;
                         group.add(wall);
                     }
-                    // occasional light
                     if (seededRandom(cx+ox*7, cz+oz*11) > 0.98) {
                         const light = new THREE.PointLight(0xffee88, 0, 10, 2);
                         light.position.set(ox, 3.5, oz);
@@ -818,14 +450,11 @@
                         group.add(light);
                         gameState.flickeringLights.push(light);
                     }
-                    // occasional decorative entity
                     if (seededRandom(cx*3+ox, cz*5+oz) > 0.995) {
                         const ent = createEntity(group.position.x + ox + seededRandom(ox,oz)*2, group.position.z + oz + seededRandom(oz,ox)*2, Math.floor(seededRandom(ox,oz)*3));
                         gameState.entities.push(ent);
-                        group.add(ent); // parent to chunk so it's removed with the chunk
+                        group.add(ent);
                     }
-
-                    // occasional prop: pillar or crate
                     const pr = seededRandom(cx*7+ox, cz*13+oz);
                     if (pr > 0.97 && pr < 0.995) {
                         let prop;
@@ -840,8 +469,6 @@
                         group.add(prop);
                         group.userData.props.push(prop);
                     }
-
-                    // seeded collectible (glowing orb)
                     if (seededRandom(cx*11+ox, cz*17+oz) > 0.997) {
                         const orbGeo = new THREE.SphereGeometry(0.25, 8, 8);
                         const orbMat = new THREE.MeshStandardMaterial({ color: 0xffff88, emissive: 0xffff66, emissiveIntensity: 1.5, metalness: 0.2 });
@@ -854,14 +481,11 @@
                     }
                 }
             }
-
-            // Add a subtle landmark now and then
             if (seededRandom(cx, cz) > 0.995) {
                 const landmark = new THREE.Mesh(new THREE.ConeGeometry(2, 6, 8), new THREE.MeshStandardMaterial({ color: 0x8800ff, emissive: 0x440044 }));
                 landmark.position.set(0, 3, 0);
                 group.add(landmark);
             }
-
             group.userData = { cx, cz };
             return group;
         }
@@ -882,34 +506,24 @@
                     }
                 }
             }
-            // remove distant chunks and clean up any entities they may contain
             Object.keys(gameState.chunks).forEach(k => {
                 if (!needed[k]) {
                     const ch = gameState.chunks[k];
-                    // remove entities that were added as children of this chunk
                     ch.traverse(child => {
                         if (child.userData && child.userData.type !== undefined) {
-                            // remove from global entity list
                             gameState.entities = gameState.entities.filter(e => e !== child);
                         }
                         if (child.isPointLight) {
-                            // remove from flickering lights list
                             gameState.flickeringLights = (gameState.flickeringLights || []).filter(l => l !== child);
                         }
-                        // dispose geometry/material to free memory
                         if (child.geometry) { child.geometry.dispose(); }
                         if (child.material) { if (Array.isArray(child.material)) child.material.forEach(m=>m.dispose()); else child.material.dispose(); }
                     });
-                    // dispose props
                     if (ch.userData && ch.userData.props) {
                         ch.userData.props.forEach(p => { if (p.geometry) p.geometry.dispose(); if (p.material) p.material.dispose(); });
                     }
-                    // remove collectibles from global scene (if any)
                     if (ch.userData && ch.userData.collectibles) {
-                        ch.userData.collectibles.forEach(c => {
-                            // if still in scene, remove
-                            if (c.parent) c.parent.remove(c);
-                        });
+                        ch.userData.collectibles.forEach(c => { if (c.parent) c.parent.remove(c); });
                     }
                     scene.remove(ch);
                     delete gameState.chunks[k];
@@ -918,7 +532,6 @@
         }
 
         function regenerateWorld() {
-            // remove existing chunks
             Object.keys(gameState.chunks || {}).forEach(k => { scene.remove(gameState.chunks[k]); delete gameState.chunks[k]; });
             updateChunks(camera.position);
         }
@@ -928,92 +541,45 @@
                 { color: 0x330000, emissive: 0xff0000, speed: 0.02, health: 3, size: 0.8, isFriendly: false, dialogue: {normal: ["We are one.", "You cannot comprehend.", "The pattern must be completed.", "Your presence is a flaw."]} },
                 { color: 0x001a33, emissive: 0x0088ff, speed: 0.04, health: 2, size: 0.6, isFriendly: false, dialogue: {normal: ["It is listening.", "The frequency is changing.", "You disrupt the signal.", "Become one with the static."]} },
                 { color: 0x1a3300, emissive: 0x88ff00, speed: 0.015, health: 5, size: 1.2, isFriendly: false, dialogue: {normal: ["The flesh is weak.", "We will consume.", "Your form is imperfect.", "Join the growth."]} },
-                { 
-                    color: 0x003333, emissive: 0x00ffff, speed: 0.01, health: 100, size: 0.7, isFriendly: true,
-                    dialogue: {
-                        highSanity: ["You seem lucid. Good.", "The exit is real, but it moves.", "These walls... they listen.", "I saw a man with a face like a clock.", "The yellow is a lie.", "Stay away from the shadows, they bite.", "The architect of this place is a madman.", "I've seen others, but they all go mad."],
-                        lowSanity: ["...the colors... they scream...", "It sees you. It knows your name.", "You're becoming part of this place.", "The static is singing to me.", "My teeth are not my own.", "The walls are breathing, can't you feel it?", "My reflection has a different face.", "The whispers are getting louder."],
-                        normal: ["You aren't supposed to be here.", "The buzzing... it makes them angry.", "Follow the green light.", "Don't lose your mind. They feed on fear.", "Hurry. This place... it remembers.", "There's no escape, only deeper levels.", "The creatures here are drawn to movement.", "Don't trust the silence."],
-                        enemyResponses: {
-                            "We are one.": "I am not you.",
-                            "You cannot comprehend.": "I don't want to.",
-                            "The pattern must be completed.": "I will break it.",
-                            "Your presence is a flaw.": "I am not a flaw.",
-                            "It is listening.": "I know.",
-                            "The frequency is changing.": "I can feel it.",
-                            "You disrupt the signal.": "Good.",
-                            "Become one with the static.": "Never.",
-                            "The flesh is weak.": "But my will is strong.",
-                            "We will consume.": "Not me.",
-                            "Your form is imperfect.": "It's mine.",
-                            "Join the growth.": "I refuse."
-                        }
-                    }
-                }
+                { color: 0x003333, emissive: 0x00ffff, speed: 0.01, health: 100, size: 0.7, isFriendly: true, dialogue: { highSanity: ["You seem lucid. Good.", "The exit is real, but it moves.", "These walls... they listen.", "I saw a man with a face like a clock.", "The yellow is a lie.", "Stay away from the shadows, they bite.", "The architect of this place is a madman.", "I've seen others, but they all go mad."], lowSanity: ["...the colors... they scream...", "It sees you. It knows your name.", "You're becoming part of this place.", "The static is singing to me.", "My teeth are not my own.", "The walls are breathing, can't you feel it?", "My reflection has a different face.", "The whispers are getting louder."], normal: ["You aren't supposed to be here.", "The buzzing... it makes them angry.", "Follow the green light.", "Don't lose your mind. They feed on fear.", "Hurry. This place... it remembers.", "There's no escape, only deeper levels.", "The creatures here are drawn to movement.", "Don't trust the silence."], enemyResponses: { "We are one.": "I am not you.", "You cannot comprehend.": "I don't want to.", "The pattern must be completed.": "I will break it.", "Your presence is a flaw.": "I am not a flaw.", "It is listening.": "I know.", "The frequency is changing.": "I can feel it.", "You disrupt the signal.": "Good.", "Become one with the static.": "Never.", "The flesh is weak.": "But my will is strong.", "We will consume.": "Not me.", "Your form is imperfect.": "It's mine.", "Join the growth.": "I refuse." } } }
             ];
             const entityType = types[type];
-            const geometry = entityType.isFriendly ? new THREE.DodecahedronGeometry(entityType.size, 0) : new THREE.TorusKnotGeometry(entityType.size * 0.6, entityType.size * 0.2, 100, 16);
-            const material = new THREE.MeshStandardMaterial({ 
-                color: entityType.color, emissive: entityType.emissive,
-                emissiveIntensity: 2.0, flatShading: true, roughness: 0.8
-            });
-            const entity = new THREE.Mesh(geometry, material);
-            entity.position.set(x, 1.5, z);
+
+            let entity;
+            if (!entityType.isFriendly && zombieModel) {
+                entity = THREE.SkeletonUtils.clone(zombieModel);
+                entity.scale.set(0.8, 0.8, 0.8);
+
+                const mixer = new THREE.AnimationMixer(entity);
+                if (zombieAnimations && zombieAnimations.length) {
+                    const clip = THREE.AnimationClip.findByName(zombieAnimations, 'walk') || zombieAnimations[0];
+                    if(clip) mixer.clipAction(clip).play();
+                }
+                entity.userData.mixer = mixer;
+
+            } else {
+                const geometry = entityType.isFriendly ? new THREE.DodecahedronGeometry(entityType.size, 0) : new THREE.TorusKnotGeometry(entityType.size * 0.6, entityType.size * 0.2, 100, 16);
+                const material = new THREE.MeshStandardMaterial({ color: entityType.color, emissive: entityType.emissive, emissiveIntensity: 2.0, flatShading: true, roughness: 0.8 });
+                entity = new THREE.Mesh(geometry, material);
+            }
+
+            entity.position.set(x, 0, z);
             entity.castShadow = true;
             const light = new THREE.PointLight(entityType.emissive, 1.5, 15);
             entity.add(light);
-            entity.userData = {
-                type: type, health: entityType.health, speed: entityType.speed,
-                baseAngle: Math.random() * Math.PI * 2, radius: 15 + Math.random() * 10,
-                isFriendly: entityType.isFriendly, dialogue: entityType.dialogue,
-                dialogueIndex: 0, canSpeak: true, lastSpokeTime: 0,
-                voice: entityType.voice
-            };
+
+            Object.assign(entity.userData, { type: type, health: entityType.health, speed: entityType.speed, baseAngle: Math.random() * Math.PI * 2, radius: 15 + Math.random() * 10, isFriendly: entityType.isFriendly, dialogue: entityType.dialogue, dialogueIndex: 0, canSpeak: true, lastSpokeTime: 0, voice: entityType.voice });
+
             return entity;
         }
         
-        function createMorphoser() {
-            const particleCount = 2000;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const basePositions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const i3 = i * 3; const r = Math.random() * 2.5; const phi = Math.acos(2 * Math.random() - 1); const theta = 2 * Math.PI * Math.random();
-                basePositions[i3] = r * Math.sin(phi) * Math.cos(theta); basePositions[i3+1] = r * Math.sin(phi) * Math.sin(theta); basePositions[i3+2] = r * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({ color: 0xffaaff, size: 0.05, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8 });
-            const morphoser = new THREE.Points(geometry, material);
-            morphoser.userData = { basePositions, time: 0, noiseFactor: 2 };
-            const light = new THREE.PointLight(0xffaaff, 1.5, 20);
-            morphoser.add(light);
-            scene.add(morphoser);
-            return morphoser;
-        }
-
+        function createMorphoser() { const pC = 2000, g = new THREE.BufferGeometry(), pos = new Float32Array(pC * 3), bPos = new Float32Array(pC * 3); for (let i = 0; i < pC; i++) { const i3 = i * 3, r = Math.random() * 2.5, phi = Math.acos(2 * Math.random() - 1), theta = 2 * Math.PI * Math.random(); bPos[i3] = r * Math.sin(phi) * Math.cos(theta); bPos[i3+1] = r * Math.sin(phi) * Math.sin(theta); bPos[i3+2] = r * Math.cos(phi); } g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const m = new THREE.PointsMaterial({ color: 0xffaaff, size: 0.05, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8 }), morph = new THREE.Points(g, m); morph.userData = { basePositions: bPos, time: 0, noiseFactor: 2 }; const l = new THREE.PointLight(0xffaaff, 1.5, 20); morph.add(l); scene.add(morph); return morph; }
         function createSword() { const g = new THREE.Group(), bM = new THREE.MeshStandardMaterial({color: 0xcccccc, metalness: 0.9, roughness: 0.2}), hM = new THREE.MeshStandardMaterial({color: 0x332211, roughness: 0.8}); const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.02), bM); b.position.y = 0.75; const h = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), hM); const grd = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.05), hM); grd.position.y = 0.15; g.add(b, h, grd); g.visible = false; camera.add(g); return g; }
         function createTentacle() { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x8e44ad, roughness: 0.6, metalness: 0.2}), sG = new THREE.SphereGeometry(0.05, 8, 8); for (let i = 0; i < 15; i++) { const s = new THREE.Mesh(sG, m); s.position.y = -i * 0.1; g.add(s); } g.visible = false; camera.add(g); return g; }
         function createShotgun() { const g = new THREE.Group(), brlM = new THREE.MeshStandardMaterial({color: 0x444444, metalness: 0.8, roughness: 0.4}), stkM = new THREE.MeshStandardMaterial({color: 0x5a3a22, roughness: 0.7}); const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 16), brlM); brl.position.set(0, 0, -0.4); brl.rotation.x = Math.PI / 2; const stk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.5), stkM); stk.position.set(0, -0.05, 0.3); g.add(brl, stk); g.visible = false; camera.add(g); return g; }
         function createRailgun() { const g = new THREE.Group(), bdyM = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.95, roughness: 0.3}), railM = new THREE.MeshStandardMaterial({color: 0x00aaff, emissive: 0x00aaff, emissiveIntensity: 2}); const bdy = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 1.2), bdyM); const rG = new THREE.CylinderGeometry(0.01, 0.01, 1.0, 8); const r1 = new THREE.Mesh(rG, railM); r1.position.set(0.05, 0.03, -0.5); r1.rotation.x = Math.PI / 2; const r2 = new THREE.Mesh(rG, railM); r2.position.set(-0.05, 0.03, -0.5); r2.rotation.x = Math.PI / 2; g.add(bdy, r1, r2); g.visible = false; camera.add(g); return g; }
-
-        function createExitPortal(level) {
-            const geometry = new THREE.SphereGeometry(2, 32, 32);
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 2.5, transparent: true, opacity: 0.7 });
-            const portal = new THREE.Mesh(geometry, material);
-            portal.position.set(0, 2, 40 + level * 10);
-            const light = new THREE.PointLight(0x00ff00, 2, 25);
-            portal.add(light);
-            return portal;
-        }
-
-        function createProjectile(origin, direction, color = 0xffff00, lifetime = 100, velocity = 1.2) {
-            const geometry = new THREE.SphereGeometry(0.1, 8, 8);
-            const material = new THREE.MeshBasicMaterial({ color });
-            const projectile = new THREE.Mesh(geometry, material);
-            projectile.position.copy(origin);
-            projectile.userData = { velocity: direction.normalize().multiplyScalar(velocity), lifetime: lifetime };
-            return projectile;
-        }
+        function createExitPortal(level) { const g = new THREE.SphereGeometry(2, 32, 32), m = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 2.5, transparent: true, opacity: 0.7 }), p = new THREE.Mesh(g, m); p.position.set(0, 2, 40 + level * 10); const l = new THREE.PointLight(0x00ff00, 2, 25); p.add(l); return p; }
+        function createProjectile(origin, direction, color = 0xffff00, lifetime = 100, velocity = 1.2) { const g = new THREE.SphereGeometry(0.1, 8, 8), m = new THREE.MeshBasicMaterial({ color }), p = new THREE.Mesh(g, m); p.position.copy(origin); p.userData = { velocity: direction.normalize().multiplyScalar(velocity), lifetime: lifetime }; return p; }
 
         function setupLevel() {
             gameState.entities.forEach(e => scene.remove(e));
@@ -1033,544 +599,135 @@
             gameState.morphoser.position.set((Math.random() - 0.5) * 40, 2, (Math.random() - 0.5) * 40);
         }
 
-    // Initialize chunked scene
-    gameState.chunks = {};
-    updateChunks(camera.position);
-        setupLevel();
-        gameState.sword = createSword(); gameState.tentacle = createTentacle(); gameState.shotgun = createShotgun(); gameState.railgun = createRailgun();
-        gameState.exitPortal = createExitPortal(gameState.level);
-        scene.add(gameState.exitPortal);
-        
-        const ambientLight = new THREE.AmbientLight(0xffeecc, 0.2);
-        scene.add(ambientLight);
-        const mainLight = new THREE.PointLight(0xffeedd, 0.8, 35);
-        mainLight.position.set(0, 3, 0);
-        mainLight.castShadow = true;
-        camera.add(mainLight);
-        scene.add(camera);
-        
-        const events = [
-            { name: 'LIGHTS FLICKERING', duration: 5000, effect: () => { mainLight.intensity = 0.3 + Math.random() * 0.7; } },
-            { name: 'REALITY SHIFT', duration: 3000, effect: () => { scene.fog.color.setHex(Math.random() * 0xffffff); gameState.sanity -= 0.001; } },
-            { name: 'ENTITY SPAWN', duration: 1000, effect: () => { if(gameState.entities.filter(e => !e.isFriendly).length < 15) { const a = Math.random() * Math.PI * 2, r = 30; const nE = createEntity(camera.position.x + Math.sin(a) * r, camera.position.z + Math.cos(a) * r, Math.floor(Math.random() * 3)); gameState.entities.push(nE); scene.add(nE); } } }
-        ];
-        
-        function triggerEvent() {
-            if(!gameState.activeEvent && Math.random() < 0.3) {
-                gameState.activeEvent = events[Math.floor(Math.random() * events.length)];
-                gameState.eventTimer = gameState.activeEvent.duration;
-                document.getElementById('eventText').textContent = gameState.activeEvent.name;
-                document.getElementById('eventText').style.opacity = 1;
-            }
+        function initGame() {
+            gameState.chunks = {};
+            updateChunks(camera.position);
+            setupLevel();
+            gameState.sword = createSword(); gameState.tentacle = createTentacle(); gameState.shotgun = createShotgun(); gameState.railgun = createRailgun();
+            gameState.exitPortal = createExitPortal(gameState.level);
+            scene.add(gameState.exitPortal);
+            
+            const ambientLight = new THREE.AmbientLight(0xffeecc, 0.2);
+            scene.add(ambientLight);
+            const mainLight = new THREE.PointLight(0xffeedd, 0.8, 35);
+            mainLight.position.set(0, 3, 0);
+            mainLight.castShadow = true;
+            camera.add(mainLight);
+            scene.add(camera);
         }
         
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            gameState.keys[key] = true;
-            if (key === '1') switchWeapon('gun'); if (key === '2') switchWeapon('sword'); if (key === '3') switchWeapon('tentacle'); if (key === '4') switchWeapon('railgun'); if (key === '5') switchWeapon('shotgun');
-            if(key === 'r' && (gameState.activeWeapon === 'gun' || gameState.activeWeapon === 'shotgun') && !gameState.reloading) {
-                AudioEngine.play('reload'); gameState.reloading = true;
-                setTimeout(() => {
-                    if (gameState.activeWeapon === 'gun') gameState.ammo = gameState.maxAmmo;
-                    if (gameState.activeWeapon === 'shotgun') gameState.ammo = 8;
-                    gameState.reloading = false;
-                }, 1500);
-            }
-            if(key === 'tab') {
-                e.preventDefault();
-                gameState.shaderMode = (gameState.shaderMode + 1) % shaderModes.length;
-                document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode];
-                // regenerate chunked world so new shader mode propagates
-                regenerateWorld();
-            }
-        });
+        const events = [ { name: 'LIGHTS FLICKERING', duration: 5000, effect: () => { mainLight.intensity = 0.3 + Math.random() * 0.7; } }, { name: 'REALITY SHIFT', duration: 3000, effect: () => { scene.fog.color.setHex(Math.random() * 0xffffff); gameState.sanity -= 0.001; } }, { name: 'ENTITY SPAWN', duration: 1000, effect: () => { if(gameState.entities.filter(e => !e.isFriendly).length < 15) { const a = Math.random() * Math.PI * 2, r = 30; const nE = createEntity(camera.position.x + Math.sin(a) * r, camera.position.z + Math.cos(a) * r, Math.floor(Math.random() * 3)); gameState.entities.push(nE); scene.add(nE); } } } ];
         
+        function triggerEvent() { if(!gameState.activeEvent && Math.random() < 0.3) { gameState.activeEvent = events[Math.floor(Math.random() * events.length)]; gameState.eventTimer = gameState.activeEvent.duration; document.getElementById('eventText').textContent = gameState.activeEvent.name; document.getElementById('eventText').style.opacity = 1; } }
+        
+        window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); gameState.keys[key] = true; if (key === '1') switchWeapon('gun'); if (key === '2') switchWeapon('sword'); if (key === '3') switchWeapon('tentacle'); if (key === '4') switchWeapon('railgun'); if (key === '5') switchWeapon('shotgun'); if(key === 'r' && (gameState.activeWeapon === 'gun' || gameState.activeWeapon === 'shotgun') && !gameState.reloading) { AudioEngine.play('reload'); gameState.reloading = true; setTimeout(() => { if (gameState.activeWeapon === 'gun') gameState.ammo = gameState.maxAmmo; if (gameState.activeWeapon === 'shotgun') gameState.ammo = 8; gameState.reloading = false; }, 1500); } if(key === 'tab') { e.preventDefault(); gameState.shaderMode = (gameState.shaderMode + 1) % shaderModes.length; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode]; regenerateWorld(); } });
         window.addEventListener('keyup', (e) => { gameState.keys[e.key.toLowerCase()] = false; });
         canvas.addEventListener('click', () => { if (!AudioEngine.isInitialized) AudioEngine.init(); if(!gameState.isLocked) canvas.requestPointerLock(); else attack(); });
         document.addEventListener('pointerlockchange', () => { gameState.isLocked = document.pointerLockElement === canvas; document.body.style.cursor = gameState.isLocked ? 'none' : 'default'; });
         canvas.addEventListener('mousemove', (e) => { if(gameState.isLocked) { gameState.rotation.y -= e.movementX * 0.002; gameState.rotation.x -= e.movementY * 0.002; gameState.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, gameState.rotation.x)); } });
 
-        function switchWeapon(weapon) {
-            gameState.activeWeapon = weapon;
-            if (gameState.pistol) gameState.pistol.visible = (weapon === 'gun');
-            gameState.sword.visible = (weapon === 'sword');
-            gameState.shotgun.visible = (weapon === 'shotgun');
-            gameState.railgun.visible = (weapon === 'railgun');
-            gameState.tentacle.visible = (weapon === 'tentacle');
-            const isGun = (weapon === 'gun' || weapon === 'shotgun' || weapon === 'railgun');
-            document.getElementById('ammoDisplay').style.display = isGun ? 'block' : 'none';
-            document.getElementById('ammoBar').style.display = isGun ? 'block' : 'none';
-        }
-
-        function attack() {
-            if (gameState.activeWeapon === 'gun') shoot();
-            else if (gameState.activeWeapon === 'sword') swingSword();
-            else if (gameState.activeWeapon === 'shotgun') shootShotgun();
-            else if (gameState.activeWeapon === 'railgun') shootRailgun();
-            else if (gameState.activeWeapon === 'tentacle') whipTentacle();
-        }
+        function switchWeapon(weapon) { gameState.activeWeapon = weapon; if (gameState.pistol) gameState.pistol.visible = (weapon === 'gun'); gameState.sword.visible = (weapon === 'sword'); gameState.shotgun.visible = (weapon === 'shotgun'); gameState.railgun.visible = (weapon === 'railgun'); gameState.tentacle.visible = (weapon === 'tentacle'); const isGun = (weapon === 'gun' || weapon === 'shotgun' || weapon === 'railgun'); document.getElementById('ammoDisplay').style.display = isGun ? 'block' : 'none'; document.getElementById('ammoBar').style.display = isGun ? 'block' : 'none'; }
+        function attack() { if (gameState.activeWeapon === 'gun') shoot(); else if (gameState.activeWeapon === 'sword') swingSword(); else if (gameState.activeWeapon === 'shotgun') shootShotgun(); else if (gameState.activeWeapon === 'railgun') shootRailgun(); else if (gameState.activeWeapon === 'tentacle') whipTentacle(); }
+        function shoot() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 200) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; if (gameState.pistol) { gameState.pistol.rotation.x = -0.2; gameState.pistol.position.z = -0.4; } const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const p = createProjectile(camera.position.clone(), d); gameState.projectiles.push(p); scene.add(p); } }
+        function shootShotgun() { const now = performance.now(); if(gameState.ammo >= 2 && !gameState.reloading && now - gameState.lastShot > 1000) { AudioEngine.play('shoot'); gameState.ammo -= 2; gameState.lastShot = now; for (let i = 0; i < 8; i++) { const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); d.x += (Math.random() - 0.5) * 0.2; d.y += (Math.random() - 0.5) * 0.2; const p = createProjectile(camera.position.clone(), d, 0xff8800); gameState.projectiles.push(p); scene.add(p); } } }
+        function shootRailgun() { const now = performance.now(); if (!gameState.reloading && now - gameState.lastShot > 2000) { AudioEngine.play('railgun'); gameState.lastShot = now; const r = new THREE.Raycaster(), d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); r.set(camera.position, d); const intersects = r.intersectObjects(gameState.entities); const bM = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }), bG = new THREE.CylinderGeometry(0.05, 0.05, 100, 8), beam = new THREE.Mesh(bG, bM); beam.position.copy(camera.position).add(d.multiplyScalar(50)); beam.quaternion.copy(camera.quaternion); beam.rotation.x += Math.PI / 2; scene.add(beam); setTimeout(() => scene.remove(beam), 100); if (intersects.length > 0) { const hit = intersects[0].object; if (hit && hit.userData && !hit.userData.isFriendly) { hit.userData.health -= 10; AudioEngine.play('entityHit'); if (hit.userData.health <= 0) { scene.remove(hit); gameState.entities = gameState.entities.filter(e => e !== hit); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } } }
+        function swingSword() { if (gameState.isSwinging) return; gameState.isSwinging = true; gameState.swingStartTime = performance.now(); AudioEngine.play('swordSwing'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 2.5) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.8) { e.userData.health -= 3; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isSwinging = false; }, 500); }
+        function whipTentacle() { if (gameState.isWhipping) return; gameState.isWhipping = true; gameState.whipStartTime = performance.now(); AudioEngine.play('tentacleWhip'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 4) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.7) { e.userData.health -= 2; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isWhipping = false; }, 700); }
         
-        function shoot() {
-            const now = performance.now();
-            if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 200) {
-                AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now;
-                if (gameState.pistol) {
-                    gameState.pistol.rotation.x = -0.2;
-                    gameState.pistol.position.z = -0.4;
-                }
-                const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                const projectile = createProjectile(camera.position.clone(), direction);
-                gameState.projectiles.push(projectile); scene.add(projectile);
-            }
-        }
-
-        function shootShotgun() {
-            const now = performance.now();
-            if(gameState.ammo >= 2 && !gameState.reloading && now - gameState.lastShot > 1000) {
-                AudioEngine.play('shoot'); gameState.ammo -= 2; gameState.lastShot = now;
-                for (let i = 0; i < 8; i++) {
-                    const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                    direction.x += (Math.random() - 0.5) * 0.2; direction.y += (Math.random() - 0.5) * 0.2;
-                    const projectile = createProjectile(camera.position.clone(), direction, 0xff8800);
-                    gameState.projectiles.push(projectile); scene.add(projectile);
-                }
-            }
-        }
-
-        function shootRailgun() {
-            const now = performance.now();
-            if (!gameState.reloading && now - gameState.lastShot > 2000) {
-                AudioEngine.play('railgun');
-                gameState.lastShot = now;
-
-                const raycaster = new THREE.Raycaster();
-                const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                raycaster.set(camera.position, direction);
-
-                const intersects = raycaster.intersectObjects(gameState.entities);
-
-                const beamMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-                const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 100, 8);
-                const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-                beam.position.copy(camera.position).add(direction.multiplyScalar(50));
-                beam.quaternion.copy(camera.quaternion);
-                beam.rotation.x += Math.PI / 2;
-                scene.add(beam);
-                setTimeout(() => scene.remove(beam), 100);
-
-                if (intersects.length > 0) {
-                    const hitEntity = intersects[0].object;
-                    if (hitEntity && hitEntity.userData && !hitEntity.userData.isFriendly) {
-                        hitEntity.userData.health -= 10;
-                        AudioEngine.play('entityHit');
-                        if (hitEntity.userData.health <= 0) {
-                            scene.remove(hitEntity);
-                            gameState.entities = gameState.entities.filter(e => e !== hitEntity);
-                            gameState.kills++;
-                            gameState.sanity = Math.min(1, gameState.sanity + 0.1);
-                        }
-                    }
-                }
-            }
-        }
-
-        function swingSword() {
-            if (gameState.isSwinging) return;
-            gameState.isSwinging = true; gameState.swingStartTime = performance.now(); AudioEngine.play('swordSwing');
-            const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-            gameState.entities.forEach(entity => {
-                if (!entity.userData.isFriendly && entity.position.distanceTo(camera.position) < 2.5) {
-                    const dirToEntity = entity.position.clone().sub(camera.position).normalize();
-                    if (forward.dot(dirToEntity) > 0.8) {
-                        entity.userData.health -= 3; AudioEngine.play('entityHit');
-                        if (entity.userData.health <= 0) { scene.remove(entity); gameState.entities = gameState.entities.filter(e => e !== entity); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); }
-                    }
-                }
-            });
-            setTimeout(() => { gameState.isSwinging = false; }, 500);
-        }
-
-        function whipTentacle() {
-            if (gameState.isWhipping) return;
-            gameState.isWhipping = true; gameState.whipStartTime = performance.now(); AudioEngine.play('tentacleWhip');
-            const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-            gameState.entities.forEach(entity => {
-                if (!entity.userData.isFriendly && entity.position.distanceTo(camera.position) < 4) {
-                    const dirToEntity = entity.position.clone().sub(camera.position).normalize();
-                    if (forward.dot(dirToEntity) > 0.7) {
-                        entity.userData.health -= 2; AudioEngine.play('entityHit');
-                        if (entity.userData.health <= 0) { scene.remove(entity); gameState.entities = gameState.entities.filter(e => e !== entity); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); }
-                    }
-                }
-            });
-            setTimeout(() => { gameState.isWhipping = false; }, 700);
-        }
-        
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = performance.now() * 0.001;
-            const delta = time - (gameState.lastTime || time);
-            gameState.lastTime = time;
-
-            // advance sky time for procedural animation (duplicate animate)
-            if (sky && sky.material && sky.material.uniforms && sky.material.uniforms.time) {
-                sky.material.uniforms.time.value = time;
-                if (sky.material.uniforms.speed) sky.material.uniforms.speed.value = 0.25;
-            }
-
-            // advance sky time for procedural animation
-            if (sky && sky.material && sky.material.uniforms && sky.material.uniforms.time) {
-                sky.material.uniforms.time.value = time;
-                // optional speed property
-                if (sky.material.uniforms.speed) sky.material.uniforms.speed.value = 0.25;
-            }
-
-            // sanity-based shader override (switch to GLITCH-like mode)
-            if (gameState.sanity < 0.25 && gameState.shaderMode !== 4) {
-                gameState.shaderMode = 4; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode];
-                regenerateWorld();
-            } else if (gameState.sanity >= 0.25 && gameState.shaderMode === 4) {
-                gameState.shaderMode = 0; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode];
-                regenerateWorld();
-            }
-
-            // update shader uniforms across active chunks
-            Object.values(gameState.chunks).forEach(chunk => {
-                chunk.traverse(child => {
-                    if (child.material && child.material.uniforms) {
-                        if (child.material.uniforms.time) child.material.uniforms.time.value = time;
-                        if (child.material.uniforms.sanity) child.material.uniforms.sanity.value = gameState.sanity;
-                    }
-                });
-            });
-
-            // ensure we have the right chunks around the player
-            updateChunks(camera.position);
-            // collectible pickup: check active chunk collectibles
-            Object.values(gameState.chunks).forEach(chunk => {
-                if (chunk.userData && chunk.userData.collectibles) {
-                    chunk.userData.collectibles.forEach((orb, idx) => {
-                        if (!orb || orb.userData.collected) return;
-                        const d = orb.position.distanceTo(camera.position.clone().sub(chunk.position));
-                        if (d < 2.0) {
-                            orb.userData.collected = true;
-                            // play pickup sound
-                            AudioEngine.play('pickup');
-                            // increment counter
-                            gameState.collected++;
-                            document.getElementById('collected').textContent = gameState.collected;
-                            // remove orb and dispose
-                            if (orb.parent) orb.parent.remove(orb);
-                            if (orb.geometry) orb.geometry.dispose(); if (orb.material) orb.material.dispose();
-                        }
-                    });
-                    // filter out collected
-                    chunk.userData.collectibles = chunk.userData.collectibles.filter(o => o && !o.userData.collected);
-                }
-            });
-            gameState.flickeringLights.forEach(light => { if (Math.random() > 0.95) light.intensity = Math.random() * 1.5; });
-            
-            camera.rotation.order = 'YXZ'; camera.rotation.y = gameState.rotation.y; camera.rotation.x = gameState.rotation.x;
-            
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-            const moveDirection = new THREE.Vector3();
-            if(gameState.keys['w']) moveDirection.add(forward); if(gameState.keys['s']) moveDirection.sub(forward); if(gameState.keys['a']) moveDirection.sub(right); if(gameState.keys['d']) moveDirection.add(right);
-            if (moveDirection.length() > 0) {
-                const bobHeight = Math.cos(time * 8) * 0.03;
-                camera.position.y = 1.6 + bobHeight;
-                camera.position.add(moveDirection.normalize().multiplyScalar(gameState.moveSpeed));
-                if (performance.now() - gameState.lastStepTime > 400) { AudioEngine.play('walk'); gameState.lastStepTime = performance.now(); }
-            }
-
-            const isMoving = moveDirection.length() > 0.01;
-
-            if (gameState.pistol && gameState.pistol.visible) {
-                const bobAngle = Math.sin(time * 2) * 0.02;
-                const bobHeight = isMoving ? Math.cos(time * 8) * 0.02 : 0;
-                gameState.pistol.rotation.z = bobAngle;
-                gameState.pistol.position.y = -0.3 + bobHeight;
-                gameState.pistol.rotation.x = THREE.MathUtils.lerp(gameState.pistol.rotation.x, 0, 0.1);
-                gameState.pistol.position.z = THREE.MathUtils.lerp(gameState.pistol.position.z, -0.5, 0.1);
-            }
-
-            if (gameState.sword && gameState.sword.visible) {
-                const swingProgress = gameState.isSwinging ? (performance.now() - gameState.swingStartTime) / 500 : 0;
-                gameState.sword.position.set(0.4, -0.4, -0.8);
-                if (gameState.isSwinging) { const swingAngle = Math.sin(Math.min(swingProgress, 1) * Math.PI); gameState.sword.rotation.set(0, -swingAngle * 2, swingAngle * 0.5); } 
-                else { 
-                    const bobAngle = Math.sin(time * 2) * 0.05;
-                    const bobHeight = isMoving ? Math.cos(time * 8) * 0.05 : 0;
-                    gameState.sword.rotation.set(0, 0, bobAngle);
-                    gameState.sword.position.y = -0.4 + bobHeight;
-                }
-            }
-
-            if (gameState.tentacle && gameState.tentacle.visible) {
-                const whipProgress = gameState.isWhipping ? (performance.now() - gameState.whipStartTime) / 700 : 0;
-                gameState.tentacle.position.set(0.5, -0.7, -1.2);
-                gameState.tentacle.rotation.z = Math.sin(time * 5) * 0.2;
-                gameState.tentacle.children.forEach((segment, i) => {
-                    const angle = Math.sin(i * 0.5 + time * 10) * 0.3;
-                    segment.position.x = Math.sin(i * 0.2 + time * 5) * i * 0.05; segment.rotation.z = angle;
-                    if(gameState.isWhipping) { const whipAngle = Math.sin(Math.min(whipProgress, 1) * Math.PI); segment.position.x += Math.sin(i * 0.5 + whipProgress * 10) * 0.5; segment.position.z = Math.cos(i * 0.5 + whipProgress * 10) * 0.5; }
-                });
-            }
-            
-            for(let i = gameState.projectiles.length - 1; i >= 0; i--) {
-                const proj = gameState.projectiles[i]; proj.position.add(proj.userData.velocity); proj.userData.lifetime--;
-                if(proj.userData.lifetime <= 0) { scene.remove(proj); gameState.projectiles.splice(i, 1); continue; }
-                for(let j = gameState.entities.length - 1; j >= 0; j--) {
-                    const entity = gameState.entities[j];
-                    if (!entity.userData.isFriendly && proj.position.distanceTo(entity.position) < 1.5) {
-                        entity.userData.health--; AudioEngine.play('entityHit'); scene.remove(proj); gameState.projectiles.splice(i, 1);
-                        if(entity.userData.health <= 0) { scene.remove(entity); gameState.entities.splice(j, 1); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); }
-                        break;
-                    }
-                }
-            }
-            
         function handleConversations() {
             const now = performance.now();
-
-            // Player to entity conversations
             gameState.entities.forEach(entity => {
                 const ud = entity.userData;
                 const distToPlayer = camera.position.distanceTo(entity.position);
-
                 if (distToPlayer < 10 && ud.canSpeak && now - ud.lastSpokeTime > 10000) {
                     if (ud.isFriendly) {
-                        ud.canSpeak = false;
-                        ud.lastSpokeTime = now;
+                        ud.canSpeak = false; ud.lastSpokeTime = now;
                         let dialogueSet = gameState.sanity > 0.8 ? ud.dialogue.highSanity : (gameState.sanity < 0.4 ? ud.dialogue.lowSanity : ud.dialogue.normal);
                         const line = dialogueSet[ud.dialogueIndex % dialogueSet.length];
                         const dialogueBox = document.getElementById('dialogueBox');
-                        dialogueBox.textContent = line;
-                        dialogueBox.style.color = '#00eaff';
-                        dialogueBox.style.opacity = 1;
-                        AudioEngine.speakFriendly(line, () => {
-                            setTimeout(() => {
-                                dialogueBox.style.opacity = 0;
-                                ud.canSpeak = true;
-                                ud.dialogueIndex++;
-                            }, 2000);
-                        });
-                    } else if (now - ud.lastSpokeTime > 20000) { // Enemies talk less often
-                        ud.canSpeak = false;
-                        ud.lastSpokeTime = now;
+                        dialogueBox.textContent = line; dialogueBox.style.color = '#00eaff'; dialogueBox.style.opacity = 1;
+                        AudioEngine.speakFriendly(line, () => { setTimeout(() => { dialogueBox.style.opacity = 0; ud.canSpeak = true; ud.dialogueIndex++; }, 2000); });
+                    } else if (now - ud.lastSpokeTime > 20000) {
+                        ud.canSpeak = false; ud.lastSpokeTime = now;
                         let dialogueSet = ud.dialogue.normal;
                         const line = dialogueSet[ud.dialogueIndex % dialogueSet.length];
                         const dialogueBox = document.getElementById('dialogueBox');
-                        dialogueBox.textContent = line;
-                        dialogueBox.style.color = '#ff0000';
-                        dialogueBox.style.opacity = 1;
-                        AudioEngine.speakEnemy(line, () => {
-                            setTimeout(() => {
-                                dialogueBox.style.opacity = 0;
-                                ud.canSpeak = true;
-                                ud.dialogueIndex++;
-                                dialogueBox.style.color = '#00eaff';
-                            }, 2000);
-                        });
+                        dialogueBox.textContent = line; dialogueBox.style.color = '#ff0000'; dialogueBox.style.opacity = 1;
+                        AudioEngine.speakEnemy(line, () => { setTimeout(() => { dialogueBox.style.opacity = 0; ud.canSpeak = true; ud.dialogueIndex++; dialogueBox.style.color = '#00eaff'; }, 2000); });
                     }
                 }
             });
-
-            // Entity to entity conversations
-            const friendlies = gameState.entities.filter(e => e.userData.isFriendly);
-            const hostiles = gameState.entities.filter(e => !e.userData.isFriendly);
-
+            const friendlies = gameState.entities.filter(e => e.userData.isFriendly), hostiles = gameState.entities.filter(e => !e.userData.isFriendly);
             friendlies.forEach(friendly => {
                 hostiles.forEach(hostile => {
                     const dist = friendly.position.distanceTo(hostile.position);
                     if (dist < 15 && friendly.userData.canSpeak && hostile.userData.canSpeak && now - friendly.userData.lastSpokeTime > 15000 && now - hostile.userData.lastSpokeTime > 15000) {
-                        friendly.userData.canSpeak = false;
-                        hostile.userData.canSpeak = false;
-                        friendly.userData.lastSpokeTime = now;
-                        hostile.userData.lastSpokeTime = now;
-
-                        const hostileDialogueSet = hostile.userData.dialogue.normal;
-                        const hostileLine = hostileDialogueSet[hostile.userData.dialogueIndex % hostileDialogueSet.length];
+                        friendly.userData.canSpeak = false; hostile.userData.canSpeak = false; friendly.userData.lastSpokeTime = now; hostile.userData.lastSpokeTime = now;
+                        const hostileDialogueSet = hostile.userData.dialogue.normal, hostileLine = hostileDialogueSet[hostile.userData.dialogueIndex % hostileDialogueSet.length];
                         hostile.userData.dialogueIndex++;
-
                         const friendlyResponse = friendly.userData.dialogue.enemyResponses[hostileLine] || "What are you talking about?";
-
                         const dialogueBox = document.getElementById('dialogueBox');
-
-                        // Hostile speaks (creepier)
-                        setTimeout(() => {
-                            dialogueBox.textContent = hostileLine;
-                            dialogueBox.style.color = '#ff0000';
-                            dialogueBox.style.opacity = 1;
-                            AudioEngine.speakEnemy(hostileLine);
-                        }, 0);
-
-                        // Friendly responds
-                        setTimeout(() => {
-                            dialogueBox.textContent = friendlyResponse;
-                            dialogueBox.style.color = '#00eaff';
-                            dialogueBox.style.opacity = 1;
-                            AudioEngine.speakFriendly(friendlyResponse);
-                        }, 3000);
-
-                        // Clear dialogue
-                        setTimeout(() => {
-                            dialogueBox.style.opacity = 0;
-                            friendly.userData.canSpeak = true;
-                            hostile.userData.canSpeak = true;
-                        }, 6000);
+                        setTimeout(() => { dialogueBox.textContent = hostileLine; dialogueBox.style.color = '#ff0000'; dialogueBox.style.opacity = 1; AudioEngine.speakEnemy(hostileLine); }, 0);
+                        setTimeout(() => { dialogueBox.textContent = friendlyResponse; dialogueBox.style.color = '#00eaff'; dialogueBox.style.opacity = 1; AudioEngine.speakFriendly(friendlyResponse); }, 3000);
+                        setTimeout(() => { dialogueBox.style.opacity = 0; friendly.userData.canSpeak = true; hostile.userData.canSpeak = true; }, 6000);
                     }
                 });
             });
         }
-        
+
         function animate() {
             requestAnimationFrame(animate);
             const time = performance.now() * 0.001;
             const delta = time - (gameState.lastTime || time);
             gameState.lastTime = time;
 
-            // sanity-based shader override (switch to GLITCH-like mode)
-            if (gameState.sanity < 0.25 && gameState.shaderMode !== 4) {
-                gameState.shaderMode = 4; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode];
-                regenerateWorld();
-            } else if (gameState.sanity >= 0.25 && gameState.shaderMode === 4) {
-                gameState.shaderMode = 0; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode];
-                regenerateWorld();
-            }
+            if (sky && sky.material && sky.material.uniforms && sky.material.uniforms.time) { sky.material.uniforms.time.value = time; if (sky.material.uniforms.speed) sky.material.uniforms.speed.value = 0.25; }
+            if (gameState.sanity < 0.25 && gameState.shaderMode !== 4) { gameState.shaderMode = 4; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode]; regenerateWorld(); } else if (gameState.sanity >= 0.25 && gameState.shaderMode === 4) { gameState.shaderMode = 0; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode]; regenerateWorld(); }
 
-            // update shader uniforms across active chunks
-            Object.values(gameState.chunks).forEach(chunk => {
-                chunk.traverse(child => {
-                    if (child.material && child.material.uniforms) {
-                        if (child.material.uniforms.time) child.material.uniforms.time.value = time;
-                        if (child.material.uniforms.sanity) child.material.uniforms.sanity.value = gameState.sanity;
-                    }
-                });
-            });
+            Object.values(gameState.chunks).forEach(chunk => { chunk.traverse(child => { if (child.material && child.material.uniforms) { if (child.material.uniforms.time) child.material.uniforms.time.value = time; if (child.material.uniforms.sanity) child.material.uniforms.sanity.value = gameState.sanity; } }); });
 
-            // ensure we have the right chunks around the player
             updateChunks(camera.position);
-            // collectible pickup: check active chunk collectibles
-            Object.values(gameState.chunks).forEach(chunk => {
-                if (chunk.userData && chunk.userData.collectibles) {
-                    chunk.userData.collectibles.forEach((orb, idx) => {
-                        if (!orb || orb.userData.collected) return;
-                        const d = orb.position.distanceTo(camera.position.clone().sub(chunk.position));
-                        if (d < 2.0) {
-                            orb.userData.collected = true;
-                            // play pickup sound
-                            AudioEngine.play('pickup');
-                            // increment counter
-                            gameState.collected++;
-                            document.getElementById('collected').textContent = gameState.collected;
-                            // remove orb and dispose
-                            if (orb.parent) orb.parent.remove(orb);
-                            if (orb.geometry) orb.geometry.dispose(); if (orb.material) orb.material.dispose();
-                        }
-                    });
-                    // filter out collected
-                    chunk.userData.collectibles = chunk.userData.collectibles.filter(o => o && !o.userData.collected);
-                }
-            });
+            Object.values(gameState.chunks).forEach(chunk => { if (chunk.userData && chunk.userData.collectibles) { chunk.userData.collectibles.forEach((orb, idx) => { if (!orb || orb.userData.collected) return; const d = orb.position.distanceTo(camera.position.clone().sub(chunk.position)); if (d < 2.0) { orb.userData.collected = true; AudioEngine.play('pickup'); gameState.collected++; document.getElementById('collected').textContent = gameState.collected; if (orb.parent) orb.parent.remove(orb); if (orb.geometry) orb.geometry.dispose(); if (orb.material) orb.material.dispose(); } }); chunk.userData.collectibles = chunk.userData.collectibles.filter(o => o && !o.userData.collected); } });
             gameState.flickeringLights.forEach(light => { if (Math.random() > 0.95) light.intensity = Math.random() * 1.5; });
             
             camera.rotation.order = 'YXZ'; camera.rotation.y = gameState.rotation.y; camera.rotation.x = gameState.rotation.x;
             
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-            const moveDirection = new THREE.Vector3();
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion), right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion), moveDirection = new THREE.Vector3();
             if(gameState.keys['w']) moveDirection.add(forward); if(gameState.keys['s']) moveDirection.sub(forward); if(gameState.keys['a']) moveDirection.sub(right); if(gameState.keys['d']) moveDirection.add(right);
-            if (moveDirection.length() > 0) {
-                const bobHeight = Math.cos(time * 8) * 0.03;
-                camera.position.y = 1.6 + bobHeight;
-                camera.position.add(moveDirection.normalize().multiplyScalar(gameState.moveSpeed));
-                if (performance.now() - gameState.lastStepTime > 400) { AudioEngine.play('walk'); gameState.lastStepTime = performance.now(); }
-            }
+            if (moveDirection.length() > 0) { const bobHeight = Math.cos(time * 8) * 0.03; camera.position.y = 1.6 + bobHeight; camera.position.add(moveDirection.normalize().multiplyScalar(gameState.moveSpeed)); if (performance.now() - gameState.lastStepTime > 400) { AudioEngine.play('walk'); gameState.lastStepTime = performance.now(); } }
 
             const isMoving = moveDirection.length() > 0.01;
-
-            if (gameState.pistol && gameState.pistol.visible) {
-                const bobAngle = Math.sin(time * 2) * 0.02;
-                const bobHeight = isMoving ? Math.cos(time * 8) * 0.02 : 0;
-                gameState.pistol.rotation.z = bobAngle;
-                gameState.pistol.position.y = -0.3 + bobHeight;
-                gameState.pistol.rotation.x = THREE.MathUtils.lerp(gameState.pistol.rotation.x, 0, 0.1);
-                gameState.pistol.position.z = THREE.MathUtils.lerp(gameState.pistol.position.z, -0.5, 0.1);
-            }
-
-            if (gameState.sword && gameState.sword.visible) {
-                const swingProgress = gameState.isSwinging ? (performance.now() - gameState.swingStartTime) / 500 : 0;
-                gameState.sword.position.set(0.4, -0.4, -0.8);
-                if (gameState.isSwinging) { const swingAngle = Math.sin(Math.min(swingProgress, 1) * Math.PI); gameState.sword.rotation.set(0, -swingAngle * 2, swingAngle * 0.5); } 
-                else { 
-                    const bobAngle = Math.sin(time * 2) * 0.05;
-                    const bobHeight = isMoving ? Math.cos(time * 8) * 0.05 : 0;
-                    gameState.sword.rotation.set(0, 0, bobAngle);
-                    gameState.sword.position.y = -0.4 + bobHeight;
-                }
-            }
-
-            if (gameState.tentacle && gameState.tentacle.visible) {
-                const whipProgress = gameState.isWhipping ? (performance.now() - gameState.whipStartTime) / 700 : 0;
-                gameState.tentacle.position.set(0.5, -0.7, -1.2);
-                gameState.tentacle.rotation.z = Math.sin(time * 5) * 0.2;
-                gameState.tentacle.children.forEach((segment, i) => {
-                    const angle = Math.sin(i * 0.5 + time * 10) * 0.3;
-                    segment.position.x = Math.sin(i * 0.5 + time * 5) * i * 0.05; segment.rotation.z = angle;
-                    if(gameState.isWhipping) { const whipAngle = Math.sin(Math.min(whipProgress, 1) * Math.PI); segment.position.x += Math.sin(i * 0.5 + whipProgress * 10) * 0.5; segment.position.z = Math.cos(i * 0.5 + whipProgress * 10) * 0.5; }
-                });
-            }
+            if (gameState.pistol && gameState.pistol.visible) { const bobAngle = Math.sin(time * 2) * 0.02, bobHeight = isMoving ? Math.cos(time * 8) * 0.02 : 0; gameState.pistol.rotation.z = bobAngle; gameState.pistol.position.y = -0.3 + bobHeight; gameState.pistol.rotation.x = THREE.MathUtils.lerp(gameState.pistol.rotation.x, 0, 0.1); gameState.pistol.position.z = THREE.MathUtils.lerp(gameState.pistol.position.z, -0.5, 0.1); }
+            if (gameState.sword && gameState.sword.visible) { const swingProgress = gameState.isSwinging ? (performance.now() - gameState.swingStartTime) / 500 : 0; gameState.sword.position.set(0.4, -0.4, -0.8); if (gameState.isSwinging) { const swingAngle = Math.sin(Math.min(swingProgress, 1) * Math.PI); gameState.sword.rotation.set(0, -swingAngle * 2, swingAngle * 0.5); } else { const bobAngle = Math.sin(time * 2) * 0.05, bobHeight = isMoving ? Math.cos(time * 8) * 0.05 : 0; gameState.sword.rotation.set(0, 0, bobAngle); gameState.sword.position.y = -0.4 + bobHeight; } }
+            if (gameState.tentacle && gameState.tentacle.visible) { const whipProgress = gameState.isWhipping ? (performance.now() - gameState.whipStartTime) / 700 : 0; gameState.tentacle.position.set(0.5, -0.7, -1.2); gameState.tentacle.rotation.z = Math.sin(time * 5) * 0.2; gameState.tentacle.children.forEach((segment, i) => { const angle = Math.sin(i * 0.5 + time * 10) * 0.3; segment.position.x = Math.sin(i * 0.5 + time * 5) * i * 0.05; segment.rotation.z = angle; if(gameState.isWhipping) { const whipAngle = Math.sin(Math.min(whipProgress, 1) * Math.PI); segment.position.x += Math.sin(i * 0.5 + whipProgress * 10) * 0.5; segment.position.z = Math.cos(i * 0.5 + whipProgress * 10) * 0.5; } }); }
             
-            for(let i = gameState.projectiles.length - 1; i >= 0; i--) {
-                const proj = gameState.projectiles[i]; proj.position.add(proj.userData.velocity); proj.userData.lifetime--;
-                if(proj.userData.lifetime <= 0) { scene.remove(proj); gameState.projectiles.splice(i, 1); continue; }
-                for(let j = gameState.entities.length - 1; j >= 0; j--) {
-                    const entity = gameState.entities[j];
-                    if (!entity.userData.isFriendly && proj.position.distanceTo(entity.position) < 1.5) {
-                        entity.userData.health--; AudioEngine.play('entityHit'); scene.remove(proj); gameState.projectiles.splice(i, 1);
-                        if(entity.userData.health <= 0) { scene.remove(entity); gameState.entities.splice(j, 1); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); }
-                        break;
-                    }
-                }
-            }
+            for(let i = gameState.projectiles.length - 1; i >= 0; i--) { const proj = gameState.projectiles[i]; proj.position.add(proj.userData.velocity); proj.userData.lifetime--; if(proj.userData.lifetime <= 0) { scene.remove(proj); gameState.projectiles.splice(i, 1); continue; } for(let j = gameState.entities.length - 1; j >= 0; j--) { const entity = gameState.entities[j]; if (!entity.userData.isFriendly && proj.position.distanceTo(entity.position) < 1.5) { entity.userData.health--; AudioEngine.play('entityHit'); scene.remove(proj); gameState.projectiles.splice(i, 1); if(entity.userData.health <= 0) { scene.remove(entity); gameState.entities.splice(j, 1); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } break; } } }
             
             let closestHostileDist = 1000;
+            gameState.entities.forEach(entity => {
+                if (entity.userData.mixer) entity.userData.mixer.update(delta);
+                if (!entity.userData.isFriendly) {
+                    const dist = entity.position.distanceTo(camera.position);
+                    if (dist < closestHostileDist) closestHostileDist = dist;
+                    entity.lookAt(camera.position);
+                    if (dist > 2) entity.translateZ(entity.userData.speed);
+                }
+            });
+
             handleConversations();
 
-            if (gameState.morphoser) {
-                gameState.morphoser.userData.time += delta * 0.5;
-                const positions = gameState.morphoser.geometry.attributes.position.array; const basePositions = gameState.morphoser.userData.basePositions;
-                for (let i = 0; i < positions.length; i+=3) {
-                    positions[i] = basePositions[i] + Math.sin(gameState.morphoser.userData.time + basePositions[i+1]) * 0.5;
-                    positions[i+1] = basePositions[i+1] + Math.cos(gameState.morphoser.userData.time + basePositions[i+2]) * 0.5;
-                    positions[i+2] = basePositions[i+2] + Math.sin(gameState.morphoser.userData.time + basePositions[i]) * 0.5;
-                }
-                gameState.morphoser.geometry.attributes.position.needsUpdate = true;
-                const distToMorphoser = camera.position.distanceTo(gameState.morphoser.position);
-                if (distToMorphoser < 15 && forward.dot(gameState.morphoser.position.clone().sub(camera.position).normalize()) > 0.7) {
-                    gameState.sanity -= 0.002 * (1 - distToMorphoser / 15);
-                }
-            }
+            if (gameState.morphoser) { gameState.morphoser.userData.time += delta * 0.5; const pos = gameState.morphoser.geometry.attributes.position.array, bPos = gameState.morphoser.userData.basePositions; for (let i = 0; i < pos.length; i+=3) { pos[i] = bPos[i] + Math.sin(gameState.morphoser.userData.time + bPos[i+1]) * 0.5; pos[i+1] = bPos[i+1] + Math.cos(gameState.morphoser.userData.time + bPos[i+2]) * 0.5; pos[i+2] = bPos[i+2] + Math.sin(gameState.morphoser.userData.time + bPos[i]) * 0.5; } gameState.morphoser.geometry.attributes.position.needsUpdate = true; const distToMorphoser = camera.position.distanceTo(gameState.morphoser.position); if (distToMorphoser < 15 && forward.dot(gameState.morphoser.position.clone().sub(camera.position).normalize()) > 0.7) { gameState.sanity -= 0.002 * (1 - distToMorphoser / 15); } }
             
             const warning = document.getElementById('warning');
-            if(closestHostileDist < 25) { gameState.sanity -= 0.0008; warning.style.opacity = Math.max(0, 1 - closestHostileDist / 25); } 
-            else { warning.style.opacity = 0; }
+            if(closestHostileDist < 25) { gameState.sanity -= 0.0008; warning.style.opacity = Math.max(0, 1 - closestHostileDist / 25); } else { warning.style.opacity = 0; }
             if(closestHostileDist < 3) gameState.sanity -= 0.015;
             
             gameState.sanity = Math.max(0, Math.min(1, gameState.sanity + 0.0001));
             AudioEngine.updateSanityEffect(gameState.sanity);
             
-            if(gameState.eventTimer > 0) {
-                gameState.eventTimer -= 16; if(gameState.activeEvent) gameState.activeEvent.effect();
-                if(gameState.eventTimer <= 0) { gameState.activeEvent = null; scene.fog.color.setHex(0x0a0a0a); mainLight.intensity = 0.8; document.getElementById('eventText').style.opacity = 0; }
-            } else if(Math.random() < 0.001) { triggerEvent(); }
+            if(gameState.eventTimer > 0) { gameState.eventTimer -= 16; if(gameState.activeEvent) gameState.activeEvent.effect(); if(gameState.eventTimer <= 0) { gameState.activeEvent = null; scene.fog.color.setHex(0x0a0a0a); mainLight.intensity = 0.8; document.getElementById('eventText').style.opacity = 0; } } else if(Math.random() < 0.001) { triggerEvent(); }
             
-            if(camera.position.distanceTo(gameState.exitPortal.position) < 5) {
-                AudioEngine.play('nextLevel'); gameState.level++; camera.position.set(0, 1.6, 0);
-                scene.remove(gameState.exitPortal); gameState.exitPortal = createExitPortal(gameState.level); scene.add(gameState.exitPortal);
-                setupLevel();
-            }
+            if(camera.position.distanceTo(gameState.exitPortal.position) < 5) { AudioEngine.play('nextLevel'); gameState.level++; camera.position.set(0, 1.6, 0); scene.remove(gameState.exitPortal); gameState.exitPortal = createExitPortal(gameState.level); scene.add(gameState.exitPortal); setupLevel(); }
 
             document.getElementById('sanity').textContent = (gameState.sanity * 100).toFixed(0);
             document.getElementById('level').textContent = gameState.level;
@@ -1581,57 +738,8 @@
             composer.render();
         }
 
-            if (gameState.morphoser) {
-                gameState.morphoser.userData.time += delta * 0.5;
-                const positions = gameState.morphoser.geometry.attributes.position.array; const basePositions = gameState.morphoser.userData.basePositions;
-                for (let i = 0; i < positions.length; i+=3) {
-                    positions[i] = basePositions[i] + Math.sin(gameState.morphoser.userData.time + basePositions[i+1]) * 0.5;
-                    positions[i+1] = basePositions[i+1] + Math.cos(gameState.morphoser.userData.time + basePositions[i+2]) * 0.5;
-                    positions[i+2] = basePositions[i+2] + Math.sin(gameState.morphoser.userData.time + basePositions[i]) * 0.5;
-                }
-                gameState.morphoser.geometry.attributes.position.needsUpdate = true;
-                const distToMorphoser = camera.position.distanceTo(gameState.morphoser.position);
-                if (distToMorphoser < 15 && forward.dot(gameState.morphoser.position.clone().sub(camera.position).normalize()) > 0.7) {
-                    gameState.sanity -= 0.002 * (1 - distToMorphoser / 15);
-                }
-            }
-            
-            const warning = document.getElementById('warning');
-            if(closestHostileDist < 25) { gameState.sanity -= 0.0008; warning.style.opacity = Math.max(0, 1 - closestHostileDist / 25); } 
-            else { warning.style.opacity = 0; }
-            if(closestHostileDist < 3) gameState.sanity -= 0.015;
-            
-            gameState.sanity = Math.max(0, Math.min(1, gameState.sanity + 0.0001));
-            AudioEngine.updateSanityEffect(gameState.sanity);
-            
-            if(gameState.eventTimer > 0) {
-                gameState.eventTimer -= 16; if(gameState.activeEvent) gameState.activeEvent.effect();
-                if(gameState.eventTimer <= 0) { gameState.activeEvent = null; scene.fog.color.setHex(0x0a0a0a); mainLight.intensity = 0.8; document.getElementById('eventText').style.opacity = 0; }
-            } else if(Math.random() < 0.001) { triggerEvent(); }
-            
-            if(camera.position.distanceTo(gameState.exitPortal.position) < 5) {
-                AudioEngine.play('nextLevel'); gameState.level++; camera.position.set(0, 1.6, 0);
-                scene.remove(gameState.exitPortal); gameState.exitPortal = createExitPortal(gameState.level); scene.add(gameState.exitPortal);
-                setupLevel();
-            }
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); });
 
-            document.getElementById('sanity').textContent = (gameState.sanity * 100).toFixed(0);
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('kills').textContent = gameState.kills;
-            document.getElementById('ammo').textContent = gameState.reloading ? 'RELOADING' : `${gameState.ammo} / ∞`;
-            document.getElementById('ammoFill').style.width = `${gameState.reloading ? 0 : (gameState.ammo / gameState.maxAmmo) * 100}%`;
-
-            composer.render();
-        }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
       }
     </script>
 </body>
