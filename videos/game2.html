@@ -250,20 +250,21 @@
         let zombieModel = null;
         let zombieAnimations = [];
         let floorTexture = null;
+        let mainLight;
 
         const loadingManager = new THREE.LoadingManager();
         const gltfLoader = new THREE.GLTFLoader(loadingManager);
         const textureLoader = new THREE.TextureLoader(loadingManager);
 
-        floorTexture = textureLoader.load('assets/textures/floor.png', (tex) => { tex.wrapS = tex.wrapT = THREE.RepeatWrapping; });
+        floorTexture = textureLoader.load('../assets/textures/floor.png', (tex) => { tex.wrapS = tex.wrapT = THREE.RepeatWrapping; });
 
-        gltfLoader.load('assets/models/zombie.glb', (gltf) => {
+        gltfLoader.load('../assets/models/zombie.glb', (gltf) => {
             zombieModel = gltf.scene;
             zombieAnimations = gltf.animations;
             console.log("Zombie model loaded.");
         });
 
-        gltfLoader.load('assets/models/pistol.glb', (gltf) => {
+        gltfLoader.load('../assets/models/pistol.glb', (gltf) => {
             gameState.pistol = gltf.scene;
             gameState.pistol.scale.set(0.1, 0.1, 0.1);
             gameState.pistol.position.set(0.3, -0.3, -0.5);
@@ -293,7 +294,7 @@
                     this.masterGain.connect(this.ctx.destination);
                     this.isInitialized = true;
                     console.log("Audio Engine Initialized.");
-                    this.loadAmbientSound('assets/sounds/ambient.wav');
+                    this.loadAmbientSound('../assets/sounds/ambient.wav');
                 } catch (e) { console.error("Web Audio API is not supported in this browser", e); }
             },
             loadAmbientSound(url) {
@@ -609,7 +610,7 @@
             
             const ambientLight = new THREE.AmbientLight(0xffeecc, 0.2);
             scene.add(ambientLight);
-            const mainLight = new THREE.PointLight(0xffeedd, 0.8, 35);
+            mainLight = new THREE.PointLight(0xffeedd, 0.8, 35);
             mainLight.position.set(0, 3, 0);
             mainLight.castShadow = true;
             camera.add(mainLight);
