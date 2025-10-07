@@ -274,6 +274,16 @@
             console.log("Pistol model loaded for weapon switching.");
         });
 
+        gltfLoader.load('../assets/models/rifle.glb', (gltf) => {
+            gameState.rifle = gltf.scene;
+            gameState.rifle.scale.set(0.1, 0.1, 0.1);
+            gameState.rifle.position.set(0.3, -0.3, -0.5);
+            gameState.rifle.rotation.y = Math.PI;
+            camera.add(gameState.rifle);
+            gameState.rifle.visible = false; // Initially hidden
+            console.log("Rifle model loaded.");
+        });
+
         loadingManager.onLoad = () => {
             console.log("All assets loaded, starting game.");
             initGame();
@@ -539,9 +549,9 @@
         
         function createEntity(x, z, type = 0) {
             const types = [
-                { color: 0x330000, emissive: 0xff0000, speed: 0.02, health: 3, size: 0.8, isFriendly: false, dialogue: {normal: ["We are one.", "You cannot comprehend.", "The pattern must be completed.", "Your presence is a flaw."]} },
-                { color: 0x001a33, emissive: 0x0088ff, speed: 0.04, health: 2, size: 0.6, isFriendly: false, dialogue: {normal: ["It is listening.", "The frequency is changing.", "You disrupt the signal.", "Become one with the static."]} },
-                { color: 0x1a3300, emissive: 0x88ff00, speed: 0.015, health: 5, size: 1.2, isFriendly: false, dialogue: {normal: ["The flesh is weak.", "We will consume.", "Your form is imperfect.", "Join the growth."]} },
+                { color: 0x330000, emissive: 0xff0000, speed: 0.01, health: 3, size: 0.8, isFriendly: false, dialogue: {normal: ["We are one.", "You cannot comprehend.", "The pattern must be completed.", "Your presence is a flaw."]} },
+                { color: 0x001a33, emissive: 0x0088ff, speed: 0.02, health: 2, size: 0.6, isFriendly: false, dialogue: {normal: ["It is listening.", "The frequency is changing.", "You disrupt the signal.", "Become one with the static."]} },
+                { color: 0x1a3300, emissive: 0x88ff00, speed: 0.0075, health: 5, size: 1.2, isFriendly: false, dialogue: {normal: ["The flesh is weak.", "We will consume.", "Your form is imperfect.", "Join the growth."]} },
                 { color: 0x003333, emissive: 0x00ffff, speed: 0.01, health: 100, size: 0.7, isFriendly: true, dialogue: { highSanity: ["You seem lucid. Good.", "The exit is real, but it moves.", "These walls... they listen.", "I saw a man with a face like a clock.", "The yellow is a lie.", "Stay away from the shadows, they bite.", "The architect of this place is a madman.", "I've seen others, but they all go mad."], lowSanity: ["...the colors... they scream...", "It sees you. It knows your name.", "You're becoming part of this place.", "The static is singing to me.", "My teeth are not my own.", "The walls are breathing, can't you feel it?", "My reflection has a different face.", "The whispers are getting louder."], normal: ["You aren't supposed to be here.", "The buzzing... it makes them angry.", "Follow the green light.", "Don't lose your mind. They feed on fear.", "Hurry. This place... it remembers.", "There's no escape, only deeper levels.", "The creatures here are drawn to movement.", "Don't trust the silence."], enemyResponses: { "We are one.": "I am not you.", "You cannot comprehend.": "I don't want to.", "The pattern must be completed.": "I will break it.", "Your presence is a flaw.": "I am not a flaw.", "It is listening.": "I know.", "The frequency is changing.": "I can feel it.", "You disrupt the signal.": "Good.", "Become one with the static.": "Never.", "The flesh is weak.": "But my will is strong.", "We will consume.": "Not me.", "Your form is imperfect.": "It's mine.", "Join the growth.": "I refuse." } } }
             ];
             const entityType = types[type];
@@ -557,14 +567,16 @@
                     if(clip) mixer.clipAction(clip).play();
                 }
                 entity.userData.mixer = mixer;
+                entity.position.set(x, -0.5, z);
+
 
             } else {
                 const geometry = entityType.isFriendly ? new THREE.DodecahedronGeometry(entityType.size, 0) : new THREE.TorusKnotGeometry(entityType.size * 0.6, entityType.size * 0.2, 100, 16);
                 const material = new THREE.MeshStandardMaterial({ color: entityType.color, emissive: entityType.emissive, emissiveIntensity: 2.0, flatShading: true, roughness: 0.8 });
                 entity = new THREE.Mesh(geometry, material);
+                entity.position.set(x, 0, z);
             }
 
-            entity.position.set(x, 0, z);
             entity.castShadow = true;
             const light = new THREE.PointLight(entityType.emissive, 1.5, 15);
             entity.add(light);
@@ -631,9 +643,10 @@
         function attack() { if (gameState.activeWeapon === 'gun') shoot(); else if (gameState.activeWeapon === 'sword') swingSword(); else if (gameState.activeWeapon === 'shotgun') shootShotgun(); else if (gameState.activeWeapon === 'railgun') shootRailgun(); else if (gameState.activeWeapon === 'tentacle') whipTentacle(); }
         function shoot() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 200) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; if (gameState.pistol) { gameState.pistol.rotation.x = -0.2; gameState.pistol.position.z = -0.4; } const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const p = createProjectile(camera.position.clone(), d); gameState.projectiles.push(p); scene.add(p); } }
         function shootShotgun() { const now = performance.now(); if(gameState.ammo >= 2 && !gameState.reloading && now - gameState.lastShot > 1000) { AudioEngine.play('shoot'); gameState.ammo -= 2; gameState.lastShot = now; for (let i = 0; i < 8; i++) { const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); d.x += (Math.random() - 0.5) * 0.2; d.y += (Math.random() - 0.5) * 0.2; const p = createProjectile(camera.position.clone(), d, 0xff8800); gameState.projectiles.push(p); scene.add(p); } } }
-        function shootRailgun() { const now = performance.now(); if (!gameState.reloading && now - gameState.lastShot > 2000) { AudioEngine.play('railgun'); gameState.lastShot = now; const r = new THREE.Raycaster(), d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); r.set(camera.position, d); const intersects = r.intersectObjects(gameState.entities); const bM = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }), bG = new THREE.CylinderGeometry(0.05, 0.05, 100, 8), beam = new THREE.Mesh(bG, bM); beam.position.copy(camera.position).add(d.multiplyScalar(50)); beam.quaternion.copy(camera.quaternion); beam.rotation.x += Math.PI / 2; scene.add(beam); setTimeout(() => scene.remove(beam), 100); if (intersects.length > 0) { const hit = intersects[0].object; if (hit && hit.userData && !hit.userData.isFriendly) { hit.userData.health -= 10; AudioEngine.play('entityHit'); if (hit.userData.health <= 0) { scene.remove(hit); gameState.entities = gameState.entities.filter(e => e !== hit); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } } }
-        function swingSword() { if (gameState.isSwinging) return; gameState.isSwinging = true; gameState.swingStartTime = performance.now(); AudioEngine.play('swordSwing'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 2.5) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.8) { e.userData.health -= 3; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isSwinging = false; }, 500); }
-        function whipTentacle() { if (gameState.isWhipping) return; gameState.isWhipping = true; gameState.whipStartTime = performance.now(); AudioEngine.play('tentacleWhip'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 4) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.7) { e.userData.health -= 2; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isWhipping = false; }, 700); }
+        function shootRailgun() { const now = performance.now(); if (!gameState.reloading && now - gameState.lastShot > 2000) { AudioEngine.play('railgun'); gameState.lastShot = now; const r = new THREE.Raycaster(), d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); r.set(camera.position, d); const intersects = r.intersectObjects(gameState.entities); const bM = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }), bG = new THREE.CylinderGeometry(0.05, 0.05, 100, 8), beam = new THREE.Mesh(bG, bM); beam.position.copy(camera.position).add(d.multiplyScalar(50)); beam.quaternion.copy(camera.quaternion); beam.rotation.x += Math.PI / 2; scene.add(beam); setTimeout(() => scene.remove(beam), 100); if (intersects.length > 0) { const hit = intersects[0].object; if (hit && hit.userData && !hit.userData.isFriendly) { hit.userData.health -= 10; AudioEngine.play('entityHit'); if (hit.userData.health <= 0) { scene.remove(hit); gameState.entities = gameState.entities.filter(e => e !== hit); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } } }
+        function shootRifle() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 100) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; if (gameState.rifle) { gameState.rifle.rotation.x = -0.2; gameState.rifle.position.z = -0.4; } const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const p = createProjectile(camera.position.clone(), d, 0x00ff00, 100, 2.0); gameState.projectiles.push(p); scene.add(p); } }
+        function swingSword() { if (gameState.isSwinging) return; gameState.isSwinging = true; gameState.swingStartTime = performance.now(); AudioEngine.play('swordSwing'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 2.5) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.8) { e.userData.health -= 3; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isSwinging = false; }, 500); }
+        function whipTentacle() { if (gameState.isWhipping) return; gameState.isWhipping = true; gameState.whipStartTime = performance.now(); AudioEngine.play('tentacleWhip'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 4) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.7) { e.userData.health -= 2; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isWhipping = false; }, 700); }
         
         function handleConversations() {
             const now = performance.now();
@@ -702,7 +715,7 @@
             if (gameState.sword && gameState.sword.visible) { const swingProgress = gameState.isSwinging ? (performance.now() - gameState.swingStartTime) / 500 : 0; gameState.sword.position.set(0.4, -0.4, -0.8); if (gameState.isSwinging) { const swingAngle = Math.sin(Math.min(swingProgress, 1) * Math.PI); gameState.sword.rotation.set(0, -swingAngle * 2, swingAngle * 0.5); } else { const bobAngle = Math.sin(time * 2) * 0.05, bobHeight = isMoving ? Math.cos(time * 8) * 0.05 : 0; gameState.sword.rotation.set(0, 0, bobAngle); gameState.sword.position.y = -0.4 + bobHeight; } }
             if (gameState.tentacle && gameState.tentacle.visible) { const whipProgress = gameState.isWhipping ? (performance.now() - gameState.whipStartTime) / 700 : 0; gameState.tentacle.position.set(0.5, -0.7, -1.2); gameState.tentacle.rotation.z = Math.sin(time * 5) * 0.2; gameState.tentacle.children.forEach((segment, i) => { const angle = Math.sin(i * 0.5 + time * 10) * 0.3; segment.position.x = Math.sin(i * 0.5 + time * 5) * i * 0.05; segment.rotation.z = angle; if(gameState.isWhipping) { const whipAngle = Math.sin(Math.min(whipProgress, 1) * Math.PI); segment.position.x += Math.sin(i * 0.5 + whipProgress * 10) * 0.5; segment.position.z = Math.cos(i * 0.5 + whipProgress * 10) * 0.5; } }); }
             
-            for(let i = gameState.projectiles.length - 1; i >= 0; i--) { const proj = gameState.projectiles[i]; proj.position.add(proj.userData.velocity); proj.userData.lifetime--; if(proj.userData.lifetime <= 0) { scene.remove(proj); gameState.projectiles.splice(i, 1); continue; } for(let j = gameState.entities.length - 1; j >= 0; j--) { const entity = gameState.entities[j]; if (!entity.userData.isFriendly && proj.position.distanceTo(entity.position) < 1.5) { entity.userData.health--; AudioEngine.play('entityHit'); scene.remove(proj); gameState.projectiles.splice(i, 1); if(entity.userData.health <= 0) { scene.remove(entity); gameState.entities.splice(j, 1); gameState.kills++; gameState.sanity = Math.min(1, gameState.sanity + 0.1); } break; } } }
+            for(let i = gameState.projectiles.length - 1; i >= 0; i--) { const proj = gameState.projectiles[i]; proj.position.add(proj.userData.velocity); proj.userData.lifetime--; if(proj.userData.lifetime <= 0) { scene.remove(proj); gameState.projectiles.splice(i, 1); continue; } for(let j = gameState.entities.length - 1; j >= 0; j--) { const entity = gameState.entities[j]; if (!entity.userData.isFriendly && proj.position.distanceTo(entity.position) < 1.5) { entity.userData.health--; AudioEngine.play('entityHit'); scene.remove(proj); gameState.projectiles.splice(i, 1); if(entity.userData.health <= 0) { scene.remove(entity); gameState.entities.splice(j, 1); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } break; } } }
             
             let closestHostileDist = 1000;
             gameState.entities.forEach(entity => {
@@ -711,6 +724,7 @@
                     const dist = entity.position.distanceTo(camera.position);
                     if (dist < closestHostileDist) closestHostileDist = dist;
                     entity.lookAt(camera.position);
+                    entity.rotateY(Math.PI);
                     if (dist > 2) entity.translateZ(entity.userData.speed);
                 }
             });
