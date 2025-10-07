@@ -245,7 +245,7 @@
             collected: 0
         };
 
-        const shaderModes = ['NORMAL', 'CREEPY', 'CRIMSON', 'VOID', 'GLITCH', 'RAGE', 'RAINBOW', 'WATER'];
+        const shaderModes = ['NORMAL', 'CREEPY', 'CRIMSON', 'VOID', 'GLITCH', 'RAGE', 'RAINBOW', 'WATER', 'GOLD', 'DIAMOND', 'EMERALD', 'RUBY', 'SAPPHIRE', 'OBSIDIAN'];
 
         let zombieModel = null;
         let zombieAnimations = [];
@@ -434,6 +434,22 @@
             ceiling.position.y = 4;
             group.add(ceiling);
 
+            let currentWallMaterial;
+            const shaderName = shaderModes[gameState.shaderMode];
+            switch (shaderName) {
+                case 'GOLD':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.4 });
+                    break;
+                case 'DIAMOND':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xb9f2ff, metalness: 0.9, roughness: 0.1, transparent: true, opacity: 0.8 });
+                    break;
+                case 'EMERALD':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x50c878, metalness: 0.7, roughness: 0.2 });
+                    break;
+                default:
+                    currentWallMaterial = wallMaterial;
+            }
+
             const step = 12;
             gameState.flickeringLights = gameState.flickeringLights || [];
             group.userData.collectibles = [];
@@ -446,7 +462,7 @@
                         const d = 2 + seededRandom(cx + oz, cz + ox, 4) * (step - 4);
                         const h = 4 + Math.floor(seededRandom(cx + oz, cz + ox) * 8);
                         const wallGeo = new THREE.BoxGeometry(w, h, d);
-                        const wall = new THREE.Mesh(wallGeo, wallMaterial);
+                        const wall = new THREE.Mesh(wallGeo, currentWallMaterial);
                         const xPos = ox + (seededRandom(cx + ox, cz + oz, 1) - 0.5) * (step - w);
                         const zPos = oz + (seededRandom(cz + oz, cx + ox, 2) - 0.5) * (step - d);
                         wall.position.set(xPos, h / 2, zPos);
@@ -567,7 +583,9 @@
                     if(clip) mixer.clipAction(clip).play();
                 }
                 entity.userData.mixer = mixer;
-                entity.position.set(x, -0.5, z);
+                entity.position.set(x, 0, z);
+                const box = new THREE.Box3().setFromObject(entity);
+                entity.position.y = -box.min.y;
 
 
             } else {
