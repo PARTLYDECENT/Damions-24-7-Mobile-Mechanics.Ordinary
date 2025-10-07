@@ -446,6 +446,36 @@
                 case 'EMERALD':
                     currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x50c878, metalness: 0.7, roughness: 0.2 });
                     break;
+                case 'RUBY':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xe0115f, metalness: 0.7, roughness: 0.2 });
+                    break;
+                case 'SAPPHIRE':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x0f52ba, metalness: 0.7, roughness: 0.2 });
+                    break;
+                case 'OBSIDIAN':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0.8, roughness: 0.2 });
+                    break;
+                case 'CREEPY':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x113311, roughness: 0.9 });
+                    break;
+                case 'CRIMSON':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xdc143c });
+                    break;
+                case 'VOID':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x050505 });
+                    break;
+                case 'GLITCH':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0x330033 });
+                    break;
+                case 'RAGE':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x660000 });
+                    break;
+                case 'RAINBOW':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
+                    break;
+                case 'WATER':
+                    currentWallMaterial = new THREE.MeshStandardMaterial({ color: 0x2266aa, transparent: true, opacity: 0.7, roughness: 0.1 });
+                    break;
                 default:
                     currentWallMaterial = wallMaterial;
             }
@@ -741,7 +771,9 @@
                 if (!entity.userData.isFriendly) {
                     const dist = entity.position.distanceTo(camera.position);
                     if (dist < closestHostileDist) closestHostileDist = dist;
-                    entity.lookAt(camera.position);
+                    const lookAtTarget = camera.position.clone();
+                    lookAtTarget.y = entity.position.y;
+                    entity.lookAt(lookAtTarget);
                     entity.rotateY(Math.PI);
                     if (dist > 2) entity.translateZ(entity.userData.speed);
                 }
