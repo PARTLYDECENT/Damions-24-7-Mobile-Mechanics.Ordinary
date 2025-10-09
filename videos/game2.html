@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backrooms Escape - Enhanced Realism</title>
+    <title>Ordinary Technology Operation Necktie</title>
     <style>
         * {
             margin: 0;
@@ -46,13 +46,29 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 2px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+            width: 10px;
+            height: 10px;
             pointer-events: none;
             z-index: 5;
+        }
+
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+
+        #crosshair::before {
+            width: 2px;
+            height: 10px;
+            left: 4px;
+        }
+
+        #crosshair::after {
+            width: 10px;
+            height: 2px;
+            top: 4px;
         }
         
         #instructions {
@@ -183,10 +199,10 @@
     </div>
     
     <div id="instructions">
-        WASD-Move | MOUSE-Look | CLICK-Attack | R-Reload | 1-Gun | 2-Sword | 3-Tentacle | 5-Shotgun | TAB-Cycle Shaders | Find EXIT
+        WASD-Move | MOUSE-Look | CLICK-Attack | R-Reload | 1-Gun | 2-Sword | 3-Tentacle | 5-Rifle | TAB-Cycle Shaders | Find EXIT
     </div>
     
-    <div id="warning">THEY ARE WATCHING YOU</div>
+    <div id="warning"></div>
     <div id="eventText"></div>
     <div id="dialogueBox"></div>
     
@@ -245,7 +261,7 @@
             collected: 0
         };
 
-        const shaderModes = ['NORMAL', 'CREEPY', 'CRIMSON', 'VOID', 'GLITCH', 'RAGE', 'RAINBOW', 'WATER', 'GOLD', 'DIAMOND', 'EMERALD', 'RUBY', 'SAPPHIRE', 'OBSIDIAN'];
+        const shaderModes = ['NORMAL', 'CREEPY', 'CRIMSON', 'VOID', 'GLITCH', 'RAGE', 'RAINBOW', 'WATER', 'GOLD', 'DIAMOND', 'EMERALD', 'RUBY', 'SAPPHIRE', 'OBSIDIAN', 'INVERT', 'NOIR', 'PSYCHEDELIC', 'TERMINAL', 'MATRIX'];
 
         let zombieModel = null;
         let zombieAnimations = [];
@@ -262,6 +278,7 @@
             zombieModel = gltf.scene;
             zombieAnimations = gltf.animations;
             console.log("Zombie model loaded.");
+            console.log('Available zombie animations:', zombieAnimations.map(a => a.name));
         });
 
         gltfLoader.load('../assets/models/pistol.glb', (gltf) => {
@@ -592,13 +609,69 @@
             Object.keys(gameState.chunks || {}).forEach(k => { scene.remove(gameState.chunks[k]); delete gameState.chunks[k]; });
             updateChunks(camera.position);
         }
+
+        function updateWallMaterials() {
+            const shaderName = shaderModes[gameState.shaderMode];
+            let newMaterial;
+            switch (shaderName) {
+                case 'GOLD':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.4 });
+                    break;
+                case 'DIAMOND':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xb9f2ff, metalness: 0.9, roughness: 0.1, transparent: true, opacity: 0.8 });
+                    break;
+                case 'EMERALD':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x50c878, metalness: 0.7, roughness: 0.2 });
+                    break;
+                case 'RUBY':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xe0115f, metalness: 0.7, roughness: 0.2 });
+                    break;
+                case 'SAPPHIRE':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x0f52ba, metalness: 0.7, roughness: 0.2 });
+                    break;
+                case 'OBSIDIAN':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0.8, roughness: 0.2 });
+                    break;
+                case 'CREEPY':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x113311, roughness: 0.9 });
+                    break;
+                case 'CRIMSON':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xdc143c });
+                    break;
+                case 'VOID':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x050505 });
+                    break;
+                case 'GLITCH':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff, emissive: 0x330033 });
+                    break;
+                case 'RAGE':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x660000 });
+                    break;
+                case 'RAINBOW':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: new THREE.Color(Math.random(), Math.random(), Math.random()) });
+                    break;
+                case 'WATER':
+                    newMaterial = new THREE.MeshStandardMaterial({ color: 0x2266aa, transparent: true, opacity: 0.7, roughness: 0.1 });
+                    break;
+                default:
+                    newMaterial = wallMaterial;
+            }
+
+            Object.values(gameState.chunks).forEach(chunk => {
+                chunk.children.forEach(child => {
+                    if (child.isMesh && child.geometry.type === 'BoxGeometry') {
+                        child.material = newMaterial;
+                    }
+                });
+            });
+        }
         
         function createEntity(x, z, type = 0) {
             const types = [
-                { color: 0x330000, emissive: 0xff0000, speed: 0.01, health: 3, size: 0.8, isFriendly: false, dialogue: {normal: ["We are one.", "You cannot comprehend.", "The pattern must be completed.", "Your presence is a flaw."]} },
-                { color: 0x001a33, emissive: 0x0088ff, speed: 0.02, health: 2, size: 0.6, isFriendly: false, dialogue: {normal: ["It is listening.", "The frequency is changing.", "You disrupt the signal.", "Become one with the static."]} },
-                { color: 0x1a3300, emissive: 0x88ff00, speed: 0.0075, health: 5, size: 1.2, isFriendly: false, dialogue: {normal: ["The flesh is weak.", "We will consume.", "Your form is imperfect.", "Join the growth."]} },
-                { color: 0x003333, emissive: 0x00ffff, speed: 0.01, health: 100, size: 0.7, isFriendly: true, dialogue: { highSanity: ["You seem lucid. Good.", "The exit is real, but it moves.", "These walls... they listen.", "I saw a man with a face like a clock.", "The yellow is a lie.", "Stay away from the shadows, they bite.", "The architect of this place is a madman.", "I've seen others, but they all go mad."], lowSanity: ["...the colors... they scream...", "It sees you. It knows your name.", "You're becoming part of this place.", "The static is singing to me.", "My teeth are not my own.", "The walls are breathing, can't you feel it?", "My reflection has a different face.", "The whispers are getting louder."], normal: ["You aren't supposed to be here.", "The buzzing... it makes them angry.", "Follow the green light.", "Don't lose your mind. They feed on fear.", "Hurry. This place... it remembers.", "There's no escape, only deeper levels.", "The creatures here are drawn to movement.", "Don't trust the silence."], enemyResponses: { "We are one.": "I am not you.", "You cannot comprehend.": "I don't want to.", "The pattern must be completed.": "I will break it.", "Your presence is a flaw.": "I am not a flaw.", "It is listening.": "I know.", "The frequency is changing.": "I can feel it.", "You disrupt the signal.": "Good.", "Become one with the static.": "Never.", "The flesh is weak.": "But my will is strong.", "We will consume.": "Not me.", "Your form is imperfect.": "It's mine.", "Join the growth.": "I refuse." } } }
+                { color: 0x330000, emissive: 0xff0000, speed: 0.01, health: 3, size: 0.8, isFriendly: false, dialogue: {normal: ["We are one.", "You cannot comprehend.", "The pattern must be completed.", "Your presence is a flaw.", "Your light will be extinguished.", "The Architect sees all.", "You are a glitch in the system.", "We are the antibodies of this reality."]} },
+                { color: 0x001a33, emissive: 0x0088ff, speed: 0.02, health: 2, size: 0.6, isFriendly: false, dialogue: {normal: ["It is listening.", "The frequency is changing.", "You disrupt the signal.", "Become one with the static.", "Your light will be extinguished.", "The Architect sees all.", "You are a glitch in the system.", "We are the antibodies of this reality."]} },
+                { color: 0x1a3300, emissive: 0x88ff00, speed: 0.0075, health: 5, size: 1.2, isFriendly: false, dialogue: {normal: ["The flesh is weak.", "We will consume.", "Your form is imperfect.", "Join the growth.", "Your light will be extinguished.", "The Architect sees all.", "You are a glitch in the system.", "We are the antibodies of this reality."]} },
+                { color: 0x003333, emissive: 0x00ffff, speed: 0.01, health: 100, size: 0.7, isFriendly: true, dialogue: { highSanity: ["You seem lucid. Good.", "The exit is real, but it moves.", "These walls... they listen.", "I saw a man with a face like a clock.", "The yellow is a lie.", "Stay away from the shadows, they bite.", "The architect of this place is a madman.", "I've seen others, but they all go mad.", "You are not the first to try and escape. You will not be the last.", "The Architect is a cruel master. He builds, we suffer.", "I have seen things you would not believe. Realities folding in on themselves.", "There is a song that the static sings. If you listen closely, you can hear the truth."], lowSanity: ["...the colors... they scream...", "It sees you. It knows your name.", "You're becoming part of this place.", "The static is singing to me.", "My teeth are not my own.", "The walls are breathing, can't you feel it?", "My reflection has a different face.", "The whispers are getting louder.", "The walls are hungry. They want to eat the light.", "My skin is not my own. It is a prison of flesh.", "The numbers, Mason! What do they mean?", "I can see the code. It's all around us. We are just variables in a simulation."], normal: ["You aren't supposed to be here.", "The buzzing... it makes them angry.", "Follow the green light.", "Don't lose your mind. They feed on fear.", "Hurry. This place... it remembers.", "There's no escape, only deeper levels.", "The creatures here are drawn to movement.", "Don't trust the silence.", "The exit is a lie. There is only the maze.", "The entities here are not what they seem. They are echoes of what was.", "I have a name, but I have forgotten it. It was taken from me.", "There is a place where the walls bleed and the floor is made of teeth. Avoid it."], enemyResponses: { "We are one.": "I am not you.", "You cannot comprehend.": "I don't want to.", "The pattern must be completed.": "I will break it.", "Your presence is a flaw.": "I am not a flaw.", "It is listening.": "I know.", "The frequency is changing.": "I can feel it.", "You disrupt the signal.": "Good.", "Become one with the static.": "Never.", "The flesh is weak.": "But my will is strong.", "We will consume.": "Not me.", "Your form is imperfect.": "It's mine.", "Join the growth.": "I refuse." } } }
             ];
             const entityType = types[type];
 
@@ -609,13 +682,11 @@
 
                 const mixer = new THREE.AnimationMixer(entity);
                 if (zombieAnimations && zombieAnimations.length) {
-                    const clip = THREE.AnimationClip.findByName(zombieAnimations, 'walk') || zombieAnimations[0];
+                    const clip = THREE.AnimationClip.findByName(zombieAnimations, 'idle') || zombieAnimations[0];
                     if(clip) mixer.clipAction(clip).play();
                 }
                 entity.userData.mixer = mixer;
-                entity.position.set(x, 0, z);
-                const box = new THREE.Box3().setFromObject(entity);
-                entity.position.y = -box.min.y;
+                entity.position.set(x, 0.1, z);
 
 
             } else {
@@ -637,8 +708,8 @@
         function createMorphoser() { const pC = 2000, g = new THREE.BufferGeometry(), pos = new Float32Array(pC * 3), bPos = new Float32Array(pC * 3); for (let i = 0; i < pC; i++) { const i3 = i * 3, r = Math.random() * 2.5, phi = Math.acos(2 * Math.random() - 1), theta = 2 * Math.PI * Math.random(); bPos[i3] = r * Math.sin(phi) * Math.cos(theta); bPos[i3+1] = r * Math.sin(phi) * Math.sin(theta); bPos[i3+2] = r * Math.cos(phi); } g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const m = new THREE.PointsMaterial({ color: 0xffaaff, size: 0.05, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8 }), morph = new THREE.Points(g, m); morph.userData = { basePositions: bPos, time: 0, noiseFactor: 2 }; const l = new THREE.PointLight(0xffaaff, 1.5, 20); morph.add(l); scene.add(morph); return morph; }
         function createSword() { const g = new THREE.Group(), bM = new THREE.MeshStandardMaterial({color: 0xcccccc, metalness: 0.9, roughness: 0.2}), hM = new THREE.MeshStandardMaterial({color: 0x332211, roughness: 0.8}); const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 0.02), bM); b.position.y = 0.75; const h = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), hM); const grd = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.05), hM); grd.position.y = 0.15; g.add(b, h, grd); g.visible = false; camera.add(g); return g; }
         function createTentacle() { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x8e44ad, roughness: 0.6, metalness: 0.2}), sG = new THREE.SphereGeometry(0.05, 8, 8); for (let i = 0; i < 15; i++) { const s = new THREE.Mesh(sG, m); s.position.y = -i * 0.1; g.add(s); } g.visible = false; camera.add(g); return g; }
-        function createShotgun() { const g = new THREE.Group(), brlM = new THREE.MeshStandardMaterial({color: 0x444444, metalness: 0.8, roughness: 0.4}), stkM = new THREE.MeshStandardMaterial({color: 0x5a3a22, roughness: 0.7}); const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 16), brlM); brl.position.set(0, 0, -0.4); brl.rotation.x = Math.PI / 2; const stk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.5), stkM); stk.position.set(0, -0.05, 0.3); g.add(brl, stk); g.visible = false; camera.add(g); return g; }
         function createRailgun() { const g = new THREE.Group(), bdyM = new THREE.MeshStandardMaterial({color: 0x111111, metalness: 0.95, roughness: 0.3}), railM = new THREE.MeshStandardMaterial({color: 0x00aaff, emissive: 0x00aaff, emissiveIntensity: 2}); const bdy = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 1.2), bdyM); const rG = new THREE.CylinderGeometry(0.01, 0.01, 1.0, 8); const r1 = new THREE.Mesh(rG, railM); r1.position.set(0.05, 0.03, -0.5); r1.rotation.x = Math.PI / 2; const r2 = new THREE.Mesh(rG, railM); r2.position.set(-0.05, 0.03, -0.5); r2.rotation.x = Math.PI / 2; g.add(bdy, r1, r2); g.visible = false; camera.add(g); return g; }
+        function createShotgun() { const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({color: 0x444444, metalness: 0.8, roughness: 0.5}); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 16), m); b.rotation.z = Math.PI / 2; b.position.x = 0.1; const s = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.3), m); s.position.z = -0.25; g.add(b, s); g.visible = false; camera.add(g); return g; }
         function createExitPortal(level) { const g = new THREE.SphereGeometry(2, 32, 32), m = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 2.5, transparent: true, opacity: 0.7 }), p = new THREE.Mesh(g, m); p.position.set(0, 2, 40 + level * 10); const l = new THREE.PointLight(0x00ff00, 2, 25); p.add(l); return p; }
         function createProjectile(origin, direction, color = 0xffff00, lifetime = 100, velocity = 1.2) { const g = new THREE.SphereGeometry(0.1, 8, 8), m = new THREE.MeshBasicMaterial({ color }), p = new THREE.Mesh(g, m); p.position.copy(origin); p.userData = { velocity: direction.normalize().multiplyScalar(velocity), lifetime: lifetime }; return p; }
 
@@ -681,17 +752,17 @@
         
         function triggerEvent() { if(!gameState.activeEvent && Math.random() < 0.3) { gameState.activeEvent = events[Math.floor(Math.random() * events.length)]; gameState.eventTimer = gameState.activeEvent.duration; document.getElementById('eventText').textContent = gameState.activeEvent.name; document.getElementById('eventText').style.opacity = 1; } }
         
-        window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); gameState.keys[key] = true; if (key === '1') switchWeapon('gun'); if (key === '2') switchWeapon('sword'); if (key === '3') switchWeapon('tentacle'); if (key === '4') switchWeapon('railgun'); if (key === '5') switchWeapon('shotgun'); if(key === 'r' && (gameState.activeWeapon === 'gun' || gameState.activeWeapon === 'shotgun') && !gameState.reloading) { AudioEngine.play('reload'); gameState.reloading = true; setTimeout(() => { if (gameState.activeWeapon === 'gun') gameState.ammo = gameState.maxAmmo; if (gameState.activeWeapon === 'shotgun') gameState.ammo = 8; gameState.reloading = false; }, 1500); } if(key === 'tab') { e.preventDefault(); gameState.shaderMode = (gameState.shaderMode + 1) % shaderModes.length; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode]; regenerateWorld(); } });
+        window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); gameState.keys[key] = true; if (key === '1') switchWeapon('gun'); if (key === '2') switchWeapon('sword'); if (key === '3') switchWeapon('tentacle'); if (key === '4') switchWeapon('railgun'); if (key === '5') switchWeapon('shotgun'); if (key === '6') switchWeapon('rifle'); if(key === 'r' && (gameState.activeWeapon === 'gun' || gameState.activeWeapon === 'shotgun') && !gameState.reloading) { AudioEngine.play('reload'); gameState.reloading = true; setTimeout(() => { if (gameState.activeWeapon === 'gun') gameState.ammo = gameState.maxAmmo; if (gameState.activeWeapon === 'shotgun') gameState.ammo = 8; gameState.reloading = false; }, 1500); } if(key === 'tab') { e.preventDefault(); gameState.shaderMode = (gameState.shaderMode + 1) % shaderModes.length; document.getElementById('shaderMode').textContent = shaderModes[gameState.shaderMode]; updateWallMaterials(); } });
         window.addEventListener('keyup', (e) => { gameState.keys[e.key.toLowerCase()] = false; });
         canvas.addEventListener('click', () => { if (!AudioEngine.isInitialized) AudioEngine.init(); if(!gameState.isLocked) canvas.requestPointerLock(); else attack(); });
         document.addEventListener('pointerlockchange', () => { gameState.isLocked = document.pointerLockElement === canvas; document.body.style.cursor = gameState.isLocked ? 'none' : 'default'; });
         canvas.addEventListener('mousemove', (e) => { if(gameState.isLocked) { gameState.rotation.y -= e.movementX * 0.002; gameState.rotation.x -= e.movementY * 0.002; gameState.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, gameState.rotation.x)); } });
 
-        function switchWeapon(weapon) { gameState.activeWeapon = weapon; if (gameState.pistol) gameState.pistol.visible = (weapon === 'gun'); gameState.sword.visible = (weapon === 'sword'); gameState.shotgun.visible = (weapon === 'shotgun'); gameState.railgun.visible = (weapon === 'railgun'); gameState.tentacle.visible = (weapon === 'tentacle'); const isGun = (weapon === 'gun' || weapon === 'shotgun' || weapon === 'railgun'); document.getElementById('ammoDisplay').style.display = isGun ? 'block' : 'none'; document.getElementById('ammoBar').style.display = isGun ? 'block' : 'none'; }
+        function switchWeapon(weapon) { gameState.activeWeapon = weapon; if (gameState.pistol) gameState.pistol.visible = (weapon === 'gun'); if(gameState.sword) gameState.sword.visible = (weapon === 'sword'); if(gameState.shotgun) gameState.shotgun.visible = (weapon === 'shotgun'); if(gameState.railgun) gameState.railgun.visible = (weapon === 'railgun'); if(gameState.tentacle) gameState.tentacle.visible = (weapon === 'tentacle'); const isGun = (weapon === 'gun' || weapon === 'shotgun' || weapon === 'railgun'); document.getElementById('ammoDisplay').style.display = isGun ? 'block' : 'none'; document.getElementById('ammoBar').style.display = isGun ? 'block' : 'none'; }
         function attack() { if (gameState.activeWeapon === 'gun') shoot(); else if (gameState.activeWeapon === 'sword') swingSword(); else if (gameState.activeWeapon === 'shotgun') shootShotgun(); else if (gameState.activeWeapon === 'railgun') shootRailgun(); else if (gameState.activeWeapon === 'tentacle') whipTentacle(); }
         function shoot() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 200) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; if (gameState.pistol) { gameState.pistol.rotation.x = -0.2; gameState.pistol.position.z = -0.4; } const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const p = createProjectile(camera.position.clone(), d); gameState.projectiles.push(p); scene.add(p); } }
-        function shootShotgun() { const now = performance.now(); if(gameState.ammo >= 2 && !gameState.reloading && now - gameState.lastShot > 1000) { AudioEngine.play('shoot'); gameState.ammo -= 2; gameState.lastShot = now; for (let i = 0; i < 8; i++) { const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); d.x += (Math.random() - 0.5) * 0.2; d.y += (Math.random() - 0.5) * 0.2; const p = createProjectile(camera.position.clone(), d, 0xff8800); gameState.projectiles.push(p); scene.add(p); } } }
-        function shootRailgun() { const now = performance.now(); if (!gameState.reloading && now - gameState.lastShot > 2000) { AudioEngine.play('railgun'); gameState.lastShot = now; const r = new THREE.Raycaster(), d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); r.set(camera.position, d); const intersects = r.intersectObjects(gameState.entities); const bM = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }), bG = new THREE.CylinderGeometry(0.05, 0.05, 100, 8), beam = new THREE.Mesh(bG, bM); beam.position.copy(camera.position).add(d.multiplyScalar(50)); beam.quaternion.copy(camera.quaternion); beam.rotation.x += Math.PI / 2; scene.add(beam); setTimeout(() => scene.remove(beam), 100); if (intersects.length > 0) { const hit = intersects[0].object; if (hit && hit.userData && !hit.userData.isFriendly) { hit.userData.health -= 10; AudioEngine.play('entityHit'); if (hit.userData.health <= 0) { scene.remove(hit); gameState.entities = gameState.entities.filter(e => e !== hit); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } } }
+        function shootShotgun() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 1000) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; for (let i = 0; i < 8; i++) { const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const s = 0.1; d.x += (Math.random() - 0.5) * s; d.y += (Math.random() - 0.5) * s; d.z += (Math.random() - 0.5) * s; const p = createProjectile(camera.position.clone(), d, 0xff8800, 50, 1.5); gameState.projectiles.push(p); scene.add(p); } } }
+        function shootRailgun() { const now = performance.now(); if (!gameState.reloading && now - gameState.lastShot > 2000) { AudioEngine.play('railgun'); gameState.lastShot = now; const r = new THREE.Raycaster(), d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); r.set(camera.position, d); const intersects = r.intersectObjects(gameState.entities, true); const bM = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 }), bG = new THREE.CylinderGeometry(0.05, 0.05, 100, 8), beam = new THREE.Mesh(bG, bM); beam.position.copy(camera.position).add(d.multiplyScalar(50)); beam.quaternion.copy(camera.quaternion); beam.rotation.x += Math.PI / 2; scene.add(beam); setTimeout(() => scene.remove(beam), 100); if (intersects.length > 0) { const hit = intersects[0].object; if (hit && hit.userData && !hit.userData.isFriendly) { hit.userData.health -= 10; AudioEngine.play('entityHit'); if (hit.userData.health <= 0) { scene.remove(hit); gameState.entities = gameState.entities.filter(e => e !== hit); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } } }
         function shootRifle() { const now = performance.now(); if(gameState.ammo > 0 && !gameState.reloading && now - gameState.lastShot > 100) { AudioEngine.play('shoot'); gameState.ammo--; gameState.lastShot = now; if (gameState.rifle) { gameState.rifle.rotation.x = -0.2; gameState.rifle.position.z = -0.4; } const d = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion); const p = createProjectile(camera.position.clone(), d, 0x00ff00, 100, 2.0); gameState.projectiles.push(p); scene.add(p); } }
         function swingSword() { if (gameState.isSwinging) return; gameState.isSwinging = true; gameState.swingStartTime = performance.now(); AudioEngine.play('swordSwing'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 2.5) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.8) { e.userData.health -= 3; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isSwinging = false; }, 500); }
         function whipTentacle() { if (gameState.isWhipping) return; gameState.isWhipping = true; gameState.whipStartTime = performance.now(); AudioEngine.play('tentacleWhip'); const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion); gameState.entities.forEach(e => { if (!e.userData.isFriendly && e.position.distanceTo(camera.position) < 4) { const d = e.position.clone().sub(camera.position).normalize(); if (f.dot(d) > 0.7) { e.userData.health -= 2; AudioEngine.play('entityHit'); if (e.userData.health <= 0) { scene.remove(e); gameState.entities = gameState.entities.filter(i => i !== e); gameState.kills++; if (gameState.kills === 10) { showEventText("Rifle Unlocked! Press 6 to equip."); } gameState.sanity = Math.min(1, gameState.sanity + 0.1); } } } }); setTimeout(() => { gameState.isWhipping = false; }, 700); }
@@ -737,6 +808,30 @@
             });
         }
 
+        function updateZombieAnimations(entity, isMoving) {
+            const mixer = entity.userData.mixer;
+            if (!mixer) return;
+
+            const idleAction = mixer.clipAction(THREE.AnimationClip.findByName(zombieAnimations, 'idle'));
+            const walkAction = mixer.clipAction(THREE.AnimationClip.findByName(zombieAnimations, 'walk'));
+
+            if (isMoving) {
+                if (idleAction && idleAction.isRunning()) {
+                    idleAction.fadeOut(0.5);
+                }
+                if (walkAction && !walkAction.isRunning()) {
+                    walkAction.reset().fadeIn(0.5).play();
+                }
+            } else {
+                if (walkAction && walkAction.isRunning()) {
+                    walkAction.fadeOut(0.5);
+                }
+                if (idleAction && !idleAction.isRunning()) {
+                    idleAction.reset().fadeIn(0.5).play();
+                }
+            }
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             const time = performance.now() * 0.001;
@@ -767,7 +862,11 @@
             
             let closestHostileDist = 1000;
             gameState.entities.forEach(entity => {
-                if (entity.userData.mixer) entity.userData.mixer.update(delta);
+                if (entity.userData.mixer) {
+                    const isMoving = entity.position.distanceTo(camera.position) > 2;
+                    updateZombieAnimations(entity, isMoving);
+                    entity.userData.mixer.update(delta);
+                }
                 if (!entity.userData.isFriendly) {
                     const dist = entity.position.distanceTo(camera.position);
                     if (dist < closestHostileDist) closestHostileDist = dist;
@@ -775,7 +874,13 @@
                     lookAtTarget.y = entity.position.y;
                     entity.lookAt(lookAtTarget);
                     entity.rotateY(Math.PI);
-                    if (dist > 2) entity.translateZ(entity.userData.speed);
+                    if (dist > 2) {
+                        const direction = new THREE.Vector3();
+                        const cameraGroundPosition = camera.position.clone();
+                        cameraGroundPosition.y = entity.position.y;
+                        direction.subVectors(cameraGroundPosition, entity.position).normalize();
+                        entity.position.add(direction.multiplyScalar(entity.userData.speed));
+                    }
                 }
             });
 
