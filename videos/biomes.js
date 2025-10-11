@@ -1,3 +1,5 @@
+import { BlackGooEntity } from './game2.html'; // This is not a module, but indicates source
+
 const BiomeManager = {
     biomes: [
         { name: 'BACKROOMS', fogColor: 0x9c8f6f, wallTexture: 'Wallpaper', floorTexture: 'Carpet' },
@@ -16,25 +18,26 @@ const BiomeManager = {
 
     generateChunk(chunkX, chunkZ, biome, textures, shaders) {
         const group = new THREE.Group();
+        const entities = [];
         const CHUNK_SIZE = 50;
         group.position.set(chunkX * CHUNK_SIZE, 0, chunkZ * CHUNK_SIZE);
 
         switch(biome.name) {
             case 'BACKROOMS':
-                this.generateBackroomsChunk(group, CHUNK_SIZE, textures, shaders);
+                this.generateBackroomsChunk(group, CHUNK_SIZE, textures, shaders, entities);
                 break;
             case 'FLOODED':
-                this.generateFloodedChunk(group, CHUNK_SIZE, textures);
+                this.generateFloodedChunk(group, CHUNK_SIZE, textures, entities);
                 break;
             // Add other biome cases here
             default:
-                this.generateBackroomsChunk(group, CHUNK_SIZE, textures, shaders);
+                this.generateBackroomsChunk(group, CHUNK_SIZE, textures, shaders, entities);
                 break;
         }
-        return group;
+        return { group, entities };
     },
 
-    generateBackroomsChunk(group, size, textures, shaders) {
+    generateBackroomsChunk(group, size, textures, shaders, entities) {
         const wallMaterial = new THREE.ShaderMaterial(shaders[0]);
         const floorMaterial = new THREE.MeshStandardMaterial({ map: textures.floor });
         floorMaterial.map.repeat.set(10, 10);
@@ -67,9 +70,16 @@ const BiomeManager = {
                 }
             }
         }
+
+        if (Math.random() > 0.95) {
+            const goo = new BlackGooEntity();
+            goo.mesh.position.set((Math.random() - 0.5) * size, 1, (Math.random() - 0.5) * size);
+            group.add(goo.mesh);
+            entities.push(goo);
+        }
     },
 
-    generateFloodedChunk(group, size, textures) {
+    generateFloodedChunk(group, size, textures, entities) {
         const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
         const floorGeo = new THREE.PlaneGeometry(size, size);
 

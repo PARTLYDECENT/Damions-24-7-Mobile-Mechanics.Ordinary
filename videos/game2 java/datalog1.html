@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CLASSIFIED DOSSIER — OPERATION: NECKTIE</title>
+  <style>
+    :root{--bg:#050507;--text:#cfd6dc;--accent:#9bdcff;--mono: 'Courier New', Courier, monospace}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#020204 0%,#07080a 100%);color:var(--text);font-family:var(--mono);}
+    .wrap{max-width:900px;margin:3vh auto;padding:28px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 40px rgba(0,0,0,0.7);}
+    header{display:flex;align-items:center;gap:12px}
+    .seal{width:64px;height:64px;border-radius:8px;background:linear-gradient(135deg,#0b0f14,#071018);display:flex;align-items:center;justify-content:center;border:1px solid rgba(155,220,255,0.06)}
+    .seal .o{width:36px;height:36px;border-radius:6px;background:linear-gradient(90deg,#131620,#0b0f14);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
+    h1{font-size:1.2rem;margin:0;color:var(--accent)}
+    p.meta{margin:6px 0 18px 0;font-size:0.85rem;color:#9fb0bf}
+    .console{background:#00000011;border-radius:8px;padding:18px;min-height:320px;position:relative;overflow:hidden}
+    pre#dossier{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.45;margin:0;color:var(--text);}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button{background:#0f1720;border:1px solid #1d2730;color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.primary{background:linear-gradient(90deg,#0b2330,#04333f);border:1px solid rgba(155,220,255,0.12);color:var(--accent)}
+    .small{font-size:13px;color:#9fb0bf}
+    .status{position:absolute;right:14px;top:14px;font-size:12px;color:#9fb0bf}
+    .blink{animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:0}}
+    .footer{display:flex;justify-content:space-between;margin-top:14px;color:#8ea0ad;font-size:13px}
+    .tag{background:#081018;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.02);font-size:12px}
+    .voice-settings{display:flex;gap:8px;align-items:center}
+    select,input[type=range]{background:#081018;color:var(--text);border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="seal" aria-hidden><div class="o">Ω</div></div>
+      <div>
+        <h1>CLASSIFIED DOSSIER — OPERATION: NECKTIE</h1>
+        <p class="meta">ACCESS: TIER 5 CONTRACTOR | EYES ONLY — Joint: DoD • DARPA • "GRAY LOGIC"</p>
+      </div>
+    </header>
+
+    <div class="console" role="region" aria-label="Dossier console">
+      <div class="status small">Status: <span id="stat">STANDBY</span></div>
+      <pre id="dossier"></pre>
+
+      <div style="position:absolute;left:14px;bottom:12px;display:flex;gap:8px;align-items:center">
+        <div class="voice-settings">
+          <label class="small">Voice:</label>
+          <select id="voiceSelect"></select>
+          <label class="small">Pitch</label>
+          <input id="pitch" type="range" min="0.5" max="2" step="0.05" value="0.95">
+          <label class="small">Rate</label>
+          <input id="rate" type="range" min="0.6" max="1.6" step="0.05" value="0.9">
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="primary">INITIATE MISSION (TYPE & READ)</button>
+      <button id="stopBtn">ABORT</button>
+      <button id="pauseBtn">PAUSE TYPING</button>
+      <button id="droneBtn">TOGGLE DRONE</button>
+      <span class="small tag">Web Speech API TTS • Procedural Drone • Dual-voice read</span>
+    </div>
+
+    <div class="footer">
+      <div>File: OP_NECKTIE.LOG</div>
+      <div>Author: <span style="color:var(--accent)">DARPA SIGINT</span></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== DOSSIER TEXT =====
+    const TEXT = `-- CLASSIFIED DOSSIER: OPERATION NECKTIE --\nACCESS: TIER 5 // EYES ONLY\n\nOVERVIEW:\nOperation NECKTIE is a tri‑agency insertion into a stable spatial anomaly beneath a decommissioned research site. Site telemetry shows repeated topology folding and information echo.\n\nOBJECTIVE:\n1) Confirm sentience vector within anomaly.\n2) Recover sample and secure bridgehead.\n3) Extract any active code or memetic artifacts.\n\nFIELD REPORT (INITIAL ENTRY):\nAt 0400 hours local, the scout team crossed the threshold. Visual feed: intact human architecture; ambient logic reconfiguration observed. Two members reported auditory overlap between internal thought and incoming digital structure.\n\nANOMALY BEHAVIORAL NOTES:\n- Environment performs approximations of human belief systems.\n- Data presents as layered narrative; attempts to communicate using user‑familiar constructs.\n- GRAY LOGIC analysts warn of recursive patterning — repeated exposure increases cognitive assimilation risk.\n\nSTATUS:\nMission LIVE. Insertion team established a short‑range relay. Command advises strict SOP: no unsolicited communication, no personal identifiers, terminate on anomalous empathic resonance.\n\nIF CONTACT IS LOST:\nAssume assimilation. Do not attempt remote reinterpretation. Purge tie‑lines and sever feed.\n\n-- END OF FILE --`;
+
+    // ===== UI elements =====
+    const dossierEl = document.getElementById('dossier');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const droneBtn = document.getElementById('droneBtn');
+    const stat = document.getElementById('stat');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const pitchEl = document.getElementById('pitch');
+    const rateEl = document.getElementById('rate');
+
+    // ===== Typing engine =====
+    let idx = 0, paused = false, typing = false, typingTimer = null;
+
+    function typeStep(){
+      if(paused){ typingTimer = setTimeout(typeStep, 120); return; }
+      if(idx >= TEXT.length){ typing = false; stat.textContent = 'COMPLETE'; return; }
+      dossierEl.textContent += TEXT[idx++];
+      // small pause at punctuation
+      let delay = 24 + (TEXT[idx-1] === '\n' ? 140 : (/[.,:;\-]/.test(TEXT[idx-1]) ? 80 : 0));
+      typingTimer = setTimeout(typeStep, delay);
+    }
+
+    // ===== Web Speech API =====
+    let synth = window.speechSynthesis;
+    let voices = [];
+
+    function populateVoices(){
+      voices = synth.getVoices() || [];
+      voiceSelect.innerHTML = '';
+      voices.forEach((v,i)=>{
+        const opt = document.createElement('option'); opt.value = i; opt.textContent = `${v.name} — ${v.lang}`; voiceSelect.appendChild(opt);
+      });
+    }
+    populateVoices();
+    if(synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
+
+    function speakDossier(){
+      if(!('speechSynthesis' in window)) return;
+      // Main clean read
+      const u1 = new SpeechSynthesisUtterance(TEXT.replace(/\n/g,'\n'));
+      const vIdx = parseInt(voiceSelect.value || 0);
+      if(voices[vIdx]) u1.voice = voices[vIdx];
+      u1.pitch = parseFloat(pitchEl.value);
+      u1.rate = parseFloat(rateEl.value);
+      u1.volume = 1.0;
+
+      // Secondary low resonance to imply "corruption" — slightly delayed, lower pitch
+      const u2 = new SpeechSynthesisUtterance(TEXT.replace(/\n/g,'\n'));
+      if(voices[vIdx]) u2.voice = voices[vIdx];
+      u2.pitch = Math.max(0.45, parseFloat(pitchEl.value) - 0.35);
+      u2.rate = Math.min(1.6, parseFloat(rateEl.value) * 0.98);
+      u2.volume = 0.45;
+
+      // Schedule: start primary now, start secondary after 220ms for a haunting overlap
+      synth.cancel();
+      synth.speak(u1);
+      setTimeout(()=>{ synth.speak(u2); }, 220);
+
+      // subtle extra: onend, mark status
+      u1.onend = () => { stat.textContent = 'TTS COMPLETE'; };
+    }
+
+    // ===== WebAudio Drone + Static =====
+    let audioCtx, droneGain, osc, noiseNode, noiseGain;
+    function ensureAudio(){
+      if(audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // drone
+      osc = audioCtx.createOscillator();
+      droneGain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 45; // low drone
+      droneGain.gain.value = 0;
+      osc.connect(droneGain);
+      droneGain.connect(audioCtx.destination);
+      osc.start();
+
+      // static/noise
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * 0.02;
+      noiseNode = audioCtx.createBufferSource();
+      noiseNode.buffer = buffer; noiseNode.loop = true;
+      noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0;
+      noiseNode.connect(noiseGain); noiseGain.connect(audioCtx.destination);
+      noiseNode.start();
+    }
+
+    let droneOn = false;
+    function toggleDrone(){
+      ensureAudio();
+      droneOn = !droneOn;
+      if(droneOn){
+        droneGain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.4);
+        noiseGain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.6);
+        droneBtn.textContent = 'DRONE: ON';
+      } else {
+        droneGain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.4);
+        noiseGain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.4);
+        droneBtn.textContent = 'TOGGLE DRONE';
+      }
+    }
+
+    // ===== Controls wiring =====
+    startBtn.addEventListener('click', ()=>{
+      if(typing) return; // don't restart
+      // reset
+      dossierEl.textContent = '';
+      idx = 0; paused = false; typing = true; stat.textContent = 'DEPLOYED';
+      typeStep();
+      // start TTS shortly after typing starts
+      setTimeout(()=>{
+        try{ speakDossier(); }catch(e){ console.warn('TTS failed', e); }
+      }, 700);
+      // ensure audio context exists so drone can be engaged without user gesture issues
+      ensureAudio();
+    });
+
+    pauseBtn.addEventListener('click', ()=>{
+      paused = !paused; pauseBtn.textContent = paused ? 'RESUME TYPING' : 'PAUSE TYPING';
+      stat.textContent = paused ? 'PAUSED' : 'DEPLOYED';
+    });
+
+    stopBtn.addEventListener('click', ()=>{
+      // abort everything
+      typing = false; paused = false; clearTimeout(typingTimer);
+      idx = TEXT.length; dossierEl.textContent = TEXT; synth.cancel();
+      if(audioCtx){ droneGain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.2); noiseGain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.2); }
+      stat.textContent = 'ABORTED';
+    });
+
+    droneBtn.addEventListener('click', ()=>{ toggleDrone(); });
+
+    // allow keyboard shortcut: Enter to start
+    window.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ startBtn.click(); } if(e.key === 'Escape'){ stopBtn.click(); } });
+
+    // Accessibility: announce when voices load
+    setTimeout(()=>{ if(voices.length) stat.textContent = 'VOICES LOADED'; else stat.textContent = 'VOICE UNAVAILABLE'; }, 800);
+  </script>
+</body>
+</html>

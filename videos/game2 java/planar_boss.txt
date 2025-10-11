@@ -1,0 +1,516 @@
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+
+const PlanarDemon = () => {
+  const mountRef = useRef(null);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const sceneRef = useRef(null);
+
+  useEffect(() => {
+    if (!mountRef.current) return;
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const clock = new THREE.Clock();
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0a0a0a, 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    mountRef.current.appendChild(renderer.domElement);
+    
+    camera.position.set(0, 8, 10);
+    camera.lookAt(0, 0, 0);
+
+    // Create demon geometry
+    const geometry = new THREE.PlaneGeometry(8, 8, 128, 128);
+    const posArray = geometry.attributes.position.array;
+    const originalPositions = new Float32Array(posArray.length);
+    originalPositions.set(posArray);
+    
+    const vertexCount = geometry.attributes.position.count;
+    const teethIntensity = new Float32Array(vertexCount);
+    const chaosFactors = new Float32Array(vertexCount);
+    const bloodFlow = new Float32Array(vertexCount);
+    
+    for (let i = 0; i < vertexCount; i++) {
+      teethIntensity[i] = Math.random();
+      chaosFactors[i] = Math.random() * 2 - 1;
+      bloodFlow[i] = Math.random();
+    }
+    
+    geometry.setAttribute('teethIntensity', new THREE.BufferAttribute(teethIntensity, 1));
+    geometry.setAttribute('chaosFactors', new THREE.BufferAttribute(chaosFactors, 1));
+    geometry.setAttribute('bloodFlow', new THREE.BufferAttribute(bloodFlow, 1));
+
+    // Shader material
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uMorphProgress: { value: 0 },
+        uMousePos: { value: new THREE.Vector2(0, 0) },
+        uTeethHeight: { value: 2.0 },
+        uDarkness: { value: 0.8 },
+        uBloodIntensity: { value: 1.0 },
+        uChaosLevel: { value: 1.5 },
+        uSpikeSharpness: { value: 8.0 },
+        uPulseSpeed: { value: 3.0 }
+      },
+      vertexShader: `
+        uniform float uTime;
+        uniform float uMorphProgress;
+        uniform vec2 uMousePos;
+        uniform float uTeethHeight;
+        uniform float uChaosLevel;
+        uniform float uSpikeSharpness;
+        uniform float uPulseSpeed;
+        
+        attribute float teethIntensity;
+        attribute float chaosFactors;
+        attribute float bloodFlow;
+        
+        varying vec3 vNormal;
+        varying vec2 vUv;
+        varying float vElevation;
+        varying float vTeethFactor;
+        varying float vChaos;
+        varying float vBloodFlow;
+        varying vec3 vWorldPosition;
+        
+        vec4 permute(vec4 x) {
+          return mod(((x*34.0)+1.0)*x, 289.0);
+        }
+        
+        vec4 taylorInvSqrt(vec4 r) {
+          return 1.79284291400159 - 0.85373472095314 * r;
+        }
+        
+        float snoise(vec3 v) {
+          const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+          const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+          
+          vec3 i = floor(v + dot(v, C.yyy));
+          vec3 x0 = v - i + dot(i, C.xxx);
+          
+          vec3 g = step(x0.yzx, x0.xyz);
+          vec3 l = 1.0 - g;
+          vec3 i1 = min(g.xyz, l.zxy);
+          vec3 i2 = max(g.xyz, l.zxy);
+          
+          vec3 x1 = x0 - i1 + C.xxx;
+          vec3 x2 = x0 - i2 + C.yyy;
+          vec3 x3 = x0 - D.yyy;
+          
+          i = mod(i, 289.0);
+          vec4 p = permute(permute(permute(
+                    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                  + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                  + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+          
+          float n_ = 0.142857142857;
+          vec3 ns = n_ * D.wyz - D.xzx;
+          
+          vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+          vec4 x_ = floor(j * ns.z);
+          vec4 y_ = floor(j - 7.0 * x_);
+          
+          vec4 x = x_ *ns.x + ns.yyyy;
+          vec4 y = y_ *ns.x + ns.yyyy;
+          vec4 h = 1.0 - abs(x) - abs(y);
+          
+          vec4 b0 = vec4(x.xy, y.xy);
+          vec4 b1 = vec4(x.zw, y.zw);
+          
+          vec4 s0 = floor(b0)*2.0 + 1.0;
+          vec4 s1 = floor(b1)*2.0 + 1.0;
+          vec4 sh = -step(h, vec4(0.0));
+          
+          vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+          vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+          
+          vec3 p0 = vec3(a0.xy, h.x);
+          vec3 p1 = vec3(a0.zw, h.y);
+          vec3 p2 = vec3(a1.xy, h.z);
+          vec3 p3 = vec3(a1.zw, h.w);
+          
+          vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+          p0 *= norm.x;
+          p1 *= norm.y;
+          p2 *= norm.z;
+          p3 *= norm.w;
+          
+          vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+          m = m * m;
+          return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+        }
+        
+        float generateTeeth(vec3 pos, float time, float intensity) {
+          float teethPattern = snoise(pos * 4.0 + time * 0.3) * 0.5 + 0.5;
+          float sharpSpikes = pow(teethPattern, uSpikeSharpness) * intensity;
+          float chaos = snoise(pos * 8.0 + time * 0.5) * 0.3;
+          return sharpSpikes + chaos;
+        }
+        
+        vec3 morphToDemon(vec3 originalPos, float progress) {
+          float t = uTime * uPulseSpeed;
+          vec3 pos = originalPos;
+          
+          // Calculate distance from center for spherical transformation
+          float distFromCenter = length(originalPos.xy);
+          vec2 direction = normalize(originalPos.xy);
+          
+          // Stage 1: Flat plane - completely still (0.0 - 0.1)
+          if (progress <= 0.1) {
+            float breathe = sin(t * 0.3) * 0.01 * (progress * 10.0);
+            pos.z += breathe;
+          }
+          
+          // Stage 2: DRAMATIC EXPLOSION into sphere (0.1 - 0.6)
+          else if (progress > 0.1 && progress <= 0.6) {
+            float explosionProgress = smoothstep(0.1, 0.6, progress);
+            
+            // Transform plane to sphere
+            float radius = 3.0;
+            float phi = (originalPos.x / 4.0 + 0.5) * 3.14159265359;
+            float theta = (originalPos.y / 4.0 + 0.5) * 3.14159265359 * 2.0;
+            
+            vec3 spherePos;
+            spherePos.x = radius * sin(phi) * cos(theta);
+            spherePos.y = radius * sin(phi) * sin(theta);
+            spherePos.z = radius * cos(phi);
+            
+            // Lerp from flat to sphere with aggressive easing
+            float explosionEase = explosionProgress * explosionProgress * (3.0 - 2.0 * explosionProgress);
+            pos = mix(originalPos, spherePos, explosionEase);
+            
+            // Add explosion energy burst
+            float burst = (1.0 - abs(explosionProgress - 0.5) * 2.0) * 0.5;
+            pos += normalize(spherePos) * burst;
+          }
+          
+          // Stage 3: Spikes emerge from hell orb (0.6 - 1.0)
+          else {
+            // Full sphere position
+            float radius = 3.0;
+            float phi = (originalPos.x / 4.0 + 0.5) * 3.14159265359;
+            float theta = (originalPos.y / 4.0 + 0.5) * 3.14159265359 * 2.0;
+            
+            vec3 spherePos;
+            spherePos.x = radius * sin(phi) * cos(theta);
+            spherePos.y = radius * sin(phi) * sin(theta);
+            spherePos.z = radius * cos(phi);
+            
+            pos = spherePos;
+            
+            float spikeProgress = smoothstep(0.6, 1.0, progress);
+            
+            // Generate hell spikes
+            vec3 sphereNormal = normalize(spherePos);
+            float teeth = generateTeeth(originalPos * 2.0, t * 0.5, teethIntensity);
+            
+            // Spikes protrude radially outward from sphere
+            float spikeLength = teeth * uTeethHeight * spikeProgress * 2.0;
+            pos += sphereNormal * spikeLength;
+            
+            // Chaotic spike variations
+            float chaos = snoise(spherePos * 3.0 + t * 0.3) * chaosFactors;
+            pos += sphereNormal * chaos * 0.5 * spikeProgress;
+            
+            // Pulsing hell orb
+            float pulse = sin(t * 2.0) * 0.1 + 1.0;
+            pos *= pulse;
+            
+            // Rotation of the entire orb
+            float rotationSpeed = 0.3;
+            float angle = t * rotationSpeed * spikeProgress;
+            float cosA = cos(angle);
+            float sinA = sin(angle);
+            float newX = pos.x * cosA - pos.z * sinA;
+            float newZ = pos.x * sinA + pos.z * cosA;
+            pos.x = newX;
+            pos.z = newZ;
+          }
+          
+          return pos;
+        }
+        
+        void main() {
+          vUv = uv;
+          vTeethFactor = teethIntensity;
+          vChaos = chaosFactors;
+          vBloodFlow = bloodFlow;
+          
+          vec3 transformedPosition = morphToDemon(position, uMorphProgress);
+          
+          vec2 mouseInfluence = uMousePos - uv;
+          float mouseDistance = length(mouseInfluence);
+          float mouseEffect = exp(-mouseDistance * 5.0) * 0.5;
+          
+          if (uMorphProgress > 0.6) {
+            // In orb form - spikes reach toward mouse
+            vec3 toMouse = normalize(vec3(mouseInfluence * 2.0, 1.0));
+            transformedPosition += toMouse * mouseEffect * 2.0 * (uMorphProgress - 0.6) * 2.5;
+          }
+          
+          vElevation = transformedPosition.z;
+          vWorldPosition = (modelMatrix * vec4(transformedPosition, 1.0)).xyz;
+          
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
+          vNormal = normalize(normalMatrix * normal);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uMorphProgress;
+        uniform float uDarkness;
+        uniform float uBloodIntensity;
+        
+        varying vec3 vNormal;
+        varying vec2 vUv;
+        varying float vElevation;
+        varying float vTeethFactor;
+        varying float vChaos;
+        varying float vBloodFlow;
+        varying vec3 vWorldPosition;
+        
+        vec3 getDemonColor(float elevation, float teeth, float chaos, float blood) {
+          vec3 baseColor = vec3(0.1, 0.0, 0.0);
+          vec3 bloodColor = vec3(0.8, 0.1, 0.0);
+          vec3 shadowColor = vec3(0.02, 0.01, 0.0);
+          vec3 teethColor = vec3(0.9, 0.8, 0.7);
+          
+          float elevationFactor = smoothstep(-1.0, 2.0, elevation);
+          vec3 color = mix(shadowColor, baseColor, elevationFactor);
+          
+          float bloodPulse = sin(uTime * 4.0 + blood * 10.0) * 0.5 + 0.5;
+          vec3 bloodEffect = bloodColor * blood * bloodPulse * uBloodIntensity;
+          color += bloodEffect * 0.3;
+          
+          float teethThreshold = 0.7;
+          if (teeth > teethThreshold && elevation > 0.5) {
+            float teethMix = smoothstep(teethThreshold, 1.0, teeth);
+            color = mix(color, teethColor, teethMix * 0.8);
+          }
+          
+          float chaosTint = sin(chaos * 6.28 + uTime * 2.0) * 0.1 + 0.1;
+          color.r += chaosTint * abs(chaos);
+          color *= (1.0 - uDarkness * 0.7);
+          
+          return color;
+        }
+        
+        float getRimLighting(vec3 normal, vec3 viewDir) {
+          float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+          return pow(rim, 2.0);
+        }
+        
+        float getEnergyVeins(vec2 uv, float time) {
+          float vein1 = abs(sin(uv.x * 20.0 + time * 3.0)) * 
+                       abs(sin(uv.y * 15.0 + time * 2.0));
+          float vein2 = abs(sin(uv.x * 8.0 + uv.y * 12.0 + time * 4.0));
+          return pow(vein1 * vein2, 3.0) * 2.0;
+        }
+        
+        void main() {
+          vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+          vec3 demonColor = getDemonColor(vElevation, vTeethFactor, vChaos, vBloodFlow);
+          
+          float rim = getRimLighting(vNormal, viewDirection);
+          vec3 rimColor = vec3(0.8, 0.2, 0.0) * rim * 0.5;
+          
+          float veins = getEnergyVeins(vUv, uTime);
+          vec3 veinColor = vec3(1.0, 0.3, 0.0) * veins * 0.3;
+          
+          vec3 finalColor = demonColor + rimColor + veinColor;
+          float alpha = 0.3 + 0.7 * uMorphProgress;
+          float flicker = sin(uTime * 8.0 + vBloodFlow * 5.0) * 0.1 + 0.9;
+          alpha *= flicker;
+          
+          if (vTeethFactor > 0.7 && vElevation > 0.5) {
+            alpha = max(alpha, 0.9);
+          }
+          
+          gl_FragColor = vec4(finalColor, alpha);
+        }
+      `,
+      side: THREE.DoubleSide,
+      transparent: true
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+    scene.add(mesh);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x300000, 0.1);
+    scene.add(ambientLight);
+    
+    const mainLight = new THREE.DirectionalLight(0x800000, 1.0);
+    mainLight.position.set(0, 10, 5);
+    scene.add(mainLight);
+    
+    const backLight = new THREE.DirectionalLight(0x400000, 0.5);
+    backLight.position.set(0, -5, -10);
+    scene.add(backLight);
+    
+    const spotLight = new THREE.SpotLight(0xff0000, 0.8, 20, Math.PI / 4, 0.5);
+    spotLight.position.set(5, 10, 5);
+    scene.add(spotLight);
+
+    // Ground plane
+    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1;
+    scene.add(ground);
+
+    // Particles
+    const particleCount = 200;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      particlePositions[i] = (Math.random() - 0.5) * 50;
+      particlePositions[i + 1] = Math.random() * 20;
+      particlePositions[i + 2] = (Math.random() - 0.5) * 50;
+    }
+    const particleGeometry = new THREE.BufferGeometry();
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0x330000,
+      size: 0.1,
+      transparent: true,
+      opacity: 0.3
+    });
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+
+    // Mouse tracking
+    const mouse = new THREE.Vector2();
+    const handleMouseMove = (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      material.uniforms.uMousePos.value.copy(mouse);
+    };
+
+    // Click to transform
+    let morphProgress = 0;
+    let isAnimating = false;
+    
+    const triggerTransformation = () => {
+      if (isAnimating) return;
+      isAnimating = true;
+      setIsTransforming(true);
+      
+      const startProgress = morphProgress;
+      const targetProgress = morphProgress < 0.5 ? 1.0 : 0.0;
+      const duration = 3000;
+      const startTime = Date.now();
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1.0);
+        const easedProgress = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        morphProgress = startProgress + (targetProgress - startProgress) * easedProgress;
+        material.uniforms.uMorphProgress.value = morphProgress;
+        
+        if (progress < 1.0) {
+          requestAnimationFrame(animate);
+        } else {
+          isAnimating = false;
+          setIsTransforming(false);
+        }
+      };
+      animate();
+    };
+
+    const handleClick = () => triggerTransformation();
+    
+    const handleKeyDown = (event) => {
+      if (event.code === 'Space') {
+        morphProgress = 0;
+        material.uniforms.uMorphProgress.value = 0;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('click', handleClick);
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      
+      const deltaTime = clock.getDelta();
+      const elapsedTime = clock.getElapsedTime();
+      
+      material.uniforms.uTime.value = elapsedTime;
+      
+      if (morphProgress > 0.6) {
+        material.uniforms.uChaosLevel.value = 1.2 + Math.sin(elapsedTime * 1.5) * 0.3;
+        material.uniforms.uBloodIntensity.value = 1.5 + Math.sin(elapsedTime * 2.5) * 0.4;
+        material.uniforms.uSpikeSharpness.value = 12.0 + Math.sin(elapsedTime * 1.0) * 2.0;
+      } else {
+        material.uniforms.uChaosLevel.value = 0.2;
+        material.uniforms.uBloodIntensity.value = 0.1;
+        material.uniforms.uSpikeSharpness.value = 3.0;
+      }
+      
+      particles.rotation.y += deltaTime * 0.1;
+      camera.position.x = Math.sin(elapsedTime * 0.1) * 2;
+      
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Resize handler
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    sceneRef.current = { mesh, material, morphProgress };
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+      mountRef.current?.removeChild(renderer.domElement);
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#0a0a0a' }}>
+      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        color: '#ff0000',
+        fontFamily: 'monospace',
+        background: 'rgba(0,0,0,0.7)',
+        padding: '15px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        maxWidth: '350px'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>🔥 HELL ORB CONTROLS 🔥</h3>
+        <p style={{ margin: '5px 0' }}>• <strong>CLICK</strong> - EXPLOSIVE transformation: 2D → SPIKED ORB</p>
+        <p style={{ margin: '5px 0' }}>• <strong>SPACEBAR</strong> - Reset to flat plane</p>
+        <p style={{ margin: '5px 0' }}>• <strong>MOUSE</strong> - Control the spikes of hell...</p>
+        <p style={{ margin: '10px 0 0 0', color: '#ff6666', fontSize: '12px' }}>⚠️ Warning: Dramatic transformation ahead</p>
+      </div>
+    </div>
+  );
+};
+
+export default PlanarDemon;

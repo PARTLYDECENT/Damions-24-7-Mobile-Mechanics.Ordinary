@@ -18,13 +18,21 @@ class WorldManager {
                 if (!this.chunks.has(chunkId)) {
                     const biome = this.biomeManager.getBiome(x, z);
                     // NOTE: This is a simplified placeholder. We'll need to pass proper textures/shaders.
-                    const chunk = this.biomeManager.generateChunk(x, z, biome, {}, []); 
-                    this.scene.add(chunk);
-                    this.chunks.set(chunkId, { chunk, biome });
+                    const { group, entities } = this.biomeManager.generateChunk(x, z, biome, {}, []); 
+                    this.scene.add(group);
+                    this.chunks.set(chunkId, { chunk: group, biome, entities });
                 }
             }
         }
 
         // Optional: Unload distant chunks (can be added later for performance)
+    }
+
+    updateEntities() {
+        for (const chunk of this.chunks.values()) {
+            for (const entity of chunk.entities) {
+                entity.update();
+            }
+        }
     }
 }

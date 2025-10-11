@@ -1,9 +1,8 @@
 const slideshowCanvas = document.getElementById('hero-slideshow-canvas');
-if (!slideshowCanvas) {
-    console.error('Slideshow canvas not found.');
-}
 
-const ctx = slideshowCanvas.getContext('2d');
+if (slideshowCanvas) {
+
+    const ctx = slideshowCanvas.getContext('2d');
 
 const backgroundImages = [
     'bg1.jpg', 'bg2.jpg', 'bg3.jpg', 'bg4.jpg', 'bg5.jpg',
@@ -77,3 +76,7 @@ function changeBackground() {
 }
 
 preloadImages();
+
+} else {
+    console.log('Slideshow canvas not found on this page.');
+}
