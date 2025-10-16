@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Collector Ultimate</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #0a0e27 0%, #020208 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 250px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .ui h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+        
+        .stat-label {
+            opacity: 0.8;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #4facfe;
+        }
+        
+        .score-big {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .mode-selector {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(100, 200, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+        }
+        
+        .mode-label {
+            color: #4facfe;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+        }
+        
+        select option {
+            background: #1a1a2e;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px 0;
+            transition: all 0.3s;
+            width: 100%;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button.secondary {
+            background: linear-gradient(135deg, #434343 0%, #000000 100%);
+        }
+        
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            text-align: right;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+        }
+        
+        .instructions h3 {
+            color: #4facfe;
+            margin-bottom: 8px;
+        }
+        
+        .combo {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: #f5576c;
+            text-shadow: 0 0 20px rgba(245, 87, 108, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .level-up {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #f093fb, #f5576c, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .achievement {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.5s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .achievement.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .power-indicator {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(100, 200, 255, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+        }
+        
+        .power-name {
+            color: #4facfe;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .timer-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            transition: width 0.1s linear;
+        }
+        
+        .upgrades {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .upgrade-title {
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .upgrade-btn {
+            padding: 4px 12px;
+            font-size: 11px;
+            margin: 0;
+            width: auto;
+        }
+        
+        .upgrade-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .trail-toggle {
+            margin: 10px 0;
+        }
+        
+        .health-bar {
+            margin: 10px 0;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .currency {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.15);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="ui">
+        <h1>⚡ COSMIC COLLECTOR</h1>
+        <div class="score-big" id="score">0</div>
+        
+        <div class="health-bar">
+            <div class="health-fill" id="health">100 HP</div>
+        </div>
+        
+        <div class="currency" id="stardust">✨ 0 Stardust</div>
+        
+        <div class="stats">
+            <div class="stat-row">
+                <span class="stat-label">Level:</span>
+                <span class="stat-value" id="level">1</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Combo:</span>
+                <span class="stat-value" id="combo">0x</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Collected:</span>
+                <span class="stat-value" id="collected">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">High Score:</span>
+                <span class="stat-value" id="highscore">0</span>
+            </div>
+        </div>
+        
+        <div class="mode-selector">
+            <div class="mode-label">GRAVITY MODE</div>
+            <select id="mode">
+                <option value="attract">🧲 Attract</option>
+                <option value="repel">💨 Repel</option>
+                <option value="orbit">🌀 Orbital</option>
+                <option value="chaos">⚡ Chaos</option>
+            </select>
+        </div>
+        
+        <div class="power-indicator" id="powerup" style="display:none;">
+            <div class="power-name" id="powername"></div>
+            <div class="timer-bar">
+                <div class="timer-fill" id="powertimer"></div>
+            </div>
+        </div>
+        
+        <div class="upgrades">
+            <div class="upgrade-title">⭐ UPGRADES</div>
+            <div class="upgrade-item">
+                <span>Radius Lv.<span id="radiusLv">1</span></span>
+                <button class="upgrade-btn" id="upgradeRadius">50 ✨</button>
+            </div>
+            <div class="upgrade-item">
+                <span>Speed Lv.<span id="speedLv">1</span></span>
+                <button class="upgrade-btn" id="upgradeSpeed">50 ✨</button>
+            </div>
+            <div class="upgrade-item">
+                <span>Health Lv.<span id="healthLv">1</span></span>
+                <button class="upgrade-btn" id="upgradeHealth">75 ✨</button>
+            </div>
+        </div>
+        
+        <div class="trail-toggle">
+            <button id="toggle" class="secondary">Enable Trails</button>
+        </div>
+        
+        <button id="reset">🔄 NEW GAME</button>
+    </div>
+    
+    <div class="instructions">
+        <h3>🎮 HOW TO PLAY</h3>
+        <div style="margin-top: 10px; line-height: 1.6;">
+            <strong style="color: #4facfe;">Blue:</strong> +10 pts, +5 stardust<br>
+            <strong style="color: #f5576c;">Red:</strong> -20 pts, -20 HP<br>
+            <strong style="color: #ffd700;">Gold:</strong> +50 pts, power-up!<br>
+            <strong style="color: #9b59b6;">Purple:</strong> +25 pts, +20 stardust<br>
+            <strong style="color: #2ecc71;">Green:</strong> +30 HP restore<br>
+            <br>
+            Click & drag + switch modes!<br>
+            Build combos for multipliers!<br>
+            Spend stardust on upgrades!<br>
+            Don't let HP reach 0!
+        </div>
+    </div>
+    
+    <div class="combo" id="combotext"></div>
+    <div class="level-up" id="leveluptext"></div>
+    <div class="achievement" id="achievement"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let W = canvas.width = window.innerWidth;
+        let H = canvas.height = window.innerHeight;
+        
+        let particles = [];
+        let mouseX = W / 2;
+        let mouseY = H / 2;
+        let mouseDown = false;
+        let showTrails = false;
+        
+        let score = 0;
+        let highScore = Number(localStorage.getItem('cosmicHighScore')) || 0;
+        let level = 1;
+        let combo = 0;
+        let comboTimer = 0;
+        let targetScore = 500;
+        let health = 100;
+        let maxHealth = 100;
+        let stardust = 0;
+        let totalCollected = 0;
+        
+        // Upgrades
+        let radiusLevel = 1;
+        let speedLevel = 1;
+        let healthLevel = 1;
+        
+        let activePower = null;
+        let powerTimer = 0;
+        let powerDuration = 0;
+        
+        // Achievements
+        const achievements = {
+            firstBlood: false,
+            combo10: false,
+            combo25: false,
+            combo50: false,
+            level5: false,
+            level10: false,
+            survivor: false,
+            collector100: false,
+            collector500: false,
+            millionaire: false
+        };
+        
+        const savedAchievements = localStorage.getItem('cosmicAchievements');
+        if (savedAchievements) {
+            Object.assign(achievements, JSON.parse(savedAchievements));
+        }
+        
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const comboEl = document.getElementById('combo');
+        const highscoreEl = document.getElementById('highscore');
+        const healthEl = document.getElementById('health');
+        const stardustEl = document.getElementById('stardust');
+        const collectedEl = document.getElementById('collected');
+        const comboTextEl = document.getElementById('combotext');
+        const levelUpEl = document.getElementById('leveluptext');
+        const powerUpEl = document.getElementById('powerup');
+        const powerNameEl = document.getElementById('powername');
+        const powerTimerEl = document.getElementById('powertimer');
+        const achievementEl = document.getElementById('achievement');
+        const modeSelect = document.getElementById('mode');
+        
+        highscoreEl.textContent = highScore;
+        
+        class Particle {
+            constructor(x, y, type = 'blue') {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.type = type;
+                this.collected = false;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.age = 0;
+                
+                const types = {
+                    blue: { size: 3, hue: 200, value: 10, stardust: 5 },
+                    red: { size: 4, hue: 0, value: -20, damage: 20 },
+                    gold: { size: 5, hue: 45, value: 50, stardust: 20 },
+                    purple: { size: 4, hue: 280, value: 25, stardust: 20 },
+                    green: { size: 4, hue: 120, heal: 30 }
+                };
+                
+                const t = types[type];
+                this.size = t.size;
+                this.hue = t.hue;
+                this.value = t.value || 0;
+                this.stardust = t.stardust || 0;
+                this.damage = t.damage || 0;
+                this.heal = t.heal || 0;
+            }
+            
+            update() {
+                if (this.collected) return;
+                
+                this.age++;
+                if (this.age > 1200) { // 20 seconds
+                    this.collected = true;
+                    return;
+                }
+                
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                const effectiveRadius = 30 + (radiusLevel - 1) * 10;
+                
+                if (dist < effectiveRadius) {
+                    this.collect();
+                    return;
+                }
+                
+                const mode = modeSelect.value;
+                const attractRadius = 300 + (radiusLevel - 1) * 50;
+                
+                if (mouseDown && dist < attractRadius) {
+                    let force = activePower === 'magnet' ? 1.2 : 0.6;
+                    force *= (1 + (speedLevel - 1) * 0.3);
+                    const effectiveDist = (attractRadius - dist) / attractRadius;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    switch(mode) {
+                        case 'attract':
+                            this.vx += Math.cos(angle) * effectiveDist * force;
+                            this.vy += Math.sin(angle) * effectiveDist * force;
+                            break;
+                        case 'repel':
+                            this.vx -= Math.cos(angle) * effectiveDist * force * 1.2;
+                            this.vy -= Math.sin(angle) * effectiveDist * force * 1.2;
+                            break;
+                        case 'orbit':
+                            this.vx += -Math.sin(angle) * effectiveDist * force * 0.8;
+                            this.vy += Math.cos(angle) * effectiveDist * force * 0.8;
+                            break;
+                        case 'chaos':
+                            const chaosAngle = angle + Math.sin(Date.now() * 0.005 + this.pulsePhase);
+                            this.vx += Math.cos(chaosAngle) * effectiveDist * force;
+                            this.vy += Math.sin(chaosAngle) * effectiveDist * force;
+                            break;
+                    }
+                }
+                
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (this.x < 0 || this.x > W) this.vx *= -0.8;
+                if (this.y < 0 || this.y > H) this.vy *= -0.8;
+                
+                this.x = Math.max(0, Math.min(W, this.x));
+                this.y = Math.max(0, Math.min(H, this.y));
+                
+                this.pulsePhase += 0.1;
+            }
+            
+            collect() {
+                this.collected = true;
+                totalCollected++;
+                
+                if (this.type === 'red' && activePower === 'shield') {
+                    return;
+                }
+                
+                if (this.damage > 0) {
+                    health -= this.damage;
+                    combo = 0;
+                    if (health <= 0) {
+                        health = 0;
+                        gameOver();
+                    }
+                } else if (this.heal > 0) {
+                    health = Math.min(maxHealth, health + this.heal);
+                    combo++;
+                    comboTimer = 60;
+                } else {
+                    combo++;
+                    comboTimer = 60;
+                    
+                    let points = this.value;
+                    if (combo > 5) points *= 2;
+                    if (combo > 10) points *= 3;
+                    if (combo > 20) points *= 5;
+                    
+                    score += points;
+                    stardust += this.stardust;
+                    
+                    checkComboAchievements();
+                }
+                
+                if (this.stardust > 0 && !achievements.firstBlood) {
+                    unlockAchievement('firstBlood', '🎯 First Blood!');
+                }
+                
+                updateUI();
+                checkLevelUp();
+                
+                if (this.type === 'gold') {
+                    activatePowerUp();
+                }
+                
+                checkCollectionAchievements();
+            }
+            
+            draw() {
+                if (this.collected) return;
+                
+                const pulse = Math.sin(this.pulsePhase) * 0.5 + 1;
+                const size = this.size * pulse;
+                
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, size * 3);
+                gradient.addColorStop(0, `hsla(${this.hue}, 100%, 60%, 0.4)`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 100%, 60%, 0)`);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size * 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(this.x - size/3, this.y - size/3, size/2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fill();
+            }
+        }
+        
+        function spawnParticles() {
+            const edge = Math.floor(Math.random() * 4);
+            let x, y;
+            
+            switch(edge) {
+                case 0: x = Math.random() * W; y = 0; break;
+                case 1: x = W; y = Math.random() * H; break;
+                case 2: x = Math.random() * W; y = H; break;
+                case 3: x = 0; y = Math.random() * H; break;
+            }
+            
+            const rand = Math.random();
+            let type = 'blue';
+            
+            if (rand < 0.03) type = 'gold';
+            else if (rand < 0.08) type = 'purple';
+            else if (rand < 0.13 && health < maxHealth * 0.5) type = 'green';
+            else if (rand < 0.18 + level * 0.02) type = 'red';
+            
+            particles.push(new Particle(x, y, type));
+        }
+        
+        function activatePowerUp() {
+            const powers = ['magnet', 'shield', 'slowmo', 'timewarp'];
+            activePower = powers[Math.floor(Math.random() * powers.length)];
+            powerTimer = 0;
+            powerDuration = 300;
+            
+            const names = {
+                'magnet': '🧲 SUPER MAGNET',
+                'shield': '🛡️ SHIELD',
+                'slowmo': '⏱️ SLOW MOTION',
+                'timewarp': '⚡ TIME WARP'
+            };
+            
+            powerNameEl.textContent = names[activePower];
+            powerUpEl.style.display = 'block';
+        }
+        
+        function updatePowerUp() {
+            if (activePower) {
+                powerTimer++;
+                const remaining = ((powerDuration - powerTimer) / powerDuration) * 100;
+                powerTimerEl.style.width = remaining + '%';
+                
+                if (powerTimer >= powerDuration) {
+                    activePower = null;
+                    powerUpEl.style.display = 'none';
+                }
+            }
+        }
+        
+        function checkComboAchievements() {
+            if (combo === 10 && !achievements.combo10) {
+                unlockAchievement('combo10', '🔥 10x Combo Master!');
+            }
+            if (combo === 25 && !achievements.combo25) {
+                unlockAchievement('combo25', '💥 25x Combo Legend!');
+            }
+            if (combo === 50 && !achievements.combo50) {
+                unlockAchievement('combo50', '⚡ 50x COMBO GOD!');
+            }
+        }
+        
+        function checkCollectionAchievements() {
+            if (totalCollected === 100 && !achievements.collector100) {
+                unlockAchievement('collector100', '📦 Collected 100!');
+            }
+            if (totalCollected === 500 && !achievements.collector500) {
+                unlockAchievement('collector500', '🏆 Collected 500!');
+            }
+            if (score >= 1000000 && !achievements.millionaire) {
+                unlockAchievement('millionaire', '💰 MILLIONAIRE!');
+            }
+        }
+        
+        function unlockAchievement(id, text) {
+            achievements[id] = true;
+            localStorage.setItem('cosmicAchievements', JSON.stringify(achievements));
+            
+            achievementEl.textContent = '🏆 ' + text;
+            achievementEl.classList.add('show');
+            setTimeout(() => {
+                achievementEl.classList.remove('show');
+            }, 3000);
+        }
+        
+        function checkLevelUp() {
+            if (score >= targetScore) {
+                level++;
+                targetScore += 500 * level;
+                
+                levelUpEl.textContent = `LEVEL ${level}!`;
+                levelUpEl.style.opacity = '1';
+                setTimeout(() => {
+                    levelUpEl.style.opacity = '0';
+                }, 1500);
+                
+                if (level === 5 && !achievements.level5) {
+                    unlockAchievement('level5', '⭐ Reached Level 5!');
+                }
+                if (level === 10 && !achievements.level10) {
+                    unlockAchievement('level10', '🌟 Reached Level 10!');
+                }
+            }
+        }
+        
+        function gameOver() {
+            if (health <= 0 && score > 5000 && !achievements.survivor) {
+                unlockAchievement('survivor', '💪 Survived to 5000!');
+            }
+            
+            alert(`Game Over!\nFinal Score: ${score}\nLevel: ${level}\nTotal Collected: ${totalCollected}`);
+            init();
+        }
+        
+        function updateUI() {
+            scoreEl.textContent = score.toLocaleString();
+            levelEl.textContent = level;
+            comboEl.textContent = combo + 'x';
+            stardustEl.textContent = `✨ ${stardust} Stardust`;
+            collectedEl.textContent = totalCollected;
+            healthEl.textContent = `${health} HP`;
+            healthEl.style.width = (health / maxHealth * 100) + '%';
+            
+            if (score > highScore) {
+                highScore = score;
+                highscoreEl.textContent = highScore.toLocaleString();
+                localStorage.setItem('cosmicHighScore', highScore);
+            }
+            
+            updateUpgradeButtons();
+        }
+        
+        function updateUpgradeButtons() {
+            const radiusCost = 50 * radiusLevel;
+            const speedCost = 50 * speedLevel;
+            const healthCost = 75 * healthLevel;
+            
+            document.getElementById('upgradeRadius').textContent = radiusCost + ' ✨';
+            document.getElementById('upgradeSpeed').textContent = speedCost + ' ✨';
+            document.getElementById('upgradeHealth').textContent = healthCost + ' ✨';
+            
+            document.getElementById('upgradeRadius').disabled = stardust < radiusCost;
+            document.getElementById('upgradeSpeed').disabled = stardust < speedCost;
+            document.getElementById('upgradeHealth').disabled = stardust < healthCost;
+            
+            document.getElementById('radiusLv').textContent = radiusLevel;
+            document.getElementById('speedLv').textContent = speedLevel;
+            document.getElementById('healthLv').textContent = healthLevel;
+        }
+        
+        function init() {
+            particles = [];
+            score = 0;
+            level = 1;
+            combo = 0;
+            targetScore = 500;
+            health = maxHealth;
+            stardust = 0;
+            totalCollected = 0;
+            activePower = null;
+            radiusLevel = 1;
+            speedLevel = 1;
+            healthLevel = 1;
+            maxHealth = 100;
+            powerUpEl.style.display = 'none';
+            updateUI();
+        }
+        
+        function drawGravityField() {
+            if (mouseDown) {
+                const radius = 300 + (radiusLevel - 1) * 50;
+                const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, radius);
+                gradient.addColorStop(0, 'rgba(100, 200, 255, 0.15)');
+                gradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, W, H);
+                
+                for (let i = 1; i <= 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(mouseX, mouseY, (radius / 3) * i, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(100, 200, 255, ${0.3 - i * 0.08})`;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        let frameCount = 0;
+        
+        function animate() {
+            if (showTrails) {
+                ctx.fillStyle = 'rgba(2, 2, 8, 0.05)';
+            } else {
+                ctx.fillStyle = 'rgba(2, 2, 8, 0.25)';
+            }
+            ctx.fillRect(0, 0, W, H);
+            
+            drawGravityField();
+            
+            frameCount++;
+            
+            const spawnRate = activePower === 'slowmo' ? 20 : activePower === 'timewarp' ? 8 : Math.max(5, 12 - level);
+            if (frameCount % spawnRate === 0 && particles.length < 150) {
+                spawnParticles();
+            }
+            
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer === 0) {
+                    combo = 0;
+                    updateUI();
+                }
+            }
+            
+            updatePowerUp();
+            
+            particles = particles.filter(p => !p.collected);
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        canvas.addEventListener('mousedown', () => mouseDown = true);
+        canvas.addEventListener('mouseup', () => mouseDown = false);
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            mouseDown = true;
+            mouseX = e.touches[0].clientX;
+            mouseY = e.touches[0].clientY;
+        });
+        
+        canvas.addEventListener('touchend', () => mouseDown = false);
+        
+        document.getElementById('reset').addEventListener('click', init);
+        
+        document.getElementById('toggle').addEventListener('click', () => {
+            showTrails = !showTrails;
+            document.getElementById('toggle').textContent = showTrails ? 'Disable Trails' : 'Enable Trails';
+        });
+        
+        document.getElementById('upgradeRadius').addEventListener('click', () => {
+            const cost = 50 * radiusLevel;
+            if (stardust >= cost) {
+                stardust -= cost;
+                radiusLevel++;
+                updateUI();
+            }
+        });
+        
+        document.getElementById('upgradeSpeed').addEventListener('click', () => {
+            const cost = 50 * speedLevel;
+            if (stardust >= cost) {
+                stardust -= cost;
+                speedLevel++;
+                updateUI();
+            }
+        });
+        
+        document.getElementById('upgradeHealth').addEventListener('click', () => {
+            const cost = 75 * healthLevel;
+            if (stardust >= cost) {
+                stardust -= cost;
+                healthLevel++;
+                maxHealth += 20;
+                health = Math.min(health + 20, maxHealth);
+                updateUI();
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        });
+        
+        init();
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Automotive Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 69, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0, 191, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ff4500, #00bfff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            letter-spacing: -2px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+            animation: fadeIn 1s ease 0.2s both;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .tool-card {
+            background: rgba(30, 30, 45, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .tool-card:hover::before {
+            left: 100%;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 69, 0, 0.5);
+            box-shadow: 0 20px 40px rgba(255, 69, 0, 0.2);
+        }
+
+        .tool-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff4500, #ff6a33);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(255, 69, 0, 0.3);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .description {
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .features li {
+            padding: 8px 0;
+            color: #999;
+            font-size: 0.9rem;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .features li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #ff4500;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #ff4500, #ff6a33);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(255, 69, 0, 0.5);
+        }
+
+        .category {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(0, 191, 255, 0.2);
+            border: 1px solid rgba(0, 191, 255, 0.4);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #00bfff;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Premium Automotive Tools</h1>
+        <p class="subtitle">Professional-grade free resources for car enthusiasts and mechanics</p>
+        
+        <div class="grid">
+            <div class="tool-card">
+                <div class="category">VIN Decoder</div>
+                <div class="tool-icon">🔍</div>
+                <h3>NHTSA VIN Decoder</h3>
+                <p class="description">Official government database that decodes any Vehicle Identification Number to reveal detailed vehicle specifications and safety information.</p>
+                <ul class="features">
+                    <li>Complete vehicle specifications</li>
+                    <li>Safety recall information</li>
+                    <li>Manufacturing details</li>
+                    <li>100% accurate government data</li>
+                </ul>
+                <a href="https://vpic.nhtsa.dot.gov/decoder/" class="btn" target="_blank">Decode VIN →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Diagnostics</div>
+                <div class="tool-icon">⚡</div>
+                <h3>OBD-Codes.com</h3>
+                <p class="description">Comprehensive database of diagnostic trouble codes with detailed explanations, causes, and repair solutions for all vehicle makes.</p>
+                <ul class="features">
+                    <li>10,000+ diagnostic codes</li>
+                    <li>Detailed repair guides</li>
+                    <li>Symptoms and causes</li>
+                    <li>Cost estimates</li>
+                </ul>
+                <a href="https://www.obd-codes.com/" class="btn" target="_blank">Look Up Codes →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Maintenance</div>
+                <div class="tool-icon">📋</div>
+                <h3>Edmunds Maintenance Guide</h3>
+                <p class="description">Vehicle-specific maintenance schedules and cost estimators to help you stay on top of required service intervals.</p>
+                <ul class="features">
+                    <li>Model-specific schedules</li>
+                    <li>Service cost estimates</li>
+                    <li>Maintenance reminders</li>
+                    <li>DIY difficulty ratings</li>
+                </ul>
+                <a href="https://www.edmunds.com/car-maintenance/" class="btn" target="_blank">Check Schedule →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Recalls</div>
+                <div class="tool-icon">⚠️</div>
+                <h3>NHTSA Recalls Lookup</h3>
+                <p class="description">Search for active safety recalls on any vehicle using VIN or make/model. Get official manufacturer recall notices instantly.</p>
+                <ul class="features">
+                    <li>Real-time recall data</li>
+                    <li>Safety defect information</li>
+                    <li>Remedy details</li>
+                    <li>Dealer locator</li>
+                </ul>
+                <a href="https://www.nhtsa.gov/recalls" class="btn" target="_blank">Check Recalls →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Specifications</div>
+                <div class="tool-icon">📊</div>
+                <h3>CarSpecs.us</h3>
+                <p class="description">Detailed technical specifications for thousands of vehicles including dimensions, engine specs, fuel economy, and performance data.</p>
+                <ul class="features">
+                    <li>Complete tech specs</li>
+                    <li>Performance metrics</li>
+                    <li>Dimension diagrams</li>
+                    <li>Historical data</li>
+                </ul>
+                <a href="https://www.carspecs.us/" class="btn" target="_blank">View Specs →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Repair Manuals</div>
+                <div class="tool-icon">🛠️</div>
+                <h3>RepairPal Estimator</h3>
+                <p class="description">Fair price estimates for repairs, maintenance, and parts. Compare prices and find certified mechanics in your area.</p>
+                <ul class="features">
+                    <li>Instant repair quotes</li>
+                    <li>Certified mechanic finder</li>
+                    <li>Local price comparison</li>
+                    <li>Warranty information</li>
+                </ul>
+                <a href="https://repairpal.com/estimator" class="btn" target="_blank">Get Estimate →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Tire Calculator</div>
+                <div class="tool-icon">⭕</div>
+                <h3>Tire Size Calculator</h3>
+                <p class="description">Calculate tire size differences, speedometer accuracy, and find alternative tire sizes that fit your vehicle safely.</p>
+                <ul class="features">
+                    <li>Size comparison tool</li>
+                    <li>Speedometer calibration</li>
+                    <li>Fitment verification</li>
+                    <li>Visual representation</li>
+                </ul>
+                <a href="https://tiresize.com/calculator/" class="btn" target="_blank">Calculate Size →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Fuel Economy</div>
+                <div class="tool-icon">⛽</div>
+                <h3>FuelEconomy.gov</h3>
+                <p class="description">Official EPA fuel economy ratings, compare vehicles, calculate fuel costs, and track your own vehicle's MPG performance.</p>
+                <ul class="features">
+                    <li>Official EPA ratings</li>
+                    <li>Cost calculators</li>
+                    <li>Vehicle comparisons</li>
+                    <li>Eco-driving tips</li>
+                </ul>
+                <a href="https://www.fueleconomy.gov/" class="btn" target="_blank">Check MPG →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Parts Lookup</div>
+                <div class="tool-icon">🔩</div>
+                <h3>RockAuto Parts Catalog</h3>
+                <p class="description">Massive online parts catalog with diagrams, part numbers, and pricing. Find exactly what you need with visual guides.</p>
+                <ul class="features">
+                    <li>Millions of parts</li>
+                    <li>Exploded diagrams</li>
+                    <li>OEM & aftermarket</li>
+                    <li>Price comparison</li>
+                </ul>
+                <a href="https://www.rockauto.com/" class="btn" target="_blank">Find Parts →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Wiring Diagrams</div>
+                <div class="tool-icon">🔌</div>
+                <h3>AutoZone Repair Guides</h3>
+                <p class="description">Free access to repair information, wiring diagrams, and technical service bulletins for thousands of vehicle models.</p>
+                <ul class="features">
+                    <li>Wiring schematics</li>
+                    <li>Repair procedures</li>
+                    <li>TSB database</li>
+                    <li>Torque specifications</li>
+                </ul>
+                <a href="https://www.autozone.com/repairguides" class="btn" target="_blank">Access Guides →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Paint Code</div>
+                <div class="tool-icon">🎨</div>
+                <h3>PaintScratch Color Match</h3>
+                <p class="description">Find your vehicle's exact paint code and color name. Includes paint code location guides for all makes and models.</p>
+                <ul class="features">
+                    <li>Paint code lookup</li>
+                    <li>Color visualization</li>
+                    <li>Location diagrams</li>
+                    <li>Touch-up guides</li>
+                </ul>
+                <a href="https://www.paintscratch.com/" class="btn" target="_blank">Find Code →</a>
+            </div>
+
+            <div class="tool-card">
+                <div class="category">Forums</div>
+                <div class="tool-icon">💬</div>
+                <h3>Car-Part.com</h3>
+                <p class="description">Search inventory of over 7,000 salvage yards instantly. Find used OEM parts with pricing, condition, and availability.</p>
+                <ul class="features">
+                    <li>7,000+ salvage yards</li>
+                    <li>Real-time inventory</li>
+                    <li>Direct seller contact</li>
+                    <li>Part condition ratings</li>
+                </ul>
+                <a href="https://www.car-part.com/" class="btn" target="_blank">Search Parts →</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
