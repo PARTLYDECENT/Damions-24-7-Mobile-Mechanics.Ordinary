@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damion's Toolbox</title>
+    <style>
+        :root {
+            --bg-dark: #0A0F1A;
+            --text-light: #F0F0F0;
+            --accent-color: #00E5FF;
+            --font-display: 'Orbitron', sans-serif;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: var(--font-display), sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 15px;
+            background: rgba(26, 34, 56, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid var(--accent-color);
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel">
+        <h1>Interactive Toolbox</h1>
+        <p>Wrench Model</p>
+    </div>
+    <script type="module" src="toolbox.js"></script>
+</body>
+</html>

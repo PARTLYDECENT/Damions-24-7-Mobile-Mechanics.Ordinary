@@ -141,6 +141,48 @@ body {
     text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-hover);
     animation: flicker 3s infinite alternate;
 }
+
+/* --- Hero Slideshow --- */
+#hero-slideshow-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background-color: #000;
+}
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    transform: scale(1.1); /* Initial scale for Ken Burns effect */
+    animation: ken-burns 12s infinite;
+}
+.hero-slide.active {
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    font-weight: 900;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-hover);
+    animation: flicker 3s infinite alternate;
+}
+.hero-slide.active {
+    opacity: 1;
+    transform: scale(1); /* End scale for Ken Burns effect */
+}
+@keyframes ken-burns {
+    0% { transform: scale(1.05) translate(2%, -1%); }
+    50% { transform: scale(1.15) translate(-2%, 1%); }
+    100% { transform: scale(1.05) translate(2%, -1%); }
+}
 .hero p {
     font-size: 1.3rem;
     margin-bottom: 40px;

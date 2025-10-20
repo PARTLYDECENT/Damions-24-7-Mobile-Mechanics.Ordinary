@@ -5,121 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/Damions-24-7-Mobile-Mechanics.Ordinary/">
     <title>Ultimate Automotive Resource Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #0A0F1A;
+            --primary-color: #1A2238;
+            --secondary-color: #1D2A4A;
+            --accent-color: #00E5FF;
+            --accent-hover: #00B8CC;
+            --text-light: #F0F0F0;
+            --text-gray: #A0A0A0;
+            --border-color: #2A3A67;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Roboto', sans-serif;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: #fff;
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        #background-shader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
         .header {
             text-align: center;
             margin-bottom: 40px;
             padding: 30px 0;
-            background: linear-gradient(45deg, #ff6b35, #f7931e);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+            background: transparent;
+            border: none;
         }
 
         .header h1 {
+            font-family: var(--font-display);
             font-size: 3.5em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            color: var(--accent-color);
+            text-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-hover);
         }
 
         .header p {
             font-size: 1.3em;
-            opacity: 0.9;
+            color: var(--text-gray);
         }
 
         .search-bar {
             margin: 30px 0;
             text-align: center;
+            position: relative;
         }
 
         .search-input {
             width: 60%;
             padding: 15px 25px;
             font-size: 1.1em;
-            border: none;
             border-radius: 50px;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
+            background: rgba(26, 34, 56, 0.7);
+            color: var(--text-light);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
         }
 
         .search-input::placeholder {
-            color: rgba(255,255,255,0.7);
+            color: var(--text-gray);
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
         }
 
         .filters {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin: 20px 0;
+            margin: 40px 0;
             flex-wrap: wrap;
         }
 
         .filter-btn {
             padding: 10px 20px;
-            background: linear-gradient(45deg, #333, #555);
-            border: none;
+            background: transparent;
+            border: 1px solid var(--border-color);
             border-radius: 25px;
-            color: #fff;
+            color: var(--text-light);
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: bold;
+            font-family: var(--font-display);
+            font-weight: 700;
         }
 
         .filter-btn:hover, .filter-btn.active {
-            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            border-color: var(--accent-color);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
         }
 
         .categories {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
-            margin: 40px 0;
+            margin: 60px 0;
         }
 
         .category {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            background: rgba(26, 34, 56, 0.5);
             border-radius: 20px;
             padding: 25px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid var(--border-color);
             transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .category.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .category:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.2);
-            border-color: rgba(255, 107, 53, 0.5);
+            box-shadow: 0 15px 40px rgba(0, 229, 255, 0.15);
+            border-color: var(--accent-color);
         }
 
         .category h2 {
-            color: #ff6b35;
+            color: var(--accent-color);
             font-size: 1.8em;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-family: var(--font-display);
         }
 
         .category-icon {
@@ -132,22 +181,23 @@
         }
 
         .website {
-            background: rgba(255,255,255,0.05);
+            background: rgba(10, 15, 26, 0.6);
             padding: 15px;
             border-radius: 10px;
-            border-left: 4px solid #ff6b35;
+            border-left: 4px solid var(--border-color);
             transition: all 0.3s ease;
             cursor: pointer;
         }
 
         .website:hover {
-            background: rgba(255,255,255,0.1);
+            background: var(--primary-color);
             transform: translateX(5px);
+            border-left-color: var(--accent-color);
         }
 
         .website-name {
-            font-weight: bold;
-            color: #f7931e;
+            font-weight: 700;
+            color: var(--text-light);
             font-size: 1.1em;
             margin-bottom: 5px;
         }
@@ -160,8 +210,8 @@
 
         .website-url {
             font-size: 0.8em;
-            color: #4CAF50;
             text-decoration: none;
+            color: var(--accent-hover);
         }
 
         .website-url:hover {
@@ -179,20 +229,21 @@
         .stat {
             text-align: center;
             padding: 20px;
-            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            background: rgba(26, 34, 56, 0.5);
             border-radius: 15px;
             backdrop-filter: blur(10px);
+            min-width: 180px;
         }
 
         .stat-number {
             font-size: 2.5em;
-            font-weight: bold;
-            color: #ff6b35;
+            font-weight: 900;
+            color: var(--accent-color);
+            font-family: var(--font-display);
         }
 
         .stat-label {
             font-size: 1.1em;
-            opacity: 0.9;
         }
 
         .hidden {
@@ -229,13 +280,13 @@
         .quick-btn {
             display: block;
             width: 60px;
-            height: 60px;
-            background: linear-gradient(45deg, #ff6b35, #f7931e);
-            border: none;
+            height: 60px; 
+            background: rgba(29, 42, 74, 0.8);
+            border: 1px solid var(--border-color);
             border-radius: 50%;
-            color: white;
+            color: var(--accent-color);
             font-size: 1.5em;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
             transition: all 0.3s ease;
@@ -243,10 +294,14 @@
 
         .quick-btn:hover {
             transform: scale(1.1);
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            box-shadow: 0 0 25px var(--accent-color);
         }
     </style>
 </head>
 <body>
+    <canvas id="background-shader"></canvas>
     <div class="container">
         <div class="header">
             <h1>🔧 Ultimate Automotive Hub 🏁</h1>
@@ -363,6 +418,11 @@
                         <div class="website-description">Quality auto parts with how-to videos</div>
                         <a href="https://www.1aauto.com" class="website-url" target="_blank">1aauto.com</a>
                     </div>
+                    <div class="website" onclick="openSite('https://www.tirerack.com')">
+                        <div class="website-name">Tire Rack</div>
+                        <div class="website-description">Leading source for tires, wheels, and performance reviews</div>
+                        <a href="https://www.tirerack.com" class="website-url" target="_blank">tirerack.com</a>
+                    </div>
                 </div>
             </div>
 
@@ -399,6 +459,11 @@
                         <div class="website-name">CorvetteForum</div>
                         <div class="website-description">Corvette owners community and technical help</div>
                         <a href="https://www.corvetteforum.com" class="website-url" target="_blank">corvetteforum.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.garagejournal.com/forum/')">
+                        <div class="website-name">The Garage Journal</div>
+                        <div class="website-description">The definitive forum for tool talk, projects, and shop discussion</div>
+                        <a href="https://www.garagejournal.com/forum/" class="website-url" target="_blank">garagejournal.com/forum</a>
                     </div>
                 </div>
             </div>
@@ -437,6 +502,11 @@
                         <div class="website-description">Technical articles and diagnostic procedures</div>
                         <a href="https://www.automotive-tech.com" class="website-url" target="_blank">automotive-tech.com</a>
                     </div>
+                    <div class="website" onclick="openSite('https://haynes.com/')">
+                        <div class="website-name">Haynes Manuals</div>
+                        <div class="website-description">Iconic and comprehensive car repair manuals for DIY and pros</div>
+                        <a href="https://haynes.com/" class="website-url" target="_blank">haynes.com</a>
+                    </div>
                 </div>
             </div>
 
@@ -473,6 +543,11 @@
                         <div class="website-name">Craftsman</div>
                         <div class="website-description">Reliable tools for DIY and professional use</div>
                         <a href="https://www.craftsman.com" class="website-url" target="_blank">craftsman.com</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.gearwrench.com/')">
+                        <div class="website-name">Gearwrench</div>
+                        <div class="website-description">Innovative hand tools, specializing in ratcheting wrenches</div>
+                        <a href="https://www.gearwrench.com/" class="website-url" target="_blank">gearwrench.com</a>
                     </div>
                 </div>
             </div>
@@ -569,6 +644,16 @@
                         <div class="website-name">MotorTrend</div>
                         <div class="website-description">Car reviews, tests, and automotive content</div>
                         <a href="https://www.youtube.com/c/MotorTrend" class="website-url" target="_blank">youtube.com/c/MotorTrend</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/SouthMainAutoRepair')">
+                        <div class="website-name">South Main Auto Repair</div>
+                        <div class="website-description">No-nonsense, real-world diagnostic procedures from a master tech</div>
+                        <a href="https://www.youtube.com/c/SouthMainAutoRepair" class="website-url" target="_blank">youtube.com/c/SouthMainAutoRepair</a>
+                    </div>
+                    <div class="website" onclick="openSite('https://www.youtube.com/c/EricTheCarGuy')">
+                        <div class="website-name">EricTheCarGuy</div>
+                        <div class="website-description">A legendary resource for in-depth repair tutorials and advice</div>
+                        <a href="https://www.youtube.com/c/EricTheCarGuy" class="website-url" target="_blank">youtube.com/c/EricTheCarGuy</a>
                     </div>
                 </div>
             </div>
@@ -805,12 +890,40 @@
         </div>
     </div>
 
+    <audio id="hover-sound" src="videos/rare1.mp3" preload="auto"></audio>
+    <audio id="click-sound" src="videos/impact.mp3" preload="auto"></audio>
+    <script src="resources_shader.js"></script>
+
     <script>
         // Search functionality
         const searchInput = document.getElementById('searchInput');
         const categories = document.querySelectorAll('.category');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const websites = document.querySelectorAll('.website');
+        const hoverSound = document.getElementById('hover-sound');
+        const clickSound = document.getElementById('click-sound');
+
+        // --- Initialize Background Shader ---
+        const bgCanvas = document.getElementById('background-shader');
+        if (bgCanvas && typeof initializeResourceShader === 'function') {
+            initializeResourceShader(bgCanvas, { color: [0.0, 0.5, 0.6] });
+        }
+
+        // --- Sound Effects ---
+        if(hoverSound && clickSound) {
+            hoverSound.volume = 0.3;
+            clickSound.volume = 0.5;
+            document.querySelectorAll('.website, .filter-btn, .quick-btn').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    hoverSound.currentTime = 0;
+                    hoverSound.play().catch(e => {});
+                });
+                el.addEventListener('click', () => {
+                    clickSound.currentTime = 0;
+                    clickSound.play().catch(e => {});
+                });
+            });
+        }
 
         // Search functionality
         searchInput.addEventListener('input', function() {
@@ -876,19 +989,18 @@
         // Dark mode toggle (already dark, but adds extra effects)
         function toggleDarkMode() {
             document.body.style.filter = document.body.style.filter === 'invert(1) hue-rotate(180deg)' ? '' : 'invert(1) hue-rotate(180deg)';
+            document.getElementById('background-shader').style.filter = document.body.style.filter;
         }
 
         // Random site function
         function showRandomSite() {
             const allWebsites = Array.from(websites);
             const randomWebsite = allWebsites[Math.floor(Math.random() * allWebsites.length)];
-            const url = randomWebsite.querySelector('.website-url').href;
             
             // Highlight the random site
-            randomWebsite.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
-            randomWebsite.style.transform = 'scale(1.05)';
+            randomWebsite.style.background = 'var(--accent-color)';
+            randomWebsite.style.transform = 'scale(1.05) translateX(5px)';
             
-            // Scroll to the site
             randomWebsite.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             // Reset highlight after 3 seconds
@@ -899,7 +1011,7 @@
             
             // Ask if user wants to open it
             if (confirm('Open this random site: ' + randomWebsite.querySelector('.website-name').textContent + '?')) {
-                window.open(url, '_blank');
+                openSite(randomWebsite.querySelector('.website-url').href);
             }
         }
 
@@ -923,36 +1035,21 @@
             }
         });
 
-        // Add hover effects and animations
-        websites.forEach(website => {
-            website.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(10px) scale(1.02)';
-                this.style.boxShadow = '0 8px 25px rgba(255, 107, 53, 0.3)';
-            });
-            
-            website.addEventListener('mouseleave', function() {
-                if (!this.style.background.includes('linear-gradient(45deg, #ff6b35, #f7931e)')) {
-                    this.style.transform = '';
-                    this.style.boxShadow = '';
-                }
-            });
-        });
-
         // Update total sites counter
         document.getElementById('totalSites').textContent = websites.length + '+';
 
-        // Add loading animation
-        window.addEventListener('load', function() {
-            categories.forEach((category, index) => {
-                category.style.opacity = '0';
-                category.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    category.style.transition = 'all 0.5s ease';
-                    category.style.opacity = '1';
-                    category.style.transform = 'translateY(0)';
-                }, index * 100);
+        // Add scroll-triggered animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
             });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.category').forEach((el, index) => {
+            el.style.transitionDelay = `${index * 100}ms`;
+            observer.observe(el);
         });
 
         // Add right-click context menu for websites

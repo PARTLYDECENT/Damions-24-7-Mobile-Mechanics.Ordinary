@@ -3,11 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Enter Site Button ---
     const enterOverlay = document.getElementById('enter-overlay');
     const enterBtn = document.getElementById('enter-btn');
+    const enterBg = document.getElementById('enter-bg');
     const backgroundMusic = document.getElementById('background-music');
 
     enterBtn.addEventListener('click', () => {
         enterOverlay.style.opacity = '0';
-        setTimeout(() => {
+        enterBg.classList.add('zooming'); // Add class to trigger zoom/blur
+        setTimeout(() => { 
             enterOverlay.style.display = 'none';
         }, 1000); // Match this to the transition duration
 
@@ -26,7 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const drop = document.createElement('div');
         drop.classList.add('raindrop');
         drop.style.left = `${Math.random() * 100}vw`;
-        drop.style.animationDuration = `${Math.random() * 1 + 0.5}s`; // Random duration
+        drop.style.animationDuration = `${Math.random() * 0.8 + 0.4}s`; // Faster, more varied duration
+        drop.style.opacity = `${Math.random() * 0.5 + 0.3}`; // Random opacity
+        drop.style.setProperty('--drift', `${(Math.random() - 0.5) * 20}px`); // Add horizontal drift
         
         bloodRainContainer.appendChild(drop);
 
@@ -54,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoPopup = document.getElementById('info-popup');
     const popupContent = document.querySelector('.popup-content');
     const closeBtn = document.querySelector('.close-btn');
+    const nextTipBtn = document.getElementById('next-tip-btn');
     const dontShowBtn = document.getElementById('dont-show-btn');
     let popupsDisabled = localStorage.getItem('popupsDisabled') === 'true';
     const popupTitle = document.getElementById('popup-title');
@@ -94,14 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function showRandomTip() {
         if (popupsDisabled) return;
 
-        const randomIndex = Math.floor(Math.random() * mechanicTips.length);
-        const tip = mechanicTips[randomIndex];
+        // Fade out content, change it, then fade in
+        popupContent.style.opacity = '0';
 
-        popupTitle.textContent = tip.title;
-        popupText.textContent = tip.text;
-        document.querySelector('.popup-icon').textContent = tip.icon;
-        
-        infoPopup.style.display = 'block';
+        setTimeout(() => {
+            const randomIndex = Math.floor(Math.random() * mechanicTips.length);
+            const tip = mechanicTips[randomIndex];
+
+            popupTitle.textContent = tip.title;
+            popupText.textContent = tip.text;
+            document.querySelector('.popup-icon').textContent = tip.icon;
+            
+            if (infoPopup.style.display !== 'block') {
+                infoPopup.style.display = 'block';
+            }
+            
+            popupContent.style.opacity = '1';
+        }, 300); // This duration should match the transition in your CSS
     }
 
     function hidePopup() {
@@ -123,6 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     closeBtn.addEventListener('click', hidePopup);
+
+    nextTipBtn.addEventListener('click', () => {
+        // Play a click sound if you have one defined
+        showRandomTip();
+    });
 
     window.addEventListener('click', (event) => {
         if (event.target == infoPopup) {
@@ -147,13 +166,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Scroll Animations ---
-    const observer = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('loaded');
+                // Optional: unobserve after animation to improve performance
+                // observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.1 });
+
+    // Apply observer to individual items for staggering
+    document.querySelectorAll('.services-grid .animate-on-scroll, .feature-grid .animate-on-scroll, .news-grid .animate-on-scroll').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Apply to other general animated elements that are not in grids
 
     document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
 
@@ -281,4 +309,68 @@ document.addEventListener('DOMContentLoaded', () => {
             initializePanelShader(canvas, panel.options);
         }
     });
+
+    // --- Animated Favicon Logic ---
+    const favicon = document.getElementById('favicon');
+    const faviconFrames = [
+        // Wrench
+        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>',
+        // Gear
+        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>',
+        // V8
+        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>V8</text></svg>',
+        // Blood Moon
+        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩸</text></svg>',
+        // Skull
+        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💀</text></svg>'
+    ];
+
+    let currentFrame = 0;
+    setInterval(() => {
+        if (favicon) {
+            currentFrame = (currentFrame + 1) % faviconFrames.length;
+            favicon.href = faviconFrames[currentFrame];
+        }
+    }, 1000); // Change icon every 1 second
+
+    // --- Dramatic Hero Slideshow ---
+    const slideshowContainer = document.getElementById('hero-slideshow-container');
+    const images = [
+        'https://images.unsplash.com/photo-1553992213-cbe0837a0881?auto=format&fit=crop&w=1920&q=80', // Engine bay
+        'https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=1920&q=80', // Moody workshop
+        'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=1920&q=80', // Abstract tech
+        'https://images.unsplash.com/photo-1504222490345-c035c2d7fb03?auto=format&fit=crop&w=1920&q=80', // Night road
+        'https://images.unsplash.com/photo-1599493356243-a2d95c721a11?auto=format&fit-crop&w=1920&q=80' // Close up on engine
+    ];
+    let currentImageIndex = 0;
+
+    function initializeSlideshow() {
+        if (!slideshowContainer) return;
+
+        // Preload images and create slide elements
+        images.forEach((src, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'hero-slide';
+            slide.style.backgroundImage = `url(${src})`;
+            // Vary the animation direction for more dynamic feel
+            slide.style.animationDirection = index % 2 === 0 ? 'normal' : 'reverse';
+            slideshowContainer.appendChild(slide);
+        });
+
+        // Start the slideshow loop
+        setTimeout(cycleSlides, 10000); // Initial 10-second delay after site entry
+    }
+
+    function cycleSlides() {
+        const slides = slideshowContainer.querySelectorAll('.hero-slide');
+        if (slides.length === 0) return;
+
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[currentImageIndex].classList.add('active');
+        currentImageIndex = (currentImageIndex + 1) % slides.length;
+
+        setTimeout(cycleSlides, 8000); // Each slide shows for 8 seconds
+    }
+
+    initializeSlideshow();
 });

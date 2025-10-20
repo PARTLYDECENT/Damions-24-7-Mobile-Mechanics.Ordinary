@@ -5,8 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
     <meta name="description" content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- Refined Animations --- */
+
+        /* Staggered scroll animations for grid items */
+        .animate-on-scroll.loaded {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .services-grid .animate-on-scroll,
+        .feature-grid .animate-on-scroll,
+        .news-grid .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        /* Stagger delay for each item in a grid */
+        .animate-on-scroll.loaded:nth-child(1) { transition-delay: 0.1s; }
+        .animate-on-scroll.loaded:nth-child(2) { transition-delay: 0.2s; }
+        .animate-on-scroll.loaded:nth-child(3) { transition-delay: 0.3s; }
+        .animate-on-scroll.loaded:nth-child(4) { transition-delay: 0.4s; }
+        .animate-on-scroll.loaded:nth-child(5) { transition-delay: 0.5s; }
+        .animate-on-scroll.loaded:nth-child(6) { transition-delay: 0.6s; }
+
+        /* Smoother header transition */
+        .header {
+            transition: background-color 0.4s ease, padding 0.4s ease;
+        }
+
+        /* Enter site background image animation */
+        #enter-bg.zooming {
+            animation: zoomAndBlur 1s ease-in-out forwards;
+        }
+        @keyframes zoomAndBlur {
+            to { transform: scale(1.1); filter: blur(5px); }
+        }
+    </style>
 </head>
 <body>
     <div id="enter-overlay">
@@ -24,6 +62,7 @@
                 <a href="#why-us">Why Us</a>
                 <a href="#news">News</a>
                 <a href="#contact">Contact</a>
+                <a href="tools/toolbox.html" class="nav-link">Toolbox</a>
                 <a href="resources.html">Resources</a>
                 <a href="s2.html">S2</a>
                 <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank">3D Garage</a>
@@ -78,7 +117,8 @@
 
     <main class="main-content">
         <section class="hero" id="home">
-            <canvas id="hero-shader-canvas"></canvas>
+            <div id="hero-slideshow-container"></div>
+            <!-- <canvas id="hero-shader-canvas"></canvas> --> <!-- Replaced by slideshow -->
             <div class="hero-content animate-on-scroll">
                 <h1>Your 24/7 Mobile Mechanic Solution</h1>
                 <p>Expert auto repair and maintenance, wherever you are. Professional, reliable service that comes directly to you, day or night.</p>
@@ -312,7 +352,10 @@
                 <h3 id="popup-title"></h3>
             </div>
             <p id="popup-text"></p>
-            <button id="dont-show-btn" class="cta-button">Don't Show Again</button>
+            <div class="popup-buttons">
+                <button id="next-tip-btn" class="cta-button">Next Tip</button>
+                <button id="dont-show-btn" class="cta-button secondary">Don't Show Again</button>
+            </div>
         </div>
     </div>
 
@@ -322,7 +365,7 @@
     <script src="main.js"></script>
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
-    <script src="shader.js"></script>
-    <script src="panel_shader.js"></script>
+    <script src="shader.js"></script> <!-- Keep for hero if still used -->
+    <script src="panel_shader.js"></script> <!-- New advanced panel shader -->
 </body>
 </html>
