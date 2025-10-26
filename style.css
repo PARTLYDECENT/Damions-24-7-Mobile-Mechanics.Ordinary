@@ -32,8 +32,16 @@ body {
     font-family: var(--font-body);
     line-height: 1.7;
     color: var(--text-light);
-    background-color: var(--bg-dark);
-    overflow-x: auto;
+    background-color: var(--bg-dark); /* Default background color */
+    overflow-x: hidden;
+}
+
+body.bg-loaded {
+    background-image: url('assets/images/bg1.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
 /* --- Header & Navigation --- */
@@ -443,7 +451,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--bg-dark);
+    background-color: #0A0F1A; /* Use a solid, opaque color */
     display: flex;
     justify-content: center;
     align-items: center;

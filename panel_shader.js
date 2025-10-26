@@ -1,7 +1,16 @@
+/**
+ * Initializes a "Panel Shader" WebGL effect on a canvas element.
+ * [Visuals V2] This version creates a more dynamic, multi-layered
+ * data-stream or energy-panel effect.
+ *
+ * @param {HTMLCanvasElement} canvas The canvas to render on.
+ * @param {object} options Shader options (e.g., color, speed).
+ */
 function initializePanelShader(canvas, options) {
-    const gl = canvas.getContext('webgl', { antialias: true, powerPreference: "high-performance" });
+    const gl = canvas.getContext('webgl', { antialias: false, powerPreference: "low-power" });
     if (!gl) {
-        console.error("WebGL not supported!");
+        console.error("WebGL not supported! Cannot initialize panel shader.");
+        canvas.style.backgroundColor = '#1A2238'; // Fallback color
         return;
     }
 
@@ -12,92 +21,86 @@ function initializePanelShader(canvas, options) {
         }
     `;
 
+    // --- UPDATED FRAGMENT SHADER ---
     const fragmentShaderSource = `
         precision highp float;
         uniform vec2 u_resolution;
         uniform float u_time;
-        uniform vec2 u_mouse;
         uniform vec3 u_color;
         uniform float u_speed;
 
-        // 2D Random
-        float random (vec2 st) {
-            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+        // 2D Random function
+        float random(vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
         }
 
-        // 2D Noise
-        float noise (vec2 st) {
+        // 2D Noise function
+        float noise(vec2 st) {
             vec2 i = floor(st);
             vec2 f = fract(st);
-            float a = random(i);
-            float b = random(i + vec2(1.0, 0.0));
-            float c = random(i + vec2(0.0, 1.0));
-            float d = random(i + vec2(1.0, 1.0));
-            vec2 u = f*f*(3.0-2.0*f);
-            return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+            vec2 u = f * f * (3.0 - 2.0 * f); // Smoothstep
+            return mix(mix(random(i + vec2(0.0, 0.0)), random(i + vec2(1.0, 0.0)), u.x),
+                       mix(random(i + vec2(0.0, 1.0)), random(i + vec2(1.0, 1.0)), u.x), u.y);
         }
 
-        // Fractional Brownian Motion
-        float fbm (vec2 st) {
+        // FBM (Fractional Brownian Motion) - for layered, complex noise
+        float fbm(vec2 st) {
             float value = 0.0;
-            float amplitude = .5;
-            float frequency = 0.;
-            for (int i = 0; i < 6; i++) {
+            float amplitude = 0.5;
+            for (int i = 0; i < 4; i++) {
                 value += amplitude * noise(st);
-                st *= 2.;
-                amplitude *= .5;
+                st *= 2.0;
+                amplitude *= 0.5;
             }
             return value;
         }
 
         void main() {
-            vec2 st = gl_FragCoord.xy/u_resolution.xy;
-            st.x *= u_resolution.x/u_resolution.y;
+            vec2 st = gl_FragCoord.xy / u_resolution.xy;
+            st.x *= u_resolution.x / u_resolution.y; // Aspect correction
 
-            // Mouse interaction
-            vec2 mouse = u_mouse / u_resolution;
-            mouse.x *= u_resolution.x / u_resolution.y;
-            float mouse_dist = distance(st, mouse);
-            float mouse_effect = 1.0 - smoothstep(0.0, 0.25, mouse_dist);
+            float t = u_time * u_speed * 0.1;
 
-            // Background noise
-            vec2 q = vec2(fbm(st + 0.001*u_time*u_speed), fbm(st + vec2(1.0)));
-            vec2 r = vec2(fbm(st + 4.0*q + vec2(1.7,9.2) + 0.15*u_time*u_speed),
-                          fbm(st + 4.0*q + vec2(8.3,2.8) + 0.126*u_time*u_speed));
-            float f = fbm(st+r);
-            vec3 color = mix(vec3(0.05, 0.05, 0.15), u_color * 0.5, clamp((f*f)*4.0,0.0,1.0));
-            color = mix(color, u_color * 0.8, clamp(length(q),0.0,1.0));
-            color = mix(color, vec3(0.2,0.2,0.3), clamp(length(r.x),0.0,1.0));
-            color = (color*color*3.0+color*0.5)*f;
+            // Create two layers of noise moving diagonally in different directions
+            vec2 st1 = st * 3.0 + vec2(t, t);
+            vec2 st2 = st * 5.0 - vec2(t * 0.5, 0.0);
 
-            // Grid
-            vec2 grid_st = st * 15.0;
-            grid_st += mouse_effect * (random(st) - 0.5) * 0.5; // Distort grid near mouse
-            vec2 grid_f = fract(grid_st);
-            float grid_line = pow(smoothstep(0.0, 0.1, grid_f.x) - smoothstep(0.9, 1.0, grid_f.x), 2.0);
-            grid_line += pow(smoothstep(0.0, 0.1, grid_f.y) - smoothstep(0.9, 1.0, grid_f.y), 2.0);
-            color += u_color * grid_line * 0.2;
+            // Get FBM noise for each layer
+            float n1 = fbm(st1);
+            float n2 = fbm(st2);
 
-            // Grid pulses
-            vec2 pulse_st = fract(grid_st);
-            float pulse_time = fract(u_time * 0.2 * u_speed + random(floor(grid_st)) * 5.0);
-            float pulse_y = smoothstep(pulse_time - 0.1, pulse_time, pulse_st.y) - smoothstep(pulse_time, pulse_time + 0.1, pulse_st.y);
-            float pulse_x = smoothstep(pulse_time - 0.1, pulse_time, pulse_st.x) - smoothstep(pulse_time, pulse_time + 0.1, pulse_st.x);
-            color += u_color * (pulse_y + pulse_x) * 0.5;
+            // Combine the noise layers
+            float combinedNoise = n1 * 0.7 + n2 * 0.3;
 
-            // Mouse glow
-            color += u_color * mouse_effect * 0.5;
+            // Base color from noise
+            vec3 color = u_color * combinedNoise * 1.5;
+            
+            // Add a brighter, cooler highlight color where noise is intense
+            vec3 highlightColor = u_color + vec3(0.1, 0.1, 0.2);
+            color = mix(color, highlightColor, smoothstep(0.6, 0.8, n1));
+            
+            // Subtle scanline effect
+            float scanline = sin(st.y * u_resolution.y * 0.8) * 0.05;
+            color -= scanline * 0.2;
+
+            // Vignette
+            float vignette = length(st - vec2(0.5 * (u_resolution.x / u_resolution.y), 0.5));
+            color *= 1.0 - vignette * 1.0;
+            
+            // Add a base glow
+            color += u_color * 0.1;
 
             gl_FragColor = vec4(color, 1.0);
         }
     `;
+    // --- END UPDATED SHADER ---
 
     function createShader(gl, type, source) {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+            console.error('Shader compile error: ' + gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
@@ -107,15 +110,31 @@ function initializePanelShader(canvas, options) {
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
 
+    // Stop if shaders failed
+    if (!vertexShader || !fragmentShader) {
+        canvas.style.backgroundColor = '#1A2238'; // Fallback
+        return;
+    }
+
     const program = gl.createProgram();
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
+
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(program));
+        console.error('Program link error: ' + gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        canvas.style.backgroundColor = '#1A2238'; // Fallback
         return;
     }
+    
     gl.useProgram(program);
+
+    // Shaders are linked, no longer need them
+    gl.deleteShader(vertexShader);
+    gl.deleteShader(fragmentShader);
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -127,39 +146,43 @@ function initializePanelShader(canvas, options) {
 
     const resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     const timeUniformLocation = gl.getUniformLocation(program, "u_time");
-    const mouseUniformLocation = gl.getUniformLocation(program, "u_mouse");
     const colorUniformLocation = gl.getUniformLocation(program, "u_color");
     const speedUniformLocation = gl.getUniformLocation(program, "u_speed");
 
-    let mousePos = [0, 0];
-    canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        mousePos = [e.clientX - rect.left, rect.height - (e.clientY - rect.top)];
-    });
-
-    function resize() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-    }
-    window.addEventListener('resize', resize);
-    resize();
+    // Use a single animation frame request ID to manage the loop
+    let animationFrameId = null;
 
     function render(time) {
         time *= 0.001; // convert to seconds
 
-        gl.useProgram(program);
+        // Resize handling
+        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        }
 
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform1f(timeUniformLocation, time);
-        gl.uniform2fv(mouseUniformLocation, mousePos);
-        gl.uniform3fv(colorUniformLocation, options.color || [0.0, 0.8, 0.8]);
-        gl.uniform1f(speedUniformLocation, options.speed || 1.0);
+        gl.uniform3fv(colorUniformLocation, options.color || [0.1, 0.2, 0.3]);
+        gl.uniform1f(speedUniformLocation, options.speed || 0.5);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-        requestAnimationFrame(render);
+        
+        animationFrameId = requestAnimationFrame(render);
     }
 
-    requestAnimationFrame(render);
+    // Start the render loop
+    animationFrameId = requestAnimationFrame(render);
+    
+    // Return a simple object to allow stopping the animation if needed
+    return {
+        stop: () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        },
+        // You could add a 'destroy' method here later to clean up buffers/programs
+    };
 }

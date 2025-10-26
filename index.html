@@ -44,6 +44,38 @@
         @keyframes zoomAndBlur {
             to { transform: scale(1.1); filter: blur(5px); }
         }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 1024px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: var(--header-bg-scrolled);
+                flex-direction: column;
+                width: 100%;
+                padding: 1rem 0;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+
+            .nav-links.active { display: flex; }
+            .nav-links a { padding: 1rem 2rem; text-align: center; border-bottom: 1px solid var(--border-color-translucent); }
+            .nav-links a:last-child { border-bottom: none; }
+            .menu-toggle { display: block; }
+            .hero-content h1 { font-size: 2.5rem; }
+            .hero-content p { font-size: 1rem; }
+        }
+
+        @media (max-width: 768px) {
+            .services-grid, .feature-grid, .news-grid { grid-template-columns: 1fr; }
+            .section-title { font-size: 2rem; }
+            .footer-links { flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+            .popup-content { width: 90%; }
+        }
     </style>
 </head>
 <body>
@@ -339,12 +371,16 @@
                 <li><a href="#news">News</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
+            <div class="footer-controls">
+                <button id="mute-btn" class="cta-button secondary" title="Toggle Music">🔊</button>
+            </div>
             <img src="banner.png" alt="Banner" class="footer-banner">
             <p class="copyright">&copy; 2025 Damions 24/7 Mobile Mechanics. All Rights Reserved.</p>
         </div>
     </footer>
 
     <div id="info-popup" class="info-popup">
+        <!-- ... popup content ... -->
         <div class="popup-content">
             <span class="close-btn">&times;</span>
             <div class="popup-header">
@@ -359,13 +395,29 @@
         </div>
     </div>
 
-    <audio id="background-audio" src="./videos/rare1.mp3" preload="auto" muted></audio>
-    <audio id="background-music" src="./videos/impact.mp3" preload="auto" loop></audio>
+    <audio id="hover-audio" src="./videos/impact.mp3" preload="auto"></audio>
+    <audio id="background-music" src="./videos/rare1.mp3" preload="auto" loop></audio>
     
     <script src="main.js"></script>
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
     <script src="shader.js"></script> <!-- Keep for hero if still used -->
-    <script src="panel_shader.js"></script> <!-- New advanced panel shader -->
+    <script src="panel_shader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Panel Shaders ---
+            const panelCanvases = [
+                { id: 'services-canvas', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
+                { id: 'why-us-canvas', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
+                { id: 'news-canvas', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
+                { id: 'video-promo-canvas', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
+                { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
+                { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
+                { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
+                { id: 'engine-bay-canvas', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } }
+            ];
+            panelCanvases.forEach(panel => { const canvas = document.getElementById(panel.id); if (canvas) { initializePanelShader(canvas, panel.options); } });
+        });
+    </script>
 </body>
 </html>

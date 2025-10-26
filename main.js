@@ -1,25 +1,64 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Enter Site Button ---
+    // --- Background Image Loader with Error Handling ---
+    function checkBackgroundImage(url) {
+        const img = new Image();
+        img.onload = function() {
+            console.log('Background image loaded successfully.');
+            document.body.classList.add('bg-loaded');
+        }
+        img.onerror = function() {
+            console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check that the file exists and the path is correct. The site will use the fallback background color.`);
+            document.body.classList.remove('bg-loaded');
+        }
+        img.src = url;
+    }
+    checkBackgroundImage('assets/images/bg1.jpg');
+
+    // --- Audio & Site Entry ---
     const enterOverlay = document.getElementById('enter-overlay');
     const enterBtn = document.getElementById('enter-btn');
     const enterBg = document.getElementById('enter-bg');
     const backgroundMusic = document.getElementById('background-music');
+    const muteBtn = document.getElementById('mute-btn');
+    let isMuted = localStorage.getItem('musicMuted') === 'true';
+
+    function setMuteState(muted) {
+        isMuted = muted;
+        backgroundMusic.muted = isMuted;
+        muteBtn.textContent = isMuted ? '🔇' : '🔊';
+        localStorage.setItem('musicMuted', isMuted);
+    }
+
+    // Set initial state from localStorage
+    setMuteState(isMuted);
 
     enterBtn.addEventListener('click', () => {
         enterOverlay.style.opacity = '0';
-        enterBg.classList.add('zooming'); // Add class to trigger zoom/blur
+        enterBg.classList.add('zooming');
         setTimeout(() => { 
             enterOverlay.style.display = 'none';
-        }, 1000); // Match this to the transition duration
+        }, 1000);
 
         // Play background music
-        if (backgroundMusic.paused) {
-            backgroundMusic.play().catch(error => {
-                console.log("Autoplay was prevented. User will need to interact more to play audio.");
+        const playPromise = backgroundMusic.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.log("Autoplay was prevented. User interaction is needed to play audio.");
+                // If autoplay fails, ensure the icon reflects the muted state until the user clicks it.
+                setMuteState(true); 
             });
         }
     });
+
+    muteBtn.addEventListener('click', () => {
+        setMuteState(!isMuted);
+        // If music is paused and we are unmuting, try to play it.
+        if (!isMuted && backgroundMusic.paused) {
+            backgroundMusic.play().catch(e => console.log("Could not play audio on unmute."));
+        }
+    });
+
 
     // --- Blood Rain Animation ---
     const bloodRainContainer = document.getElementById('blood-rain');
@@ -165,6 +204,23 @@ document.addEventListener('DOMContentLoaded', () => {
         header.classList.toggle('scrolled', window.scrollY > 50);
     });
 
+    // --- Mobile Menu Toggle ---
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (menuToggle && navLinks) {
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // Close menu when a link is clicked
+        navLinks.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                navLinks.classList.remove('active');
+            }
+        });
+    }
+
     // --- Scroll Animations ---
     const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -197,19 +253,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Sound Effects ---
-    const hoverSound = new Audio('./videos/rare1.mp3');
-    const clickSound = new Audio('./videos/impact.mp3');
-    hoverSound.volume = 0.3;
-    clickSound.volume = 0.5;
+    const hoverSound = new Audio('./videos/hover_sound.mp3'); // Assuming a more subtle hover sound
+    const clickSound = document.getElementById('hover-audio'); // Use the preloaded element
+    hoverSound.volume = 0.2;
+    clickSound.volume = 0.4;
 
     document.querySelectorAll('.service-card, .cta-button, .nav-links a, .footer-links a, .read-more-btn, .dropdown a').forEach(el => {
         el.addEventListener('mouseenter', () => {
             hoverSound.currentTime = 0;
-            hoverSound.play();
+            hoverSound.play().catch(e => {});
         });
         el.addEventListener('click', () => {
             clickSound.currentTime = 0;
-            clickSound.play();
+            clickSound.play().catch(e => {});
         });
     });
 
@@ -292,24 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New WebGL Hero Shader ---
     // This code has been moved to shader.js
 
-    // --- Panel Shaders ---
-    const panelCanvases = [
-        { id: 'services-canvas', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
-        { id: 'why-us-canvas', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
-        { id: 'news-canvas', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
-        { id: 'video-promo-canvas', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
-        { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
-        { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
-        { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
-    ];
-
-    panelCanvases.forEach(panel => {
-        const canvas = document.getElementById(panel.id);
-        if (canvas) {
-            initializePanelShader(canvas, panel.options);
-        }
-    });
-
     // --- Animated Favicon Logic ---
     const favicon = document.getElementById('favicon');
     const faviconFrames = [
@@ -373,4 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initializeSlideshow();
+
+    // Create a dummy hover sound file if it doesn't exist for the logic to work
+    // In a real scenario, you'd have this file.
+    if (!hoverSound.src) {
+        const dummyAudio = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+        hoverSound.src = dummyAudio;
+    }
 });

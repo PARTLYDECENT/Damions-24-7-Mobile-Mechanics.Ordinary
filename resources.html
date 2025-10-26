@@ -35,12 +35,18 @@
 
         body {
             font-family: var(--font-body);
-            background-color: var(--bg-dark);
+            background-color: var(--bg-dark); /* Default background */
             color: var(--text-light);
             line-height: 1.6;
             overflow-x: hidden;
         }
-
+        body.bg-loaded {
+            background-image: url('assets/images/bg1.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
         #background-shader {
             position: fixed;
             top: 0;
@@ -48,6 +54,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
+            display: none; /* Hide shader to show body background */
         }
 
         .container {
@@ -301,7 +308,6 @@
     </style>
 </head>
 <body>
-    <canvas id="background-shader"></canvas>
     <div class="container">
         <div class="header">
             <h1>🔧 Ultimate Automotive Hub 🏁</h1>
@@ -895,6 +901,20 @@
     <script src="resources_shader.js"></script>
 
     <script>
+        // --- Background Image Loader with Error Handling ---
+        function checkBackgroundImage(url) {
+            const img = new Image();
+            img.onload = function() {
+                console.log('Resource page background image loaded successfully.');
+                document.body.classList.add('bg-loaded');
+            }
+            img.onerror = function() {
+                console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check file path. Using fallback color.`);
+                document.body.classList.remove('bg-loaded');
+            }
+            img.src = url;
+        }
+        checkBackgroundImage('assets/images/bg1.jpg');
         // Search functionality
         const searchInput = document.getElementById('searchInput');
         const categories = document.querySelectorAll('.category');
@@ -902,12 +922,6 @@
         const websites = document.querySelectorAll('.website');
         const hoverSound = document.getElementById('hover-sound');
         const clickSound = document.getElementById('click-sound');
-
-        // --- Initialize Background Shader ---
-        const bgCanvas = document.getElementById('background-shader');
-        if (bgCanvas && typeof initializeResourceShader === 'function') {
-            initializeResourceShader(bgCanvas, { color: [0.0, 0.5, 0.6] });
-        }
 
         // --- Sound Effects ---
         if(hoverSound && clickSound) {
