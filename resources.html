@@ -33,6 +33,12 @@
             scroll-behavior: smooth;
         }
 
+        /* Custom selection color for a more integrated feel */
+        ::selection {
+            background-color: var(--accent-color);
+            color: var(--bg-dark);
+        }
+
         body {
             font-family: var(--font-body);
             background-color: var(--bg-dark); /* Default background */
@@ -46,6 +52,34 @@
             background-position: center center;
             background-attachment: fixed;
             background-repeat: no-repeat;
+            position: relative; /* Needed for pseudo-elements */
+        }
+
+        /* Animated grain/noise overlay for a "live feed" effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXWBgYGHh4d5eXlzc3OLi4ubm5uVlZWPj4+NjY19fX2JiYl/f39ra2uRkZGZmZlpaWmXl5dvb29xcXGTk5NnZ2c8TV1mAAAAG3RSTlNAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAvEOwtAAAFVklEQVR4XpWWB67c2BUFb3g557T/hRo9/WUMZHlgr4Bg8Z4qQgQJlHI4A8SzFVrapvmTF9O7dmYRFZ60YiBhJRCgh1FYhiLAmdvX0CzTOpNE77ME0Zty/nWWzchDtiqrmQDeuv3powQ5ta2eN0FY0InkqDD73lT9c9lEzwUNqgFHs9VQce3TVClFCQrSTfOiYkVJQBmpbq2L6iZavPnAPcoU0dSw0SUTqz/GtrE+sYSOYyn9FXGkM+or2Oj5rFcRozG5X0IG6YbRxLaN4Aa3aRxFuGWpLTHEo49chvWYsIVb2OF7G5T2H6PbSjclYV09pooHYAXcJQWHljS6CDAU5UKSv*');
+            opacity: 0.04;
+            z-index: -1;
+            pointer-events: none;
+            animation: noise 0.2s infinite steps(1);
+        }
+        @keyframes noise {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -10%); }
+            20% { transform: translate(-15%, 5%); }
+            30% { transform: translate(7%, -25%); }
+            40% { transform: translate(-5%, 25%); }
+            50% { transform: translate(-15%, 10%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(3%, 35%); }
+            90% { transform: translate(-10%, 10%); }
         }
         #background-shader {
             position: fixed;
@@ -76,7 +110,12 @@
             font-size: 3.5em;
             margin-bottom: 10px;
             color: var(--accent-color);
-            text-shadow: 0 0 15px var(--accent-color), 0 0 30px var(--accent-hover);
+            text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-hover), 0 0 40px rgba(0, 229, 255, 0.5);
+            animation: text-flicker 4s linear infinite;
+        }
+        @keyframes text-flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% { text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-hover), 0 0 40px rgba(0, 229, 255, 0.5), 0 0 80px rgba(0, 229, 255, 0.3); }
+            20%, 24%, 55% { text-shadow: none; }
         }
 
         .header p {
@@ -120,15 +159,17 @@
         }
 
         .filter-btn {
-            padding: 10px 20px;
+            padding: 12px 25px;
             background: transparent;
             border: 1px solid var(--border-color);
             border-radius: 25px;
             color: var(--text-light);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-family: var(--font-display);
             font-weight: 700;
+            position: relative;
+            overflow: hidden;
         }
 
         .filter-btn:hover, .filter-btn.active {
@@ -137,6 +178,19 @@
             border-color: var(--accent-color);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
         }
 
         .categories {
@@ -152,20 +206,47 @@
             padding: 25px;
             backdrop-filter: blur(10px);
             border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             opacity: 0;
             transform: translateY(20px);
+            position: relative;
+            overflow: hidden;
         }
 
         .category.visible {
             opacity: 1;
             transform: translateY(0);
         }
-
+        
+        /* Animated border on hover */
+        .category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            transition: border-color 0.4s;
+            pointer-events: none;
+        }
+        
         .category:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 229, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 229, 255, 0.1);
+        }
+
+        .category:hover::before {
             border-color: var(--accent-color);
+            animation: border-trace 1s linear infinite;
+        }
+        @keyframes border-trace {
+            from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+            25% { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0, 0 100%, 0 100%); }
+            50% { clip-path: polygon(0 0, 100% 0, 100% 100%, 100% 100%, 0 100%, 0 100%); }
+            75% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%, 0 100%); }
+            to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0, 100% 0); }
         }
 
         .category h2 {
@@ -192,14 +273,15 @@
             padding: 15px;
             border-radius: 10px;
             border-left: 4px solid var(--border-color);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
         }
 
         .website:hover {
-            background: var(--primary-color);
+            background: rgba(29, 42, 74, 0.8);
             transform: translateX(5px);
-            border-left-color: var(--accent-color);
+            border-left-color: var(--accent-hover);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
         }
 
         .website-name {
@@ -238,8 +320,14 @@
             padding: 20px;
             background: rgba(26, 34, 56, 0.5);
             border-radius: 15px;
+            border: 1px solid transparent;
             backdrop-filter: blur(10px);
             min-width: 180px;
+            transition: all 0.3s ease;
+        }
+        .stat:hover {
+            transform: scale(1.05);
+            border-color: var(--border-color);
         }
 
         .stat-number {
@@ -292,11 +380,12 @@
             border: 1px solid var(--border-color);
             border-radius: 50%;
             color: var(--accent-color);
-            font-size: 1.5em;
+            font-size: 1.8em;
             margin-bottom: 15px;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
             transition: all 0.3s ease;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .quick-btn:hover {
@@ -901,27 +990,31 @@
     <script src="resources_shader.js"></script>
 
     <script>
-        // --- Background Image Loader with Error Handling ---
-        function checkBackgroundImage(url) {
-            const img = new Image();
-            img.onload = function() {
-                console.log('Resource page background image loaded successfully.');
-                document.body.classList.add('bg-loaded');
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Background Image Loader with Error Handling ---
+            function checkBackgroundImage(url, callback) {
+                const img = new Image();
+                img.onload = function() {
+                    console.log('Resource page background image loaded successfully.');
+                    document.body.classList.add('bg-loaded');
+                    if (callback) callback();
+                }
+                img.onerror = function() {
+                    console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check file path. Using fallback color.`);
+                    document.body.classList.remove('bg-loaded');
+                    if (callback) callback();
+                }
+                img.src = url;
             }
-            img.onerror = function() {
-                console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check file path. Using fallback color.`);
-                document.body.classList.remove('bg-loaded');
-            }
-            img.src = url;
-        }
-        checkBackgroundImage('assets/images/bg1.jpg');
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        const categories = document.querySelectorAll('.category');
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const websites = document.querySelectorAll('.website');
-        const hoverSound = document.getElementById('hover-sound');
-        const clickSound = document.getElementById('click-sound');
+            checkBackgroundImage('assets/images/bg1.jpg');
+
+            // --- Page specific logic ---
+            const searchInput = document.getElementById('searchInput');
+            const categories = document.querySelectorAll('.category');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const websites = document.querySelectorAll('.website');
+            const hoverSound = document.getElementById('hover-sound');
+            const clickSound = document.getElementById('click-sound');
 
         // --- Sound Effects ---
         if(hoverSound && clickSound) {
@@ -1098,6 +1191,7 @@
                     });
                 }
             });
+        });
         });
     </script>
 </body>

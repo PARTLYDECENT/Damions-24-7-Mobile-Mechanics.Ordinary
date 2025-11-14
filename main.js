@@ -1,19 +1,56 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Background Image Loader with Error Handling ---
-    function checkBackgroundImage(url) {
+    function checkBackgroundImage(url, callback) {
         const img = new Image();
         img.onload = function() {
             console.log('Background image loaded successfully.');
             document.body.classList.add('bg-loaded');
+            if (callback) callback(); // Run the callback function on success
         }
         img.onerror = function() {
             console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check that the file exists and the path is correct. The site will use the fallback background color.`);
             document.body.classList.remove('bg-loaded');
+            if (callback) callback(); // Also run callback on error so the site doesn't hang
         }
         img.src = url;
     }
-    checkBackgroundImage('assets/images/bg1.jpg');
+
+    // --- Centralized Panel Shader Animation ---
+    function initializeAndAnimateShaders() {
+        const panelShaders = [];
+        const panelConfigs = [
+            { id: 'services-canvas', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
+            { id: 'why-us-canvas', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
+            { id: 'news-canvas', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
+            { id: 'video-promo-canvas', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
+            { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
+            { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
+            { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
+            { id: 'engine-bay-canvas', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } },
+            { id: 'service-area-canvas', options: { color: [0.1, 0.6, 0.4], speed: 0.3 } },
+            { id: 'faq-canvas', options: { color: [0.5, 0.2, 0.5], speed: 0.6 } }
+        ];
+
+        panelConfigs.forEach(config => {
+            const canvas = document.getElementById(config.id);
+            if (canvas && typeof PanelShader !== 'undefined') {
+                panelShaders.push(new PanelShader(canvas, config.options));
+            }
+        });
+
+        // Master animation loop for all panel shaders
+        function animateShaders(time) {
+            panelShaders.forEach(shader => {
+                shader.update(time);
+            });
+            requestAnimationFrame(animateShaders);
+        }
+        requestAnimationFrame(animateShaders);
+    }
+
+    // Start the background image check, and once it's done, initialize the shaders.
+    checkBackgroundImage('assets/images/bg1.jpg', initializeAndAnimateShaders);
 
     // --- Audio & Site Entry ---
     const enterOverlay = document.getElementById('enter-overlay');
@@ -253,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Sound Effects ---
-    const hoverSound = new Audio('./videos/hover_sound.mp3'); // Assuming a more subtle hover sound
+    const hoverSound = new Audio('./videos/impact.mp3'); // Assuming a more subtle hover sound
     const clickSound = document.getElementById('hover-audio'); // Use the preloaded element
     hoverSound.volume = 0.2;
     clickSound.volume = 0.4;
@@ -419,3 +456,179 @@ document.addEventListener('DOMContentLoaded', () => {
         hoverSound.src = dummyAudio;
     }
 });
+
+// --- FAQ Accordion ---
+document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+        const faqItem = button.parentElement;
+
+        // Optional: Close other open items
+        document.querySelectorAll('.faq-item').forEach(item => {
+            if (item !== faqItem && item.classList.contains('active')) {
+                item.classList.remove('active');
+            }
+        });
+
+        faqItem.classList.toggle('active');
+    });
+});
+
+// --- Functions Sidebar Logic ---
+const sidebar = document.getElementById('functions-sidebar');
+const openBtn = document.getElementById('sidebar-open-btn');
+const closeBtn = document.getElementById('sidebar-close-btn');
+
+if (sidebar && openBtn && closeBtn) {
+    openBtn.addEventListener('click', () => sidebar.classList.add('open'));
+    closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+
+    // Optional: Close sidebar if user clicks outside of it
+    document.addEventListener('click', (event) => {
+        if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && event.target !== openBtn) {
+            sidebar.classList.remove('open');
+        }
+    });
+}
+
+// --- Sidebar Tools Logic (ported from toolbox.html) ---
+
+// --- Unit Converter Logic ---
+const conversionType = document.getElementById('conversion-type');
+const unit1Input = document.getElementById('unit1-input');
+const unit2Input = document.getElementById('unit2-input');
+const unit1Label = document.getElementById('unit1-label');
+const unit2Label = document.getElementById('unit2-label');
+
+if (conversionType) {
+    const factors = {
+        torque: { factor: 1.35582, labels: ['ft-lbs', 'Nm'] },
+        pressure: { factor: 0.0689476, labels: ['PSI', 'Bar'] },
+        power: { factor: 0.7457, labels: ['HP', 'kW'] },
+        volume: { factor: 3.78541, labels: ['gal', 'L'] }
+    };
+
+    function updateConverter(source) {
+        const type = conversionType.value;
+        const { factor, labels } = factors[type];
+        unit1Label.textContent = labels[0];
+        unit2Label.textContent = labels[1];
+
+        if (source === 1) {
+            unit2Input.value = (parseFloat(unit1Input.value) * factor).toFixed(3);
+        } else {
+            unit1Input.value = (parseFloat(unit2Input.value) / factor).toFixed(3);
+        }
+    }
+
+    conversionType.addEventListener('change', () => updateConverter(1));
+    unit1Input.addEventListener('input', () => updateConverter(1));
+    unit2Input.addEventListener('input', () => updateConverter(2));
+    updateConverter(1); // Initial calculation
+}
+
+// --- Tire Calculator Logic ---
+const tireInputs = document.querySelectorAll('#calculator-panel input');
+if (tireInputs.length > 0) {
+    function calculateTireSize() {
+        const s_w = parseFloat(document.getElementById('s_width').value) || 0;
+        const s_r = parseFloat(document.getElementById('s_ratio').value) || 0;
+        const s_d = parseFloat(document.getElementById('s_diam').value) || 0;
+        const n_w = parseFloat(document.getElementById('n_width').value) || 0;
+        const n_r = parseFloat(document.getElementById('n_ratio').value) || 0;
+        const n_d = parseFloat(document.getElementById('n_diam').value) || 0;
+
+        const s_sw = (s_w * (s_r / 100)) / 25.4;
+        const s_od = s_sw * 2 + s_d;
+        const n_sw = (n_w * (n_r / 100)) / 25.4;
+        const n_od = n_sw * 2 + n_d;
+
+        document.getElementById('s_od').textContent = s_od.toFixed(2) + ' in';
+        document.getElementById('s_sw').textContent = s_sw.toFixed(2) + ' in';
+        document.getElementById('n_od').textContent = n_od.toFixed(2) + ' in';
+        document.getElementById('n_sw').textContent = n_sw.toFixed(2) + ' in';
+
+        const diff_od = s_od > 0 ? ((n_od / s_od) - 1) * 100 : 0;
+        const diff_sw = s_sw > 0 ? ((n_sw / s_sw) - 1) * 100 : 0;
+        document.getElementById('diff_od').textContent = diff_od.toFixed(2) + '%';
+        document.getElementById('diff_sw').textContent = diff_sw.toFixed(2) + '%';
+
+        const speedo_actual = s_od > 0 ? 60 * (n_od / s_od) : 60;
+        document.getElementById('speedo_actual').textContent = speedo_actual.toFixed(1) + ' MPH';
+    }
+
+    tireInputs.forEach(input => input.addEventListener('input', calculateTireSize));
+    calculateTireSize(); // Initial calculation
+}
+
+// --- Symptom Analyzer Logic ---
+const symptomSelector = document.getElementById('symptom-selector');
+if (symptomSelector) {
+    const knowledgeBase = {
+        "Abnormal Noises": {
+            'Squealing/Screeching on Braking': [{ cause: 'Worn Brake Pads', likelihood: 9 }, { cause: 'Glazed/Warped Rotors', likelihood: 6 }],
+            'Clicking/Popping on Turns': [{ cause: 'Worn CV Joint', likelihood: 9 }, { cause: 'Worn Ball Joint', likelihood: 5 }],
+            'Rumbling/Growling that changes with speed': [{ cause: 'Bad Wheel Bearing', likelihood: 9 }, { cause: 'Uneven Tire Wear', likelihood: 6 }],
+            'Engine Knocking/Pinging': [{ cause: 'Incorrect Fuel Octane', likelihood: 7 }, { cause: 'Carbon Buildup', likelihood: 6 }, { cause: 'Engine Timing Issue', likelihood: 8 }]
+        },
+        "Strange Smells": {
+            'Sweet/Syrupy Smell from Engine Bay': [{ cause: 'Coolant (Antifreeze) Leak', likelihood: 10 }, { cause: 'Leaking Heater Core', likelihood: 7 }],
+            'Burning Carpet Smell': [{ cause: 'Overheated Brakes', likelihood: 9 }, { cause: 'Dragging Clutch', likelihood: 6 }],
+            'Burning Oil Smell': [{ cause: 'Oil Leak on Exhaust', likelihood: 9 }, { cause: 'Leaking Valve Cover Gasket', likelihood: 8 }],
+            'Rotten Eggs Smell from Exhaust': [{ cause: 'Failing Catalytic Converter', likelihood: 10 }, { cause: 'Fuel System Issue', likelihood: 5 }]
+        },
+        "Performance Issues": {
+            'Engine Hesitates or Stumbles': [{ cause: 'Clogged Fuel Filter', likelihood: 8 }, { cause: 'Failing Spark Plugs/Wires', likelihood: 7 }, { cause: 'Dirty Mass Airflow Sensor', likelihood: 6 }],
+            'Poor Fuel Economy': [{ cause: 'Low Tire Pressure', likelihood: 8 }, { cause: 'Dirty Air Filter', likelihood: 7 }, { cause: 'Failing Oxygen Sensor', likelihood: 7 }],
+            'Vehicle Pulls to One Side': [{ cause: 'Needs Wheel Alignment', likelihood: 9 }, { cause: 'Uneven Tire Pressure', likelihood: 7 }, { cause: 'Sticking Brake Caliper', likelihood: 6 }]
+        }
+    };
+
+    for (const category in knowledgeBase) {
+        const group = document.createElement('div');
+        group.className = 'symptom-group';
+        const title = document.createElement('h4');
+        title.textContent = category;
+        group.appendChild(title);
+
+        for (const symptom in knowledgeBase[category]) {
+            const label = document.createElement('label');
+            label.className = 'symptom-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = symptom;
+            checkbox.dataset.category = category;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(symptom));
+            group.appendChild(label);
+        }
+        symptomSelector.appendChild(group);
+    }
+
+    document.getElementById('diagnose-btn').addEventListener('click', () => {
+        const selectedSymptoms = Array.from(symptomSelector.querySelectorAll('input:checked'));
+        const resultsPanel = document.getElementById('diagnosis-results');
+        const resultsList = document.getElementById('diagnosis-list');
+
+        if (selectedSymptoms.length === 0) {
+            alert('Please select at least one symptom.');
+            return;
+        }
+
+        const potentialCauses = {};
+        selectedSymptoms.forEach(checkbox => {
+            const causes = knowledgeBase[checkbox.dataset.category][checkbox.value];
+            causes.forEach(item => {
+                potentialCauses[item.cause] = (potentialCauses[item.cause] || 0) + item.likelihood;
+            });
+        });
+
+        const sortedCauses = Object.entries(potentialCauses).sort((a, b) => b[1] - a[1]);
+        resultsList.innerHTML = '';
+        sortedCauses.forEach(([cause]) => {
+            const li = document.createElement('li');
+            li.textContent = cause;
+            resultsList.appendChild(li);
+        });
+        resultsPanel.style.display = 'block';
+    });
+}

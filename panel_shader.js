@@ -1,18 +1,25 @@
 /**
- * Initializes a "Panel Shader" WebGL effect on a canvas element.
- * [Visuals V2] This version creates a more dynamic, multi-layered
- * data-stream or energy-panel effect.
+ * PanelShader Class
+ * Manages a single WebGL canvas to render a dynamic, multi-layered data-stream effect.
+ * This is designed to be controlled by an external animation loop.
  *
  * @param {HTMLCanvasElement} canvas The canvas to render on.
  * @param {object} options Shader options (e.g., color, speed).
  */
-function initializePanelShader(canvas, options) {
+class PanelShader {
+    constructor(canvas, options = {}) {
     const gl = canvas.getContext('webgl', { antialias: false, powerPreference: "low-power" });
     if (!gl) {
         console.error("WebGL not supported! Cannot initialize panel shader.");
         canvas.style.backgroundColor = '#1A2238'; // Fallback color
         return;
     }
+
+        this.gl = gl;
+        this.canvas = canvas;
+        this.options = options;
+        this.program = null;
+        this.uniforms = {};
 
     const vertexShaderSource = `
         attribute vec2 a_position;
@@ -107,8 +114,8 @@ function initializePanelShader(canvas, options) {
         return shader;
     }
 
-    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
 
     // Stop if shaders failed
     if (!vertexShader || !fragmentShader) {
@@ -116,73 +123,63 @@ function initializePanelShader(canvas, options) {
         return;
     }
 
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
+        this.program = gl.createProgram();
+        gl.attachShader(this.program, vertexShader);
+        gl.attachShader(this.program, fragmentShader);
+        gl.linkProgram(this.program);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Program link error: ' + gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
+    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+            console.error('Program link error: ' + gl.getProgramInfoLog(this.program));
+            gl.deleteProgram(this.program);
         gl.deleteShader(vertexShader);
         gl.deleteShader(fragmentShader);
         canvas.style.backgroundColor = '#1A2238'; // Fallback
         return;
     }
     
-    gl.useProgram(program);
+        gl.useProgram(this.program);
 
     // Shaders are linked, no longer need them
     gl.deleteShader(vertexShader);
     gl.deleteShader(fragmentShader);
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
 
-    const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionAttributeLocation);
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        const positionAttributeLocation = gl.getAttribLocation(this.program, "a_position");
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-    const timeUniformLocation = gl.getUniformLocation(program, "u_time");
-    const colorUniformLocation = gl.getUniformLocation(program, "u_color");
-    const speedUniformLocation = gl.getUniformLocation(program, "u_speed");
-
-    // Use a single animation frame request ID to manage the loop
-    let animationFrameId = null;
-
-    function render(time) {
+        this.uniforms = {
+            resolution: gl.getUniformLocation(this.program, "u_resolution"),
+            time: gl.getUniformLocation(this.program, "u_time"),
+            color: gl.getUniformLocation(this.program, "u_color"),
+            speed: gl.getUniformLocation(this.program, "u_speed"),
+        };
+    }
+    
+    update(time) {
+        if (!this.gl || !this.program) return;
+        
+        const gl = this.gl;
+        const canvas = this.canvas;
+        
         time *= 0.001; // convert to seconds
 
         // Resize handling
         if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
-            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.viewport(0, 0, canvas.width, canvas.height);
         }
 
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform1f(timeUniformLocation, time);
-        gl.uniform3fv(colorUniformLocation, options.color || [0.1, 0.2, 0.3]);
-        gl.uniform1f(speedUniformLocation, options.speed || 0.5);
+        gl.useProgram(this.program);
+        gl.uniform2f(this.uniforms.resolution, canvas.width, canvas.height);
+        gl.uniform1f(this.uniforms.time, time);
+        gl.uniform3fv(this.uniforms.color, this.options.color || [0.1, 0.2, 0.3]);
+        gl.uniform1f(this.uniforms.speed, this.options.speed || 0.5);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        
-        animationFrameId = requestAnimationFrame(render);
     }
-
-    // Start the render loop
-    animationFrameId = requestAnimationFrame(render);
-    
-    // Return a simple object to allow stopping the animation if needed
-    return {
-        stop: () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
-            }
-        },
-        // You could add a 'destroy' method here later to clean up buffers/programs
-    };
 }

@@ -77,10 +77,112 @@
             .popup-content { width: 90%; }
         }
     </style>
+    <style>
+        /* --- Dynamic Tooltip Styles --- */
+        .dynamic-tooltip {
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: rgba(26, 34, 56, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-light);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            max-width: 300px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate3d(0, 0, 0) scale(0.95);
+            transition: opacity 0.3s ease, transform 0.2s ease;
+        }
+        .dynamic-tooltip.visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+        }
+    </style>
 </head>
 <body>
+    <!-- Functions Sidebar -->
+    <div id="functions-sidebar" class="functions-sidebar">
+        <button id="sidebar-close-btn" class="sidebar-toggle-btn close-btn">&times;</button>
+        <h2 class="sidebar-title">Function Hub</h2>
+        
+        <div class="sidebar-content">
+            <!-- Tire Size Calculator -->
+            <div id="calculator-panel" class="sidebar-panel">
+                <h2 class="panel-title">Tire Size Calculator</h2>
+                <div class="tire-section">
+                    <h3>Stock Tire Size</h3>
+                    <div class="input-group">
+                        <input type="number" id="s_width" value="225" placeholder="Width">
+                        <span>/</span>
+                        <input type="number" id="s_ratio" value="45" placeholder="Ratio">
+                        <span>R</span>
+                        <input type="number" id="s_diam" value="17" placeholder="Diameter">
+                    </div>
+                </div>
+                <div class="tire-section">
+                    <h3>New Tire Size</h3>
+                    <div class="input-group">
+                        <input type="number" id="n_width" value="245" placeholder="Width">
+                        <span>/</span>
+                        <input type="number" id="n_ratio" value="40" placeholder="Ratio">
+                        <span>R</span>
+                        <input type="number" id="n_diam" value="18" placeholder="Diameter">
+                    </div>
+                </div>
+                <div class="results-section">
+                    <div class="results-grid">
+                        <div class="result-item"><div class="result-label">Stock OD</div><div class="result-value" id="s_od">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">New OD</div><div class="result-value" id="n_od">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">Stock SW</div><div class="result-value" id="s_sw">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">New SW</div><div class="result-value" id="n_sw">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">OD Diff.</div><div class="result-value difference" id="diff_od">0.0%</div></div>
+                        <div class="result-item"><div class="result-label">SW Diff.</div><div class="result-value difference" id="diff_sw">0.0%</div></div>
+                    </div>
+                    <div class="speedo-result">60 MPH on Speedo = <span class="value" id="speedo_actual">60.0 MPH</span> Actual</div>
+                </div>
+            </div>
+
+            <!-- Unit Converter -->
+            <div id="converter-panel" class="sidebar-panel">
+                <h2 class="panel-title">Unit Converter</h2>
+                <div class="converter-row">
+                    <label for="conversion-type">Conversion:</label>
+                    <select id="conversion-type">
+                        <option value="torque">Torque (ft-lbs ↔ Nm)</option>
+                        <option value="pressure">Pressure (PSI ↔ Bar)</option>
+                        <option value="power">Power (HP ↔ kW)</option>
+                        <option value="volume">Volume (Gallons ↔ Liters)</option>
+                    </select>
+                </div>
+                <div class="converter-row inputs">
+                    <div class="converter-input-group"><input type="number" id="unit1-input" value="100"><label id="unit1-label">ft-lbs</label></div>
+                    <div class="equals-sign">⇌</div>
+                    <div class="converter-input-group"><input type="number" id="unit2-input"><label id="unit2-label">Nm</label></div>
+                </div>
+            </div>
+
+            <!-- Symptom Analyzer -->
+            <div id="symptom-analyzer-panel" class="sidebar-panel">
+                <h2 class="panel-title">Symptom Analyzer</h2>
+                <p class="panel-subtitle">Select observed symptoms to diagnose potential issues.</p>
+                <div id="symptom-selector"></div>
+                <button id="diagnose-btn">Analyze Symptoms</button>
+                <div id="diagnosis-results" style="display: none;">
+                    <h3>Potential Causes:</h3>
+                    <ul id="diagnosis-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="sidebar-open-btn" class="sidebar-toggle-btn open-btn">🔧</button>
+
     <div id="enter-overlay">
-        <img src="enter.png" alt="Enter" id="enter-bg">
+        <img src="enter.jpeg" alt="Enter" id="enter-bg">
         <button id="enter-btn" class="cta-button">Enter Site</button>
     </div>
 
@@ -164,27 +266,27 @@
                 <h2 class="section-title">Our Core Services</h2>
                 <p class="section-subtitle">We offer a comprehensive range of mobile mechanic services to cover all your vehicle's needs, 24/7.</p>
                 <div class="services-grid">
-                    <div class="service-card animate-on-scroll">
+                    <div class="service-card animate-on-scroll" data-tooltip="System Interrupt Handler: Rapid deployment protocol for critical system failures. On-site diagnostics and hardware intervention.">
                         <div class="service-icon">🚨</div>
                         <h3>Emergency Roadside Assistance</h3>
                         <p>Breakdowns, jump starts, lockouts, and more. We provide rapid-response emergency support to get you moving again.</p>
                     </div>
-                    <div class="service-card animate-on-scroll">
+                    <div class="service-card animate-on-scroll" data-tooltip="ECU Deep Scan: Accessing proprietary diagnostic ports to analyze fault codes, sensor data streams, and network communication errors.">
                         <div class="service-icon">🔍</div>
                         <h3>Advanced On-site Diagnostics</h3>
                         <p>Using state-of-the-art diagnostic tools, we accurately identify complex issues right where you are, saving you a trip to the shop.</p>
                     </div>
-                    <div class="service-card animate-on-scroll">
+                    <div class="service-card animate-on-scroll" data-tooltip="Kinetic Dampening & Friction Systems: Calibration and replacement of hydraulic actuators, friction pads, and adaptive suspension components.">
                         <div class="service-icon">🛑</div>
                         <h3>Brake & Suspension Services</h3>
                         <p>Complete brake inspection, pad/rotor replacement, and suspension repairs. Your safety is our number one priority.</p>
                     </div>
-                     <div class="service-card animate-on-scroll">
+                     <div class="service-card animate-on-scroll" data-tooltip="Powerplant Core Maintenance: Servicing of primary and secondary power units, including internal combustion engines and hybrid electric drivetrains.">
                         <div class="service-icon">⚙️</div>
                         <h3>Engine & Transmission Repair</h3>
                         <p>From minor fixes to major repairs, our certified technicians handle all engine and transmission issues with expertise.</p>
                     </div>
-                    <div class="service-card animate-on-scroll">
+                    <div class="service-card animate-on-scroll" data-tooltip="Power Cell & Circuitry Integrity: On-site analysis of power storage cells, parasitic draw tracing, and repair of high-voltage circuit pathways.">
                         <div class="service-icon">🔋</div>
                         <h3>Electrical & Battery Service</h3>
                         <p>Fast on-site battery testing and replacement, plus diagnosis and repair of complex vehicle electrical systems.</p>
@@ -204,22 +306,22 @@
                 <h2 class="section-title">The Damions 24/7 Advantage</h2>
                 <p class="section-subtitle">We are committed to providing an unmatched level of convenience, expertise, and transparent service.</p>
                 <div class="feature-grid">
-                    <div class="feature-item animate-on-scroll">
+                    <div class="feature-item animate-on-scroll" data-tooltip="Temporal Anomaly: Our operational cycle is not bound by standard solar rotations. Service available at all temporal coordinates.">
                         <div class="feature-icon">🕒</div>
                         <h3>Available Around the Clock</h3>
                         <p>Car trouble doesn't wait for business hours. That's why we're on call 24 hours a day, 7 days a week.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll">
+                    <div class="feature-item animate-on-scroll" data-tooltip="Field Operatives: All technicians are certified by the Cybernetic Automotive Guild and equipped with neural-link diagnostic interfaces.">
                         <div class="feature-icon">🛠️</div>
                         <h3>Certified Technicians</h3>
                         <p>Our mechanics are experienced, certified professionals equipped with the latest tools and knowledge.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll">
+                    <div class="feature-item animate-on-scroll" data-tooltip="Data Transparency Protocol: All work orders and cost estimates are logged to an immutable blockchain for client verification. No hidden variables.">
                         <div class="feature-icon"> прозрачность</div>
                         <h3>Transparent Pricing</h3>
                         <p>No surprises. We provide clear, upfront estimates before any work begins so you know exactly what to expect.</p>
                     </div>
-                     <div class="feature-item animate-on-scroll">
+                     <div class="feature-item animate-on-scroll" data-tooltip="Hyper-Local Deployment: Our mobile units are dispatched to your precise coordinates, bypassing traditional service infrastructure.">
                         <div class="feature-icon">📍</div>
                         <h3>We Come to You</h3>
                         <p>Save time and hassle. We perform repairs at your home, office, or roadside, eliminating the need for a tow.</p>
@@ -362,6 +464,68 @@
             </div>
         </section>
 
+        <section class="section" id="service-area">
+            <canvas class="panel-shader-canvas" id="service-area-canvas"></canvas>
+            <div class="container">
+                <h2 class="section-title">24/7 Operational Zone</h2>
+                <p class="section-subtitle">Our mobile units are always on patrol, ensuring rapid response times across the entire metropolitan area and its surrounding sectors.</p>
+                <div class="map-container">
+                    <img src="assets/images/map.png" alt="Service Area Map" class="map-image">
+                    <div class="map-point" style="top: 40%; left: 50%;"></div>
+                    <div class="map-point" style="top: 60%; left: 35%;"></div>
+                    <div class="map-point" style="top: 30%; left: 65%;"></div>
+                    <div class="map-point" style="top: 75%; left: 55%;"></div>
+                    <div class="map-scanline"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="faq">
+            <canvas class="panel-shader-canvas" id="faq-canvas"></canvas>
+            <div class="container">
+                <h2 class="section-title">Frequently Asked Questions</h2>
+                <p class="section-subtitle">Accessing our knowledge base for common inquiries. Select a query to expand.</p>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How fast can you get to me?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Our average response time within the primary metro zone is 35 minutes. This can vary based on traffic, weather conditions, and current operational load. Our dispatch system always assigns the closest available technician to minimize your wait.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Are your prices competitive with traditional shops?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Yes. While we offer a premium mobile service, our pricing is highly competitive. By eliminating the overhead of a physical garage, we can pass those savings on to you. You also save on towing fees. We provide a full, transparent estimate before any work begins.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What kind of repairs can you do on-site?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Our mobile units are equipped to handle approximately 85% of all common vehicle repairs. This includes diagnostics, brake jobs, alternator/starter replacement, battery service, fluid changes, belt and hose replacement, and much more. For major jobs requiring an engine lift, we have partnerships with trusted local facilities.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Do you work on all makes and models?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>We service a vast range of vehicles, including domestic, European, and Asian makes. Our technicians are equipped with multi-brand diagnostic tools and have extensive experience across different manufacturers. We also have specialists for classic cars, diesel engines, and high-performance vehicles.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     <footer class="footer">
         <div class="container">
             <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
@@ -369,6 +533,8 @@
                 <li><a href="#services">Services</a></li>
                 <li><a href="#why-us">Why Us</a></li>
                 <li><a href="#news">News</a></li>
+                <li><a href="#service-area">Service Area</a></li>
+                <li><a href="#faq">FAQ</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
             <div class="footer-controls">
@@ -397,27 +563,12 @@
 
     <audio id="hover-audio" src="./videos/impact.mp3" preload="auto"></audio>
     <audio id="background-music" src="./videos/rare1.mp3" preload="auto" loop></audio>
-    
-    <script src="main.js"></script>
+
+    <script src="tooltips.js"></script>
+    <script src="panel_shader.js"></script>
+    <script src="main.js"></script> 
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
     <script src="shader.js"></script> <!-- Keep for hero if still used -->
-    <script src="panel_shader.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Panel Shaders ---
-            const panelCanvases = [
-                { id: 'services-canvas', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
-                { id: 'why-us-canvas', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
-                { id: 'news-canvas', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
-                { id: 'video-promo-canvas', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
-                { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
-                { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
-                { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
-                { id: 'engine-bay-canvas', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } }
-            ];
-            panelCanvases.forEach(panel => { const canvas = document.getElementById(panel.id); if (canvas) { initializePanelShader(canvas, panel.options); } });
-        });
-    </script>
 </body>
 </html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damion's Toolbox</title>
+    <style>
+        :root {
+            --bg-dark: #0A0F1A;
+            --primary-color: #1A2238;
+            --text-light: #F0F0F0;
+            --text-gray: #A0A0A0;
+            --accent-color: #00E5FF;
+            --accent-hover: #00B8CC;
+            --font-display: 'Orbitron', sans-serif;
+            --border-color: #2A3A67;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: var(--font-display), sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 250px;
+            padding: 15px;
+            background: rgba(26, 34, 56, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            z-index: 10;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+
+        #tools-column {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        /* --- Tool Panel General Styles --- */
+        #calculator-panel, #converter-panel, #symptom-analyzer-panel {
+            position: relative;
+            top: auto; right: auto; /* Override absolute positioning */
+            width: 450px;
+            padding: 20px;
+            background: rgba(26, 34, 56, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .calculator-title {
+            font-family: var(--font-display);
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px var(--accent-hover);
+        }
+
+        .tire-section {
+            margin-bottom: 20px;
+        }
+
+        .tire-section h3 {
+            font-family: var(--font-display);
+            color: var(--text-light);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 8px;
+            border-radius: 5px;
+            font-family: var(--font-display);
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .input-group span {
+            font-size: 1.2rem;
+            color: var(--text-gray);
+        }
+
+        .results-section {
+            margin-top: 20px;
+            border-top: 2px solid var(--accent-color);
+            padding-top: 15px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+        }
+
+        .result-item {
+            background: var(--bg-dark);
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .result-label {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            font-family: var(--font-display);
+        }
+
+        .difference {
+            color: #f39c12; /* Orange for difference */
+        }
+
+        .speedo-result {
+            grid-column: 1 / -1; /* Span full width */
+            margin-top: 10px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .speedo-result .value {
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 1.3rem;
+        }
+
+        /* --- Unit Converter Specific Styles --- */
+        .converter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .converter-row.inputs {
+            gap: 10px;
+        }
+        .converter-row label {
+            font-family: var(--font-display);
+            color: var(--text-gray);
+        }
+        .converter-row select {
+            flex-grow: 1;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 8px;
+            border-radius: 5px;
+            font-family: var(--font-display);
+        }
+        .converter-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex-grow: 1;
+        }
+        .converter-input-group label {
+            font-size: 0.9rem;
+        }
+        .equals-sign {
+            font-size: 2rem;
+            color: var(--accent-color);
+            padding-bottom: 25px; /* Align with inputs */
+        }
+
+        /* --- Symptom Analyzer Styles --- */
+        #symptom-selector {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        .symptom-group h4 {
+            color: var(--accent-color);
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        .symptom-item {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .symptom-item input {
+            margin-right: 10px;
+        }
+        #diagnose-btn {
+            width: 100%;
+            padding: 12px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #diagnose-btn:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 0 15px var(--accent-hover);
+        }
+        #diagnosis-results {
+            margin-top: 20px;
+        }
+        #diagnosis-results h3 {
+            color: var(--text-light);
+        }
+        #diagnosis-results ul {
+            list-style: none;
+            padding: 0;
+        }
+        #diagnosis-results li {
+            background: var(--bg-dark);
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 5px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        @media (max-width: 900px) {
+            #tools-column {
+                position: relative;
+                width: auto;
+                top: auto;
+                right: auto;
+                margin: 20px;
+            }
+            #info-panel {
+                display: none; /* Hide wrench info on small screens */
+            }
+        }
+
+        @media (max-width: 500px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="info-panel">
+        <h1>Interactive Toolbox</h1>
+        <p>Wrench Model</p>
+    </div>
+
+    <div id="tools-column">
+        <div id="calculator-panel">
+            <h2 class="calculator-title">Tire Size Calculator</h2>
+            
+            <!-- Stock Tire Input -->
+            <div class="tire-section">
+                <h3>Stock Tire Size</h3>
+                <div class="input-group">
+                    <input type="number" id="s_width" value="225" placeholder="Width">
+                    <span>/</span>
+                    <input type="number" id="s_ratio" value="45" placeholder="Ratio">
+                    <span>R</span>
+                    <input type="number" id="s_diam" value="17" placeholder="Diameter">
+                </div>
+            </div>
+    
+            <!-- New Tire Input -->
+            <div class="tire-section">
+                <h3>New Tire Size</h3>
+                <div class="input-group">
+                    <input type="number" id="n_width" value="245" placeholder="Width">
+                    <span>/</span>
+                    <input type="number" id="n_ratio" value="40" placeholder="Ratio">
+                    <span>R</span>
+                    <input type="number" id="n_diam" value="18" placeholder="Diameter">
+                </div>
+            </div>
+    
+            <!-- Results -->
+            <div class="results-section">
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-label">Stock Diameter</div>
+                        <div class="result-value" id="s_od">0.0 in</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">New Diameter</div>
+                        <div class="result-value" id="n_od">0.0 in</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Stock Sidewall</div>
+                        <div class="result-value" id="s_sw">0.0 in</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">New Sidewall</div>
+                        <div class="result-value" id="n_sw">0.0 in</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Diameter Diff.</div>
+                        <div class="result-value difference" id="diff_od">0.0%</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Sidewall Diff.</div>
+                        <div class="result-value difference" id="diff_sw">0.0%</div>
+                    </div>
+                </div>
+                <div class="speedo-result">
+                    When your speedometer reads 60 MPH, your actual speed will be <span class="value" id="speedo_actual">60.0 MPH</span>.
+                </div>
+            </div>
+        </div>
+        <div id="converter-panel">
+            <h2 class="calculator-title">Unit Converter</h2>
+            <div class="converter-row">
+                <label for="conversion-type">Conversion:</label>
+                <select id="conversion-type">
+                    <option value="torque">Torque (ft-lbs ↔ Nm)</option>
+                    <option value="pressure">Pressure (PSI ↔ Bar)</option>
+                    <option value="power">Power (HP ↔ kW)</option>
+                    <option value="volume">Volume (Gallons ↔ Liters)</option>
+                </select>
+            </div>
+            <div class="converter-row inputs">
+                <div class="converter-input-group">
+                    <input type="number" id="unit1-input" value="100">
+                    <label id="unit1-label">ft-lbs</label>
+                </div>
+                <div class="equals-sign">⇌</div>
+                <div class="converter-input-group">
+                    <input type="number" id="unit2-input">
+                    <label id="unit2-label">Nm</label>
+                </div>
+            </div>
+        </div>
+        <div id="symptom-analyzer-panel">
+            <h2 class="calculator-title">Symptom Analyzer</h2>
+            <p style="text-align: center; color: var(--text-gray); margin-top: -15px; margin-bottom: 15px; font-size: 0.9rem;">Select observed symptoms to diagnose potential issues.</p>
+            <div id="symptom-selector">
+                <!-- Checkboxes will be generated here by JS -->
+            </div>
+            <button id="diagnose-btn">Analyze Symptoms</button>
+            <div id="diagnosis-results" style="display: none;">
+                <h3 style="margin-top: 20px; border-top: 2px solid var(--accent-color); padding-top: 15px;">Potential Causes (Most to Least Likely):</h3>
+                <ul id="diagnosis-list">
+                    <!-- Results will be populated here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="toolbox.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Unit Converter Logic ---
+            const conversionType = document.getElementById('conversion-type');
+            const unit1Input = document.getElementById('unit1-input');
+            const unit2Input = document.getElementById('unit2-input');
+            const unit1Label = document.getElementById('unit1-label');
+            const unit2Label = document.getElementById('unit2-label');
+
+            const factors = {
+                torque: { factor: 1.35582, labels: ['ft-lbs', 'Nm'] },
+                pressure: { factor: 0.0689476, labels: ['PSI', 'Bar'] },
+                power: { factor: 0.7457, labels: ['HP', 'kW'] },
+                volume: { factor: 3.78541, labels: ['gal', 'L'] }
+            };
+
+            function updateConverter(source) {
+                const type = conversionType.value;
+                const { factor, labels } = factors[type];
+                unit1Label.textContent = labels[0];
+                unit2Label.textContent = labels[1];
+
+                if (source === 1) {
+                    unit2Input.value = (parseFloat(unit1Input.value) * factor).toFixed(3);
+                } else {
+                    unit1Input.value = (parseFloat(unit2Input.value) / factor).toFixed(3);
+                }
+            }
+
+            conversionType.addEventListener('change', () => updateConverter(1));
+            unit1Input.addEventListener('input', () => updateConverter(1));
+            unit2Input.addEventListener('input', () => updateConverter(2));
+
+            // --- Tire Calculator Logic ---
+            const inputs = document.querySelectorAll('#calculator-panel input');
+
+            function calculate() {
+                const s_w = parseFloat(document.getElementById('s_width').value) || 0;
+                const s_r = parseFloat(document.getElementById('s_ratio').value) || 0;
+                const s_d = parseFloat(document.getElementById('s_diam').value) || 0;
+                const n_w = parseFloat(document.getElementById('n_width').value) || 0;
+                const n_r = parseFloat(document.getElementById('n_ratio').value) || 0;
+                const n_d = parseFloat(document.getElementById('n_diam').value) || 0;
+
+                // Calculations (in inches)
+                const s_sw = (s_w * (s_r / 100)) / 25.4;
+                const s_od = s_sw * 2 + s_d;
+                const n_sw = (n_w * (n_r / 100)) / 25.4;
+                const n_od = n_sw * 2 + n_d;
+
+                // Update UI
+                document.getElementById('s_od').textContent = s_od.toFixed(2) + ' in';
+                document.getElementById('s_sw').textContent = s_sw.toFixed(2) + ' in';
+                document.getElementById('n_od').textContent = n_od.toFixed(2) + ' in';
+                document.getElementById('n_sw').textContent = n_sw.toFixed(2) + ' in';
+
+                const diff_od = s_od > 0 ? ((n_od / s_od) - 1) * 100 : 0;
+                const diff_sw = s_sw > 0 ? ((n_sw / s_sw) - 1) * 100 : 0;
+                document.getElementById('diff_od').textContent = diff_od.toFixed(2) + '%';
+                document.getElementById('diff_sw').textContent = diff_sw.toFixed(2) + '%';
+
+                const speedo_actual = s_od > 0 ? 60 * (n_od / s_od) : 60;
+                document.getElementById('speedo_actual').textContent = speedo_actual.toFixed(1) + ' MPH';
+            }
+
+            inputs.forEach(input => input.addEventListener('input', calculate));
+            calculate(); // Initial calculation on load
+            updateConverter(1); // Initial calculation for converter
+
+            // --- Symptom Analyzer Logic ---
+            const knowledgeBase = {
+                "Abnormal Noises": {
+                    'Squealing/Screeching on Braking': [{ cause: 'Worn Brake Pads', likelihood: 9 }, { cause: 'Glazed/Warped Rotors', likelihood: 6 }],
+                    'Clicking/Popping on Turns': [{ cause: 'Worn CV Joint', likelihood: 9 }, { cause: 'Worn Ball Joint', likelihood: 5 }],
+                    'Rumbling/Growling that changes with speed': [{ cause: 'Bad Wheel Bearing', likelihood: 9 }, { cause: 'Uneven Tire Wear', likelihood: 6 }],
+                    'Engine Knocking/Pinging': [{ cause: 'Incorrect Fuel Octane', likelihood: 7 }, { cause: 'Carbon Buildup', likelihood: 6 }, { cause: 'Engine Timing Issue', likelihood: 8 }]
+                },
+                "Strange Smells": {
+                    'Sweet/Syrupy Smell from Engine Bay': [{ cause: 'Coolant (Antifreeze) Leak', likelihood: 10 }, { cause: 'Leaking Heater Core', likelihood: 7 }],
+                    'Burning Carpet Smell': [{ cause: 'Overheated Brakes', likelihood: 9 }, { cause: 'Dragging Clutch', likelihood: 6 }],
+                    'Burning Oil Smell': [{ cause: 'Oil Leak on Exhaust', likelihood: 9 }, { cause: 'Leaking Valve Cover Gasket', likelihood: 8 }],
+                    'Rotten Eggs Smell from Exhaust': [{ cause: 'Failing Catalytic Converter', likelihood: 10 }, { cause: 'Fuel System Issue', likelihood: 5 }]
+                },
+                "Performance Issues": {
+                    'Engine Hesitates or Stumbles': [{ cause: 'Clogged Fuel Filter', likelihood: 8 }, { cause: 'Failing Spark Plugs/Wires', likelihood: 7 }, { cause: 'Dirty Mass Airflow Sensor', likelihood: 6 }],
+                    'Poor Fuel Economy': [{ cause: 'Low Tire Pressure', likelihood: 8 }, { cause: 'Dirty Air Filter', likelihood: 7 }, { cause: 'Failing Oxygen Sensor', likelihood: 7 }],
+                    'Vehicle Pulls to One Side': [{ cause: 'Needs Wheel Alignment', likelihood: 9 }, { cause: 'Uneven Tire Pressure', likelihood: 7 }, { cause: 'Sticking Brake Caliper', likelihood: 6 }]
+                }
+            };
+
+            const symptomSelector = document.getElementById('symptom-selector');
+            const diagnoseBtn = document.getElementById('diagnose-btn');
+            const resultsPanel = document.getElementById('diagnosis-results');
+            const resultsList = document.getElementById('diagnosis-list');
+
+            // Build the UI
+            for (const category in knowledgeBase) {
+                const group = document.createElement('div');
+                group.className = 'symptom-group';
+                const title = document.createElement('h4');
+                title.textContent = category;
+                group.appendChild(title);
+
+                for (const symptom in knowledgeBase[category]) {
+                    const label = document.createElement('label');
+                    label.className = 'symptom-item';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = symptom;
+                    checkbox.dataset.category = category;
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(symptom));
+                    group.appendChild(label);
+                }
+                symptomSelector.appendChild(group);
+            }
+
+            // Diagnosis logic
+            diagnoseBtn.addEventListener('click', () => {
+                const selectedSymptoms = Array.from(symptomSelector.querySelectorAll('input:checked'));
+                if (selectedSymptoms.length === 0) {
+                    alert('Please select at least one symptom.');
+                    return;
+                }
+
+                const potentialCauses = {};
+
+                selectedSymptoms.forEach(checkbox => {
+                    const category = checkbox.dataset.category;
+                    const symptom = checkbox.value;
+                    const causes = knowledgeBase[category][symptom];
+
+                    causes.forEach(item => {
+                        if (potentialCauses[item.cause]) {
+                            potentialCauses[item.cause] += item.likelihood;
+                        } else {
+                            potentialCauses[item.cause] = item.likelihood;
+                        }
+                    });
+                });
+
+                const sortedCauses = Object.entries(potentialCauses).sort((a, b) => b[1] - a[1]);
+
+                resultsList.innerHTML = '';
+                if (sortedCauses.length > 0) {
+                    sortedCauses.forEach(([cause, likelihood]) => {
+                        const li = document.createElement('li');
+                        li.textContent = cause;
+                        resultsList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No common causes found for the selected combination. This may indicate a more complex or unusual issue.';
+                    resultsList.appendChild(li);
+                }
+
+                resultsPanel.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
