@@ -14,6 +14,7 @@ import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 let scene, camera, renderer, controls, model, composer, carPaintMaterial, dirLight, rimLight, mixer, animationClip, clock, ground, glitchPass, uvCheckerTexture;
 let pLight1, pLight2, pLight3, sparkles;
 let normalsHelper = [];
+let animatedMeshes = [];
 const loadingManager = new THREE.LoadingManager();
 const loadingEl = document.getElementById('loading');
 const loadingProgressEl = document.getElementById('loading-progress');
@@ -105,7 +106,7 @@ function init() {
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
-    
+
     loadModel('assets/models/zombie.glb');
     createSparkles();
     setupPostProcessing();
@@ -149,20 +150,21 @@ function loadModel(modelPath) {
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
-        
+
         model.position.sub(center);
         const scale = 2 / Math.max(size.x, size.y, size.z);
         model.scale.setScalar(scale);
         model.position.y += size.y * scale / 2;
 
         normalsHelper = [];
+        animatedMeshes = []; // Reset array
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 child.userData.originalMaterial = child.material;
                 child.userData.originalPosition = child.position.clone();
-                
+
                 if (child.material.isMeshStandardMaterial) {
                     child.material.onBeforeCompile = (shader) => {
                         shader.uniforms.uTime = { value: 0 };
@@ -240,11 +242,12 @@ function loadModel(modelPath) {
                             `
                         );
                         child.userData.shader = shader;
+                        animatedMeshes.push(child); // Cache the mesh
                     };
                 }
 
                 if (!carPaintMaterial && child.material) carPaintMaterial = child.material;
-                
+
                 const helper = new VertexNormalsHelper(child, 0.2, 0x00ff00);
                 helper.visible = params.showNormals;
                 scene.add(helper);
@@ -262,7 +265,7 @@ function loadModel(modelPath) {
             animationClip = gltf.animations[0];
             mixer.clipAction(animationClip).play();
         }
-        
+
         scene.add(model);
     }, undefined, (error) => {
         console.error('Error loading model:', error);
@@ -290,20 +293,20 @@ function createGUI() {
     const envFolder = gui.addFolder('Environment');
     envFolder.add(params, 'environment', envKeys).name('Scene').onChange(updateEnvironment);
     envFolder.add(params, 'backgroundBlur', 0, 1, 0.01).name('BG Blur').onChange(v => scene.backgroundBlurriness = v);
-    envFolder.add({ cycle: () => { /* ... */ }}, 'cycle').name('Cycle Scene');
+    envFolder.add({ cycle: () => { /* ... */ } }, 'cycle').name('Cycle Scene');
 
     const carFolder = gui.addFolder('Car Paint');
     carFolder.addColor(params, 'paintColor').name('Color').onChange(v => { if (carPaintMaterial) carPaintMaterial.color.set(v); });
     carFolder.add(params, 'material', Object.keys(materials)).name('Finish').onChange(v => {
-        if(carPaintMaterial) Object.assign(carPaintMaterial, materials[v]);
+        if (carPaintMaterial) Object.assign(carPaintMaterial, materials[v]);
     });
 
     const toolsFolder = gui.addFolder('Tools');
     toolsFolder.add({ exportGLB: exportGLB }, 'exportGLB').name('Export to .glb');
 
     const techFolder = gui.addFolder('Technical Tools');
-    techFolder.add(params, 'showNormals').name('Show Normals').onChange(v => { 
-        if(normalsHelper) normalsHelper.forEach(h => h.visible = v);
+    techFolder.add(params, 'showNormals').name('Show Normals').onChange(v => {
+        if (normalsHelper) normalsHelper.forEach(h => h.visible = v);
     });
     techFolder.add(params, 'uvCheck').name('UV Checker').onChange(toggleUVChecker);
     const noiseFolder = techFolder.addFolder('Vertex Noise');
@@ -320,7 +323,7 @@ function createGUI() {
     crazyFolder.add(params, 'floorIsLava').name('Floor is Lava').onChange(toggleFloorIsLava);
     crazyFolder.add(params, 'cameraShake').name('Camera Shake');
     crazyFolder.add(params, 'xray').name('X-Ray Vision').onChange(toggleXRay);
-    crazyFolder.add(params, 'sparkles').name('Show Sparkles').onChange(v => sparkles.visible = v);
+    crazyFolder.add(params, 'sparkles').name('Show Sparkles').onChange(v => { if (sparkles) sparkles.visible = v; });
 }
 
 function exportGLB() {
@@ -369,24 +372,42 @@ function toggleUVChecker(value) {
 function updateExplode(value) { /* ... */ }
 function toggleFloorIsLava(v) { /* ... */ }
 function toggleXRay(v) { /* ... */ }
-function createSparkles() { /* ... */ }
-function onWindowResize() { /* ... */ }
+function createSparkles() {
+    const geometry = new THREE.BufferGeometry();
+    const count = 1000;
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 10;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 10 + 2; // Keep above ground mostly
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({ size: 0.05, color: 0xffffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+    sparkles = new THREE.Points(geometry, material);
+    sparkles.visible = params.sparkles;
+    scene.add(sparkles);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
+}
 
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
     const time = clock.getElapsedTime();
 
-    if (model) {
-        model.traverse(child => {
-            if (child.isMesh && child.userData.shader) {
-                const shader = child.userData.shader;
-                shader.uniforms.uTime.value = time;
-                shader.uniforms.uVertexNoise.value = params.vertexNoise;
-                shader.uniforms.uNoiseAmount.value = params.noiseAmount;
-                shader.uniforms.uNoiseSpeed.value = params.noiseSpeed;
-                shader.uniforms.uNoiseFreq.value = params.noiseFreq;
-            }
+    if (animatedMeshes.length > 0) {
+        animatedMeshes.forEach(child => {
+            const shader = child.userData.shader;
+            shader.uniforms.uTime.value = time;
+            shader.uniforms.uVertexNoise.value = params.vertexNoise;
+            shader.uniforms.uNoiseAmount.value = params.noiseAmount;
+            shader.uniforms.uNoiseSpeed.value = params.noiseSpeed;
+            shader.uniforms.uNoiseFreq.value = params.noiseFreq;
         });
     }
 

@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
-    <meta name="description" content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
-    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
+    <meta name="description"
+        content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
+    <link id="favicon" rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
     <link rel="stylesheet" href="style.css">
     <style>
         /* --- Refined Animations --- */
@@ -25,25 +28,42 @@
         }
 
         /* Stagger delay for each item in a grid */
-        .animate-on-scroll.loaded:nth-child(1) { transition-delay: 0.1s; }
-        .animate-on-scroll.loaded:nth-child(2) { transition-delay: 0.2s; }
-        .animate-on-scroll.loaded:nth-child(3) { transition-delay: 0.3s; }
-        .animate-on-scroll.loaded:nth-child(4) { transition-delay: 0.4s; }
-        .animate-on-scroll.loaded:nth-child(5) { transition-delay: 0.5s; }
-        .animate-on-scroll.loaded:nth-child(6) { transition-delay: 0.6s; }
+        .animate-on-scroll.loaded:nth-child(1) {
+            transition-delay: 0.1s;
+        }
+
+        .animate-on-scroll.loaded:nth-child(2) {
+            transition-delay: 0.2s;
+        }
+
+        .animate-on-scroll.loaded:nth-child(3) {
+            transition-delay: 0.3s;
+        }
+
+        .animate-on-scroll.loaded:nth-child(4) {
+            transition-delay: 0.4s;
+        }
+
+        .animate-on-scroll.loaded:nth-child(5) {
+            transition-delay: 0.5s;
+        }
+
+        .animate-on-scroll.loaded:nth-child(6) {
+            transition-delay: 0.6s;
+        }
 
         /* Smoother header transition */
         .header {
             transition: background-color 0.4s ease, padding 0.4s ease;
         }
 
-        /* Enter site background image animation */
-        #enter-bg.zooming {
+        /* Enter site background image animation - REMOVED */
+        /* #enter-bg.zooming {
             animation: zoomAndBlur 1s ease-in-out forwards;
         }
         @keyframes zoomAndBlur {
             to { transform: scale(1.1); filter: blur(5px); }
-        }
+        } */
 
         /* --- Mobile Responsiveness --- */
         @media (max-width: 1024px) {
@@ -57,24 +77,59 @@
                 flex-direction: column;
                 width: 100%;
                 padding: 1rem 0;
-                box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
             }
 
-            .nav-links.active { display: flex; }
-            .nav-links a { padding: 1rem 2rem; text-align: center; border-bottom: 1px solid var(--border-color-translucent); }
-            .nav-links a:last-child { border-bottom: none; }
-            .menu-toggle { display: block; }
-            .hero-content h1 { font-size: 2.5rem; }
-            .hero-content p { font-size: 1rem; }
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 1rem 2rem;
+                text-align: center;
+                border-bottom: 1px solid var(--border-color-translucent);
+            }
+
+            .nav-links a:last-child {
+                border-bottom: none;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+            }
         }
 
         @media (max-width: 768px) {
-            .services-grid, .feature-grid, .news-grid { grid-template-columns: 1fr; }
-            .section-title { font-size: 2rem; }
-            .footer-links { flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
-            .popup-content { width: 90%; }
+
+            .services-grid,
+            .feature-grid,
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .popup-content {
+                width: 90%;
+            }
         }
     </style>
     <style>
@@ -98,18 +153,20 @@
             transform: translate3d(0, 0, 0) scale(0.95);
             transition: opacity 0.3s ease, transform 0.2s ease;
         }
+
         .dynamic-tooltip.visible {
             opacity: 1;
             transform: translate3d(0, 0, 0) scale(1);
         }
     </style>
 </head>
+
 <body>
     <!-- Functions Sidebar -->
     <div id="functions-sidebar" class="functions-sidebar">
         <button id="sidebar-close-btn" class="sidebar-toggle-btn close-btn">&times;</button>
         <h2 class="sidebar-title">Function Hub</h2>
-        
+
         <div class="sidebar-content">
             <!-- Tire Size Calculator -->
             <div id="calculator-panel" class="sidebar-panel">
@@ -136,14 +193,33 @@
                 </div>
                 <div class="results-section">
                     <div class="results-grid">
-                        <div class="result-item"><div class="result-label">Stock OD</div><div class="result-value" id="s_od">0.0 in</div></div>
-                        <div class="result-item"><div class="result-label">New OD</div><div class="result-value" id="n_od">0.0 in</div></div>
-                        <div class="result-item"><div class="result-label">Stock SW</div><div class="result-value" id="s_sw">0.0 in</div></div>
-                        <div class="result-item"><div class="result-label">New SW</div><div class="result-value" id="n_sw">0.0 in</div></div>
-                        <div class="result-item"><div class="result-label">OD Diff.</div><div class="result-value difference" id="diff_od">0.0%</div></div>
-                        <div class="result-item"><div class="result-label">SW Diff.</div><div class="result-value difference" id="diff_sw">0.0%</div></div>
+                        <div class="result-item">
+                            <div class="result-label">Stock OD</div>
+                            <div class="result-value" id="s_od">0.0 in</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">New OD</div>
+                            <div class="result-value" id="n_od">0.0 in</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Stock SW</div>
+                            <div class="result-value" id="s_sw">0.0 in</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">New SW</div>
+                            <div class="result-value" id="n_sw">0.0 in</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">OD Diff.</div>
+                            <div class="result-value difference" id="diff_od">0.0%</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">SW Diff.</div>
+                            <div class="result-value difference" id="diff_sw">0.0%</div>
+                        </div>
                     </div>
-                    <div class="speedo-result">60 MPH on Speedo = <span class="value" id="speedo_actual">60.0 MPH</span> Actual</div>
+                    <div class="speedo-result">60 MPH on Speedo = <span class="value" id="speedo_actual">60.0 MPH</span>
+                        Actual</div>
                 </div>
             </div>
 
@@ -160,9 +236,11 @@
                     </select>
                 </div>
                 <div class="converter-row inputs">
-                    <div class="converter-input-group"><input type="number" id="unit1-input" value="100"><label id="unit1-label">ft-lbs</label></div>
+                    <div class="converter-input-group"><input type="number" id="unit1-input" value="100"><label
+                            id="unit1-label">ft-lbs</label></div>
                     <div class="equals-sign">⇌</div>
-                    <div class="converter-input-group"><input type="number" id="unit2-input"><label id="unit2-label">Nm</label></div>
+                    <div class="converter-input-group"><input type="number" id="unit2-input"><label
+                            id="unit2-label">Nm</label></div>
                 </div>
             </div>
 
@@ -182,8 +260,13 @@
     <button id="sidebar-open-btn" class="sidebar-toggle-btn open-btn">🔧</button>
 
     <div id="enter-overlay">
-        <img src="enter.jpeg" alt="Enter" id="enter-bg">
-        <button id="enter-btn" class="cta-button">Enter Site</button>
+        <div class="enter-content">
+            <h1 class="enter-title">DAMIONS<span class="highlight">24/7</span></h1>
+            <p class="enter-subtitle">MOBILE MECHANICS</p>
+            <div class="enter-divider"></div>
+            <p class="enter-status">SYSTEM READY</p>
+            <button id="enter-btn" class="enter-button">INITIALIZE SYSTEM</button>
+        </div>
     </div>
 
     <div id="blood-rain"></div>
@@ -201,39 +284,39 @@
                 <a href="s2.html">S2</a>
                 <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank">3D Garage</a>
                 <div class="dropdown">
-                  <a href="#" class="dropbtn">Games</a>
-                  <div class="dropdown-content">
-                    <a href="videos/game1.html">Game 1</a>
-                    <a href="videos/game2.html">Game 2</a>
-                    <a href="videos/game3.html">Game 3</a>
-                    <a href="videos/game4.html">Game 4</a>
-                    <a href="videos/game5.html">Game 5</a>
-                    <a href="videos/game6.html">Game 6</a>
-                    <a href="videos/game7.html">Game 7</a>
-                    <a href="videos/game8.html">Game 8</a>
-                    <a href="videos/game9.html">Game 9</a>
-                    <a href="videos/game10.html">Game 10</a>
-                    <a href="videos/game11.html">Game 11</a>
-                    <a href="videos/game12.html">Game 12</a>
-                    <a href="videos/game13.html">Game 13</a>
-                    <a href="videos/game14.html">Game 14</a>
-                    <a href="videos/game15.html">Game 15</a>
-                    <a href="videos/game16.html">Game 16</a>
-                    <a href="videos/game17.html">Game 17</a>
-                    <a href="videos/game18.html">Game 18</a>
-                    <a href="videos/game19.html">Game 19</a>
-                    <a href="videos/game20.html">Game 20</a>
-                    <a href="videos/game21.html">Game 21</a>
-                    <a href="videos/game22.html">Game 22</a>
-                    <a href="videos/game23.html">Game 23</a>
-                    <a href="videos/game24.html">Game 24</a>
-                    <a href="videos/game25.html">Game 25</a>
-                    <a href="videos/game26.html">Game 26</a>
-                    <a href="videos/game27.html">Game 27</a>
-                    <a href="videos/game28.html">Game 28</a>
-                    <a href="videos/game29.html">Game 29</a>
-                    <a href="videos/game30.html">Game 30</a>
-                  </div>
+                    <a href="#" class="dropbtn">Games</a>
+                    <div class="dropdown-content">
+                        <a href="videos/game1.html">Game 1</a>
+                        <a href="videos/game2.html">Game 2</a>
+                        <a href="videos/game3.html">Game 3</a>
+                        <a href="videos/game4.html">Game 4</a>
+                        <a href="videos/game5.html">Game 5</a>
+                        <a href="videos/game6.html">Game 6</a>
+                        <a href="videos/game7.html">Game 7</a>
+                        <a href="videos/game8.html">Game 8</a>
+                        <a href="videos/game9.html">Game 9</a>
+                        <a href="videos/game10.html">Game 10</a>
+                        <a href="videos/game11.html">Game 11</a>
+                        <a href="videos/game12.html">Game 12</a>
+                        <a href="videos/game13.html">Game 13</a>
+                        <a href="videos/game14.html">Game 14</a>
+                        <a href="videos/game15.html">Game 15</a>
+                        <a href="videos/game16.html">Game 16</a>
+                        <a href="videos/game17.html">Game 17</a>
+                        <a href="videos/game18.html">Game 18</a>
+                        <a href="videos/game19.html">Game 19</a>
+                        <a href="videos/game20.html">Game 20</a>
+                        <a href="videos/game21.html">Game 21</a>
+                        <a href="videos/game22.html">Game 22</a>
+                        <a href="videos/game23.html">Game 23</a>
+                        <a href="videos/game24.html">Game 24</a>
+                        <a href="videos/game25.html">Game 25</a>
+                        <a href="videos/game26.html">Game 26</a>
+                        <a href="videos/game27.html">Game 27</a>
+                        <a href="videos/game28.html">Game 28</a>
+                        <a href="videos/game29.html">Game 29</a>
+                        <a href="videos/game30.html">Game 30</a>
+                    </div>
                 </div>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
@@ -241,12 +324,12 @@
     </header>
 
     <div class="rolling-banner">
-      <div class="rolling-banner-text">
-        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
-        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
-        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
-        <span>DAMION'S 24/7 MOBILE MECHANICS</span>
-      </div>
+        <div class="rolling-banner-text">
+            <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+            <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+            <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+            <span>DAMION'S 24/7 MOBILE MECHANICS</span>
+        </div>
     </div>
 
     <main class="main-content">
@@ -255,7 +338,8 @@
             <!-- <canvas id="hero-shader-canvas"></canvas> --> <!-- Replaced by slideshow -->
             <div class="hero-content animate-on-scroll">
                 <h1>Your 24/7 Mobile Mechanic Solution</h1>
-                <p>Expert auto repair and maintenance, wherever you are. Professional, reliable service that comes directly to you, day or night.</p>
+                <p>Expert auto repair and maintenance, wherever you are. Professional, reliable service that comes
+                    directly to you, day or night.</p>
                 <a href="tel:724-964-2936" class="cta-button">Call Now: 724-964-2936</a>
             </div>
         </section>
@@ -264,67 +348,88 @@
             <canvas class="panel-shader-canvas" id="services-canvas"></canvas>
             <div class="container">
                 <h2 class="section-title">Our Core Services</h2>
-                <p class="section-subtitle">We offer a comprehensive range of mobile mechanic services to cover all your vehicle's needs, 24/7.</p>
+                <p class="section-subtitle">We offer a comprehensive range of mobile mechanic services to cover all your
+                    vehicle's needs, 24/7.</p>
                 <div class="services-grid">
-                    <div class="service-card animate-on-scroll" data-tooltip="System Interrupt Handler: Rapid deployment protocol for critical system failures. On-site diagnostics and hardware intervention.">
+                    <div class="service-card animate-on-scroll"
+                        data-tooltip="System Interrupt Handler: Rapid deployment protocol for critical system failures. On-site diagnostics and hardware intervention.">
                         <div class="service-icon">🚨</div>
                         <h3>Emergency Roadside Assistance</h3>
-                        <p>Breakdowns, jump starts, lockouts, and more. We provide rapid-response emergency support to get you moving again.</p>
+                        <p>Breakdowns, jump starts, lockouts, and more. We provide rapid-response emergency support to
+                            get you moving again.</p>
                     </div>
-                    <div class="service-card animate-on-scroll" data-tooltip="ECU Deep Scan: Accessing proprietary diagnostic ports to analyze fault codes, sensor data streams, and network communication errors.">
+                    <div class="service-card animate-on-scroll"
+                        data-tooltip="ECU Deep Scan: Accessing proprietary diagnostic ports to analyze fault codes, sensor data streams, and network communication errors.">
                         <div class="service-icon">🔍</div>
                         <h3>Advanced On-site Diagnostics</h3>
-                        <p>Using state-of-the-art diagnostic tools, we accurately identify complex issues right where you are, saving you a trip to the shop.</p>
+                        <p>Using state-of-the-art diagnostic tools, we accurately identify complex issues right where
+                            you are, saving you a trip to the shop.</p>
                     </div>
-                    <div class="service-card animate-on-scroll" data-tooltip="Kinetic Dampening & Friction Systems: Calibration and replacement of hydraulic actuators, friction pads, and adaptive suspension components.">
+                    <div class="service-card animate-on-scroll"
+                        data-tooltip="Kinetic Dampening & Friction Systems: Calibration and replacement of hydraulic actuators, friction pads, and adaptive suspension components.">
                         <div class="service-icon">🛑</div>
                         <h3>Brake & Suspension Services</h3>
-                        <p>Complete brake inspection, pad/rotor replacement, and suspension repairs. Your safety is our number one priority.</p>
+                        <p>Complete brake inspection, pad/rotor replacement, and suspension repairs. Your safety is our
+                            number one priority.</p>
                     </div>
-                     <div class="service-card animate-on-scroll" data-tooltip="Powerplant Core Maintenance: Servicing of primary and secondary power units, including internal combustion engines and hybrid electric drivetrains.">
+                    <div class="service-card animate-on-scroll"
+                        data-tooltip="Powerplant Core Maintenance: Servicing of primary and secondary power units, including internal combustion engines and hybrid electric drivetrains.">
                         <div class="service-icon">⚙️</div>
                         <h3>Engine & Transmission Repair</h3>
-                        <p>From minor fixes to major repairs, our certified technicians handle all engine and transmission issues with expertise.</p>
+                        <p>From minor fixes to major repairs, our certified technicians handle all engine and
+                            transmission issues with expertise.</p>
                     </div>
-                    <div class="service-card animate-on-scroll" data-tooltip="Power Cell & Circuitry Integrity: On-site analysis of power storage cells, parasitic draw tracing, and repair of high-voltage circuit pathways.">
+                    <div class="service-card animate-on-scroll"
+                        data-tooltip="Power Cell & Circuitry Integrity: On-site analysis of power storage cells, parasitic draw tracing, and repair of high-voltage circuit pathways.">
                         <div class="service-icon">🔋</div>
                         <h3>Electrical & Battery Service</h3>
-                        <p>Fast on-site battery testing and replacement, plus diagnosis and repair of complex vehicle electrical systems.</p>
+                        <p>Fast on-site battery testing and replacement, plus diagnosis and repair of complex vehicle
+                            electrical systems.</p>
                     </div>
                     <div class="service-card animate-on-scroll">
                         <div class="service-icon">🚛</div>
                         <h3>Fleet Maintenance</h3>
-                        <p>Customized maintenance programs designed to keep your business fleet reliable, minimize downtime, and reduce costs.</p>
+                        <p>Customized maintenance programs designed to keep your business fleet reliable, minimize
+                            downtime, and reduce costs.</p>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <section class="section" id="why-us">
             <canvas class="panel-shader-canvas" id="why-us-canvas"></canvas>
             <div class="container">
                 <h2 class="section-title">The Damions 24/7 Advantage</h2>
-                <p class="section-subtitle">We are committed to providing an unmatched level of convenience, expertise, and transparent service.</p>
+                <p class="section-subtitle">We are committed to providing an unmatched level of convenience, expertise,
+                    and transparent service.</p>
                 <div class="feature-grid">
-                    <div class="feature-item animate-on-scroll" data-tooltip="Temporal Anomaly: Our operational cycle is not bound by standard solar rotations. Service available at all temporal coordinates.">
+                    <div class="feature-item animate-on-scroll"
+                        data-tooltip="Temporal Anomaly: Our operational cycle is not bound by standard solar rotations. Service available at all temporal coordinates.">
                         <div class="feature-icon">🕒</div>
                         <h3>Available Around the Clock</h3>
-                        <p>Car trouble doesn't wait for business hours. That's why we're on call 24 hours a day, 7 days a week.</p>
+                        <p>Car trouble doesn't wait for business hours. That's why we're on call 24 hours a day, 7 days
+                            a week.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll" data-tooltip="Field Operatives: All technicians are certified by the Cybernetic Automotive Guild and equipped with neural-link diagnostic interfaces.">
+                    <div class="feature-item animate-on-scroll"
+                        data-tooltip="Field Operatives: All technicians are certified by the Cybernetic Automotive Guild and equipped with neural-link diagnostic interfaces.">
                         <div class="feature-icon">🛠️</div>
                         <h3>Certified Technicians</h3>
-                        <p>Our mechanics are experienced, certified professionals equipped with the latest tools and knowledge.</p>
+                        <p>Our mechanics are experienced, certified professionals equipped with the latest tools and
+                            knowledge.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll" data-tooltip="Data Transparency Protocol: All work orders and cost estimates are logged to an immutable blockchain for client verification. No hidden variables.">
+                    <div class="feature-item animate-on-scroll"
+                        data-tooltip="Data Transparency Protocol: All work orders and cost estimates are logged to an immutable blockchain for client verification. No hidden variables.">
                         <div class="feature-icon"> прозрачность</div>
                         <h3>Transparent Pricing</h3>
-                        <p>No surprises. We provide clear, upfront estimates before any work begins so you know exactly what to expect.</p>
+                        <p>No surprises. We provide clear, upfront estimates before any work begins so you know exactly
+                            what to expect.</p>
                     </div>
-                     <div class="feature-item animate-on-scroll" data-tooltip="Hyper-Local Deployment: Our mobile units are dispatched to your precise coordinates, bypassing traditional service infrastructure.">
+                    <div class="feature-item animate-on-scroll"
+                        data-tooltip="Hyper-Local Deployment: Our mobile units are dispatched to your precise coordinates, bypassing traditional service infrastructure.">
                         <div class="feature-icon">📍</div>
                         <h3>We Come to You</h3>
-                        <p>Save time and hassle. We perform repairs at your home, office, or roadside, eliminating the need for a tow.</p>
+                        <p>Save time and hassle. We perform repairs at your home, office, or roadside, eliminating the
+                            need for a tow.</p>
                     </div>
                 </div>
             </div>
@@ -334,9 +439,11 @@
             <canvas class="panel-shader-canvas" id="video-promo-canvas"></canvas>
             <div class="container">
                 <h2 class="section-title">A Glimpse Into Our Work</h2>
-                <p class="section-subtitle">Watch our expert technicians in action, providing top-tier service on the go.</p>
+                <p class="section-subtitle">Watch our expert technicians in action, providing top-tier service on the
+                    go.</p>
                 <div class="video-container" style="text-align: center;">
-                    <video width="80%" controls autoplay muted loop style="border-radius: 15px; box-shadow: var(--shadow-lg);">
+                    <video width="80%" controls autoplay muted loop
+                        style="border-radius: 15px; box-shadow: var(--shadow-lg);">
                         <source src="videos/vid1.mp4" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -347,40 +454,50 @@
         <section class="section" id="news">
             <canvas class="panel-shader-canvas" id="news-canvas"></canvas>
             <div class="container">
-                 <h2 class="section-title">Automotive News & Info</h2>
-                <p class="section-subtitle">Stay informed with the latest trends, maintenance tips, and news from the automotive world.</p>
+                <h2 class="section-title">Automotive News & Info</h2>
+                <p class="section-subtitle">Stay informed with the latest trends, maintenance tips, and news from the
+                    automotive world.</p>
                 <div class="news-grid">
                     <div class="news-card animate-on-scroll">
-                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1617551139495-30472f859292?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDR8fGV2JTIwY2hhcmdpbmd8ZW58MHx8fHwxNjE5NzgxMTU4&ixlib=rb-1.2.1&q=80&w=400');"></div>
+                        <div class="news-image"
+                            style="background-image: url('https://images.unsplash.com/photo-1617551139495-30472f859292?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDR8fGV2JTIwY2hhcmdpbmd8ZW58MHx8fHwxNjE5NzgxMTU4&ixlib=rb-1.2.1&q=80&w=400');">
+                        </div>
                         <div class="news-content">
                             <h3>The Future is Electric: Are You Ready?</h3>
                             <p class="news-meta">Sep 12, 2025 | Tech Trends</p>
-                            <p class="news-excerpt">Electric vehicles are transforming the industry. We break down what you need to know about EV maintenance.</p>
+                            <p class="news-excerpt">Electric vehicles are transforming the industry. We break down what
+                                you need to know about EV maintenance.</p>
                             <a href="#" class="read-more-btn">Read More →</a>
                         </div>
                     </div>
-                     <div class="news-card animate-on-scroll">
-                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1599493356243-a2d95c721a11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGNhciUyMGVuZ2luZXxlbnwwfHx8fDE2MTk3ODEyMzA&ixlib=rb-1.2.1&q=80&w=400');"></div>
+                    <div class="news-card animate-on-scroll">
+                        <div class="news-image"
+                            style="background-image: url('https://images.unsplash.com/photo-1599493356243-a2d95c721a11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGNhciUyMGVuZ2luZXxlbnwwfHx8fDE2MTk3ODEyMzA&ixlib=rb-1.2.1&q=80&w=400');">
+                        </div>
                         <div class="news-content">
                             <h3>5 Signs Your Engine Needs a Check-Up</h3>
                             <p class="news-meta">Sep 05, 2025 | Maintenance Tips</p>
-                            <p class="news-excerpt">Don't ignore the warning signs. Learn to spot potential engine trouble before it becomes a major problem.</p>
+                            <p class="news-excerpt">Don't ignore the warning signs. Learn to spot potential engine
+                                trouble before it becomes a major problem.</p>
                             <a href="#" class="read-more-btn">Read More →</a>
                         </div>
                     </div>
-                     <div class="news-card animate-on-scroll">
-                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDF8fGNhcnxlbnwwfHx8fDE2MTk3ODEyNTc&ixlib=rb-1.2.1&q=80&w=400');"></div>
+                    <div class="news-card animate-on-scroll">
+                        <div class="news-image"
+                            style="background-image: url('https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDF8fGNhcnxlbnwwfHx8fDE2MTk3ODEyNTc&ixlib=rb-1.2.1&q=80&w=400');">
+                        </div>
                         <div class="news-content">
                             <h3>Choosing the Right Tires for the Season</h3>
                             <p class="news-meta">Aug 28, 2025 | Buyer's Guide</p>
-                            <p class="news-excerpt">Your tires are critical for safety and performance. Our guide helps you select the perfect set for any weather.</p>
+                            <p class="news-excerpt">Your tires are critical for safety and performance. Our guide helps
+                                you select the perfect set for any weather.</p>
                             <a href="#" class="read-more-btn">Read More →</a>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <section class="section" id="slideshow-section">
             <canvas class="panel-shader-canvas" id="slideshow-section-canvas"></canvas>
             <div class="container">
@@ -398,138 +515,162 @@
                 <div id="video-player-container"></div>
             </div>
         </section>
-        
+
     </main>
 
-<section class="section" id="facts">
-    <canvas class="panel-shader-canvas" id="facts-canvas"></canvas>
-            <div class="container">
-                <h2 class="section-title">Automotive Facts & Repairability Insights</h2>
-                <p class="section-subtitle">Knowledge is power. Here are some facts and tricks to help you understand your vehicle better.</p>
-                <div class="feature-grid">
-                    <div class="feature-item animate-on-scroll">
-                        <div class="feature-icon">⚠️</div>
-                        <h3>The Check Engine Light</h3>
-                        <p>A loose gas cap can trigger the Check Engine Light. Always tighten it until it clicks. If the light is flashing, it indicates a serious misfire that requires immediate attention.</p>
+    <section class="section" id="facts">
+        <canvas class="panel-shader-canvas" id="facts-canvas"></canvas>
+        <div class="container">
+            <h2 class="section-title">Automotive Facts & Repairability Insights</h2>
+            <p class="section-subtitle">Knowledge is power. Here are some facts and tricks to help you understand your
+                vehicle better.</p>
+            <div class="feature-grid">
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-icon">⚠️</div>
+                    <h3>The Check Engine Light</h3>
+                    <p>A loose gas cap can trigger the Check Engine Light. Always tighten it until it clicks. If the
+                        light is flashing, it indicates a serious misfire that requires immediate attention.</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Right to Repair</h3>
+                    <p>We advocate for your right to choose who repairs your vehicle. Modern cars require complex tools,
+                        but legislation is helping ensure independent shops have access.</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-icon">👃</div>
+                    <h3>Diagnostic Smells</h3>
+                    <p>Unusual smells can tell a story. The sweet smell of maple syrup often indicates a coolant leak,
+                        while burning carpet can point to an issue with your brakes.</p>
+                </div>
+                <div class="feature-item animate-on-scroll">
+                    <div class="feature-icon">💧</div>
+                    <h3>Hygroscopic Fluids</h3>
+                    <p>Brake fluid naturally absorbs water from the air over time, which can lead to corrosion and
+                        reduced performance. It should be flushed and replaced every 2-3 years.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="engine-bay">
+        <canvas class="panel-shader-canvas" id="engine-bay-canvas"></canvas>
+        <div class="container">
+            <h2 class="section-title">The Interactive Engine Bay</h2>
+            <p class="section-subtitle">Explore the heart of the machine and uncover the secrets of the internal
+                combustion engine.</p>
+
+            <div class="engine-history">
+                <h3>A Spark of Genius: The Internal Combustion Story</h3>
+                <p>The internal combustion engine (ICE) is a heat engine that converts chemical energy into mechanical
+                    energy. The story of the ICE is a fascinating journey of innovation, with key contributions from
+                    inventors like Nicolaus Otto, who in 1876, created the first successful four-stroke engine, and Karl
+                    Benz, who developed the first automobile powered by an ICE in 1886. This invention revolutionized
+                    transportation and paved the way for the modern world.</p>
+            </div>
+
+            <div class="interactive-engine-diagram">
+                <h3>Explore the V8</h3>
+                <div class="engine-v8">
+                    <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
+                    <map name="v8map">
+                        <area shape="rect" coords="150,100,250,150" href="#" alt="Cylinder Head" title="Cylinder Head"
+                            data-info="The cylinder head sits above the cylinders and houses the valvetrain, including the valves and spark plugs.">
+                        <area shape="rect" coords="100,150,300,250" href="#" alt="Engine Block" title="Engine Block"
+                            data-info="The engine block is the main structure of the engine, containing the cylinders and other major components.">
+                        <area shape="rect" coords="180,250,220,300" href="#" alt="Crankshaft" title="Crankshaft"
+                            data-info="The crankshaft converts the linear motion of the pistons into rotational motion.">
+                    </map>
+                    <p class="engine-info-box"></p>
+                </div>
+            </div>
+
+            <div class="engine-quiz">
+                <h3>Engine Fun Facts Quiz</h3>
+                <div id="quiz"></div>
+                <button id="submit-quiz">Submit Answers</button>
+                <div id="quiz-results"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="service-area">
+        <canvas class="panel-shader-canvas" id="service-area-canvas"></canvas>
+        <div class="container">
+            <h2 class="section-title">24/7 Operational Zone</h2>
+            <p class="section-subtitle">Our mobile units are always on patrol, ensuring rapid response times across the
+                entire metropolitan area and its surrounding sectors.</p>
+            <div class="map-container">
+                <img src="assets/images/map.png" alt="Service Area Map" class="map-image">
+                <div class="map-point" style="top: 40%; left: 50%;"></div>
+                <div class="map-point" style="top: 60%; left: 35%;"></div>
+                <div class="map-point" style="top: 30%; left: 65%;"></div>
+                <div class="map-point" style="top: 75%; left: 55%;"></div>
+                <div class="map-scanline"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="faq">
+        <canvas class="panel-shader-canvas" id="faq-canvas"></canvas>
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <p class="section-subtitle">Accessing our knowledge base for common inquiries. Select a query to expand.</p>
+            <div class="faq-accordion">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>How fast can you get to me?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Our average response time within the primary metro zone is 35 minutes. This can vary based on
+                            traffic, weather conditions, and current operational load. Our dispatch system always
+                            assigns the closest available technician to minimize your wait.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll">
-                        <div class="feature-icon">🔧</div>
-                        <h3>Right to Repair</h3>
-                        <p>We advocate for your right to choose who repairs your vehicle. Modern cars require complex tools, but legislation is helping ensure independent shops have access.</p>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Are your prices competitive with traditional shops?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes. While we offer a premium mobile service, our pricing is highly competitive. By
+                            eliminating the overhead of a physical garage, we can pass those savings on to you. You also
+                            save on towing fees. We provide a full, transparent estimate before any work begins.</p>
                     </div>
-                    <div class="feature-item animate-on-scroll">
-                        <div class="feature-icon">👃</div>
-                        <h3>Diagnostic Smells</h3>
-                        <p>Unusual smells can tell a story. The sweet smell of maple syrup often indicates a coolant leak, while burning carpet can point to an issue with your brakes.</p>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>What kind of repairs can you do on-site?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Our mobile units are equipped to handle approximately 85% of all common vehicle repairs. This
+                            includes diagnostics, brake jobs, alternator/starter replacement, battery service, fluid
+                            changes, belt and hose replacement, and much more. For major jobs requiring an engine lift,
+                            we have partnerships with trusted local facilities.</p>
                     </div>
-                     <div class="feature-item animate-on-scroll">
-                        <div class="feature-icon">💧</div>
-                        <h3>Hygroscopic Fluids</h3>
-                        <p>Brake fluid naturally absorbs water from the air over time, which can lead to corrosion and reduced performance. It should be flushed and replaced every 2-3 years.</p>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Do you work on all makes and models?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>We service a vast range of vehicles, including domestic, European, and Asian makes. Our
+                            technicians are equipped with multi-brand diagnostic tools and have extensive experience
+                            across different manufacturers. We also have specialists for classic cars, diesel engines,
+                            and high-performance vehicles.</p>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section class="section" id="engine-bay">
-            <canvas class="panel-shader-canvas" id="engine-bay-canvas"></canvas>
-            <div class="container">
-                <h2 class="section-title">The Interactive Engine Bay</h2>
-                <p class="section-subtitle">Explore the heart of the machine and uncover the secrets of the internal combustion engine.</p>
-                
-                <div class="engine-history">
-                    <h3>A Spark of Genius: The Internal Combustion Story</h3>
-                    <p>The internal combustion engine (ICE) is a heat engine that converts chemical energy into mechanical energy. The story of the ICE is a fascinating journey of innovation, with key contributions from inventors like Nicolaus Otto, who in 1876, created the first successful four-stroke engine, and Karl Benz, who developed the first automobile powered by an ICE in 1886. This invention revolutionized transportation and paved the way for the modern world.</p>
-                </div>
-
-                <div class="interactive-engine-diagram">
-                    <h3>Explore the V8</h3>
-                    <div class="engine-v8">
-                        <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
-                        <map name="v8map">
-                            <area shape="rect" coords="150,100,250,150" href="#" alt="Cylinder Head" title="Cylinder Head" data-info="The cylinder head sits above the cylinders and houses the valvetrain, including the valves and spark plugs.">
-                            <area shape="rect" coords="100,150,300,250" href="#" alt="Engine Block" title="Engine Block" data-info="The engine block is the main structure of the engine, containing the cylinders and other major components.">
-                            <area shape="rect" coords="180,250,220,300" href="#" alt="Crankshaft" title="Crankshaft" data-info="The crankshaft converts the linear motion of the pistons into rotational motion.">
-                        </map>
-                        <p class="engine-info-box"></p>
-                    </div>
-                </div>
-
-                <div class="engine-quiz">
-                    <h3>Engine Fun Facts Quiz</h3>
-                    <div id="quiz"></div>
-                    <button id="submit-quiz">Submit Answers</button>
-                    <div id="quiz-results"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="service-area">
-            <canvas class="panel-shader-canvas" id="service-area-canvas"></canvas>
-            <div class="container">
-                <h2 class="section-title">24/7 Operational Zone</h2>
-                <p class="section-subtitle">Our mobile units are always on patrol, ensuring rapid response times across the entire metropolitan area and its surrounding sectors.</p>
-                <div class="map-container">
-                    <img src="assets/images/map.png" alt="Service Area Map" class="map-image">
-                    <div class="map-point" style="top: 40%; left: 50%;"></div>
-                    <div class="map-point" style="top: 60%; left: 35%;"></div>
-                    <div class="map-point" style="top: 30%; left: 65%;"></div>
-                    <div class="map-point" style="top: 75%; left: 55%;"></div>
-                    <div class="map-scanline"></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="faq">
-            <canvas class="panel-shader-canvas" id="faq-canvas"></canvas>
-            <div class="container">
-                <h2 class="section-title">Frequently Asked Questions</h2>
-                <p class="section-subtitle">Accessing our knowledge base for common inquiries. Select a query to expand.</p>
-                <div class="faq-accordion">
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>How fast can you get to me?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Our average response time within the primary metro zone is 35 minutes. This can vary based on traffic, weather conditions, and current operational load. Our dispatch system always assigns the closest available technician to minimize your wait.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>Are your prices competitive with traditional shops?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Yes. While we offer a premium mobile service, our pricing is highly competitive. By eliminating the overhead of a physical garage, we can pass those savings on to you. You also save on towing fees. We provide a full, transparent estimate before any work begins.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>What kind of repairs can you do on-site?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Our mobile units are equipped to handle approximately 85% of all common vehicle repairs. This includes diagnostics, brake jobs, alternator/starter replacement, battery service, fluid changes, belt and hose replacement, and much more. For major jobs requiring an engine lift, we have partnerships with trusted local facilities.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>Do you work on all makes and models?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>We service a vast range of vehicles, including domestic, European, and Asian makes. Our technicians are equipped with multi-brand diagnostic tools and have extensive experience across different manufacturers. We also have specialists for classic cars, diesel engines, and high-performance vehicles.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
+    </section>
 
     <footer class="footer">
         <div class="container">
             <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
-             <ul class="footer-links">
+            <ul class="footer-links">
                 <li><a href="#services">Services</a></li>
                 <li><a href="#why-us">Why Us</a></li>
                 <li><a href="#news">News</a></li>
@@ -566,9 +707,10 @@
 
     <script src="tooltips.js"></script>
     <script src="panel_shader.js"></script>
-    <script src="main.js"></script> 
+    <script src="main.js"></script>
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
     <script src="shader.js"></script> <!-- Keep for hero if still used -->
 </body>
+
 </html>

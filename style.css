@@ -451,47 +451,101 @@ body.bg-loaded {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #0A0F1A; /* Use a solid, opaque color */
+    background: radial-gradient(circle at center, #1a2238 0%, #0a0f1a 100%);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    transition: opacity 1s ease;
+    transition: opacity 1s ease, visibility 1s ease;
 }
 
-#enter-btn {
-    font-size: 1.5rem;
-    padding: 20px 50px;
+.enter-content {
+    text-align: center;
+    color: var(--text-light);
+    z-index: 2;
 }
 
-#enter-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -1;
-    animation: glitch 5s infinite;
+.enter-title {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 900;
+    letter-spacing: 5px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+    opacity: 0;
+    animation: fade-in-up 1s ease forwards 0.5s;
 }
 
-@keyframes glitch {
-  0%, 20%, 22%, 25%, 53%, 55%, 100% {
-    opacity: 1;
-    transform: none;
-  }
-  21% {
-    opacity: 0.8;
-    transform: translate(-10px, 5px) skewX(-15deg);
-  }
-  24% {
-    opacity: 0.7;
-    transform: translate(10px, -5px) skewX(15deg);
-  }
-  54% {
-    opacity: 0.8;
-    transform: translate(-5px, 10px) skewX(-10deg) scale(1.02);
-  }
+.enter-title .highlight {
+    color: var(--accent-color);
+}
+
+.enter-subtitle {
+    font-family: var(--font-body);
+    font-size: 1.2rem;
+    letter-spacing: 8px;
+    color: var(--text-gray);
+    margin-bottom: 30px;
+    opacity: 0;
+    animation: fade-in-up 1s ease forwards 0.8s;
+}
+
+.enter-divider {
+    width: 100px;
+    height: 2px;
+    background: var(--accent-color);
+    margin: 0 auto 30px;
+    box-shadow: 0 0 10px var(--accent-color);
+    opacity: 0;
+    animation: expand-width 1s ease forwards 1.1s;
+}
+
+.enter-status {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: blink 2s infinite 1.5s;
+}
+
+.enter-button {
+    background: transparent;
+    color: var(--accent-color);
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    border: 2px solid var(--accent-color);
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    opacity: 0;
+    animation: fade-in-up 1s ease forwards 1.8s;
+}
+
+.enter-button:hover {
+    background: var(--accent-color);
+    color: var(--bg-dark);
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.6);
+    transform: scale(1.05);
+}
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes expand-width {
+    from { width: 0; opacity: 0; }
+    to { width: 100px; opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 /* --- Blood Rain Animation --- */

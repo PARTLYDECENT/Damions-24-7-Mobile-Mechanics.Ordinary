@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Audio & Site Entry ---
     const enterOverlay = document.getElementById('enter-overlay');
     const enterBtn = document.getElementById('enter-btn');
-    const enterBg = document.getElementById('enter-bg');
+    // const enterBg = document.getElementById('enter-bg'); // Removed
     const backgroundMusic = document.getElementById('background-music');
     const muteBtn = document.getElementById('mute-btn');
     let isMuted = localStorage.getItem('musicMuted') === 'true';
@@ -72,7 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     enterBtn.addEventListener('click', () => {
         enterOverlay.style.opacity = '0';
-        enterBg.classList.add('zooming');
+        enterOverlay.style.visibility = 'hidden'; // Ensure it's hidden after fade
+        // enterBg.classList.add('zooming'); // Removed
         setTimeout(() => { 
             enterOverlay.style.display = 'none';
         }, 1000);
