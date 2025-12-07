@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Viewer - Damion's 24/7 Mobile Mechanics</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Prevent scrolling if image fits */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viewer-header {
+            padding: 15px 20px;
+            background: rgba(13, 2, 33, 0.9);
+            border-bottom: 2px solid #00e5ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            flex-shrink: 0;
+        }
+
+        .viewer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .viewer-logo span {
+            color: #00e5ff;
+        }
+
+        .image-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #displayed-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border: 2px solid #0d47a1;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: 1px solid #ff1744;
+            color: #ff1744;
+            padding: 8px 16px;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            background: #ff1744;
+            color: #fff;
+            box-shadow: 0 0 15px #ff1744;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="viewer-header">
+        <div class="viewer-logo">DAMIONS<span>24/7</span> Media</div>
+        <button onclick="window.close()" class="close-btn">Close Window</button>
+    </header>
+
+    <main class="image-container">
+        <img id="displayed-image" src="" alt="Full Size Media">
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const imgSrc = urlParams.get('img');
+            const imgElement = document.getElementById('displayed-image');
+
+            if (imgSrc) {
+                imgElement.src = decodeURIComponent(imgSrc);
+            } else {
+                imgElement.alt = "No image specified.";
+                imgElement.style.display = 'none';
+                document.querySelector('.image-container').innerHTML = '<p style="font-family: Orbitron; color: #ff1744;">Error: No image found.</p>';
+            }
+        });
+    </script>
+</body>
+
+</html>

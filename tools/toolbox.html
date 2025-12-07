@@ -16,6 +16,7 @@
             --font-display: 'Orbitron', sans-serif;
             --border-color: #2A3A67;
         }
+
         body {
             margin: 0;
             overflow: hidden;
@@ -23,9 +24,11 @@
             color: var(--text-light);
             font-family: var(--font-display), sans-serif;
         }
+
         canvas {
             display: block;
         }
+
         #info-panel {
             position: absolute;
             top: 20px;
@@ -38,6 +41,7 @@
             border: 1px solid var(--border-color);
             z-index: 10;
         }
+
         h1 {
             margin: 0;
             font-size: 1.5rem;
@@ -56,9 +60,13 @@
         }
 
         /* --- Tool Panel General Styles --- */
-        #calculator-panel, #converter-panel, #symptom-analyzer-panel {
+        #calculator-panel,
+        #converter-panel,
+        #symptom-analyzer-panel {
             position: relative;
-            top: auto; right: auto; /* Override absolute positioning */
+            top: auto;
+            right: auto;
+            /* Override absolute positioning */
             width: 450px;
             padding: 20px;
             background: rgba(26, 34, 56, 0.7);
@@ -149,11 +157,13 @@
         }
 
         .difference {
-            color: #f39c12; /* Orange for difference */
+            color: #f39c12;
+            /* Orange for difference */
         }
 
         .speedo-result {
-            grid-column: 1 / -1; /* Span full width */
+            grid-column: 1 / -1;
+            /* Span full width */
             margin-top: 10px;
             text-align: center;
             font-size: 1.1rem;
@@ -172,13 +182,16 @@
             gap: 15px;
             margin-bottom: 15px;
         }
+
         .converter-row.inputs {
             gap: 10px;
         }
+
         .converter-row label {
             font-family: var(--font-display);
             color: var(--text-gray);
         }
+
         .converter-row select {
             flex-grow: 1;
             background: var(--bg-dark);
@@ -188,6 +201,7 @@
             border-radius: 5px;
             font-family: var(--font-display);
         }
+
         .converter-input-group {
             display: flex;
             flex-direction: column;
@@ -195,13 +209,16 @@
             gap: 5px;
             flex-grow: 1;
         }
+
         .converter-input-group label {
             font-size: 0.9rem;
         }
+
         .equals-sign {
             font-size: 2rem;
             color: var(--accent-color);
-            padding-bottom: 25px; /* Align with inputs */
+            padding-bottom: 25px;
+            /* Align with inputs */
         }
 
         /* --- Symptom Analyzer Styles --- */
@@ -214,6 +231,7 @@
             border: 1px solid var(--border-color);
             margin-bottom: 15px;
         }
+
         .symptom-group h4 {
             color: var(--accent-color);
             margin-top: 10px;
@@ -221,14 +239,17 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 5px;
         }
+
         .symptom-item {
             display: block;
             margin-bottom: 8px;
             cursor: pointer;
         }
+
         .symptom-item input {
             margin-right: 10px;
         }
+
         #diagnose-btn {
             width: 100%;
             padding: 12px;
@@ -241,20 +262,25 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         #diagnose-btn:hover {
             background: var(--accent-hover);
             box-shadow: 0 0 15px var(--accent-hover);
         }
+
         #diagnosis-results {
             margin-top: 20px;
         }
+
         #diagnosis-results h3 {
             color: var(--text-light);
         }
+
         #diagnosis-results ul {
             list-style: none;
             padding: 0;
         }
+
         #diagnosis-results li {
             background: var(--bg-dark);
             padding: 10px;
@@ -271,8 +297,10 @@
                 right: auto;
                 margin: 20px;
             }
+
             #info-panel {
-                display: none; /* Hide wrench info on small screens */
+                display: none;
+                /* Hide wrench info on small screens */
             }
         }
 
@@ -281,9 +309,9 @@
                 grid-template-columns: 1fr;
             }
         }
-
     </style>
 </head>
+
 <body>
     <div id="info-panel">
         <h1>Interactive Toolbox</h1>
@@ -293,7 +321,7 @@
     <div id="tools-column">
         <div id="calculator-panel">
             <h2 class="calculator-title">Tire Size Calculator</h2>
-            
+
             <!-- Stock Tire Input -->
             <div class="tire-section">
                 <h3>Stock Tire Size</h3>
@@ -305,7 +333,7 @@
                     <input type="number" id="s_diam" value="17" placeholder="Diameter">
                 </div>
             </div>
-    
+
             <!-- New Tire Input -->
             <div class="tire-section">
                 <h3>New Tire Size</h3>
@@ -317,7 +345,7 @@
                     <input type="number" id="n_diam" value="18" placeholder="Diameter">
                 </div>
             </div>
-    
+
             <!-- Results -->
             <div class="results-section">
                 <div class="results-grid">
@@ -347,7 +375,8 @@
                     </div>
                 </div>
                 <div class="speedo-result">
-                    When your speedometer reads 60 MPH, your actual speed will be <span class="value" id="speedo_actual">60.0 MPH</span>.
+                    When your speedometer reads 60 MPH, your actual speed will be <span class="value"
+                        id="speedo_actual">60.0 MPH</span>.
                 </div>
             </div>
         </div>
@@ -376,13 +405,16 @@
         </div>
         <div id="symptom-analyzer-panel">
             <h2 class="calculator-title">Symptom Analyzer</h2>
-            <p style="text-align: center; color: var(--text-gray); margin-top: -15px; margin-bottom: 15px; font-size: 0.9rem;">Select observed symptoms to diagnose potential issues.</p>
+            <p
+                style="text-align: center; color: var(--text-gray); margin-top: -15px; margin-bottom: 15px; font-size: 0.9rem;">
+                Select observed symptoms to diagnose potential issues.</p>
             <div id="symptom-selector">
                 <!-- Checkboxes will be generated here by JS -->
             </div>
             <button id="diagnose-btn">Analyze Symptoms</button>
             <div id="diagnosis-results" style="display: none;">
-                <h3 style="margin-top: 20px; border-top: 2px solid var(--accent-color); padding-top: 15px;">Potential Causes (Most to Least Likely):</h3>
+                <h3 style="margin-top: 20px; border-top: 2px solid var(--accent-color); padding-top: 15px;">Potential
+                    Causes (Most to Least Likely):</h3>
                 <ul id="diagnosis-list">
                     <!-- Results will be populated here -->
                 </ul>
@@ -390,7 +422,7 @@
         </div>
     </div>
 
-    <script type="module" src="toolbox.js"></script>
+    <script type="module" src="../toolbox.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Unit Converter Logic ---
@@ -552,4 +584,5 @@
         });
     </script>
 </body>
+
 </html>

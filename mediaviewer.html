@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Viewer - Damion's 24/7 Mobile Mechanics</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .viewer-header {
+            padding: 20px;
+            background: rgba(13, 2, 33, 0.9);
+            border-bottom: 2px solid #00e5ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .viewer-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .viewer-logo span {
+            color: #00e5ff;
+        }
+
+        .viewer-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: #00e5ff;
+            text-shadow: 0 0 10px #00e5ff;
+            text-transform: uppercase;
+        }
+
+        .gallery-container {
+            padding: 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Reuse existing gallery styles from style.css but ensure they apply here */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .gallery-item-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+        }
+
+        .gallery-item {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.1);
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid #00e5ff;
+            color: #00e5ff;
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #00e5ff;
+            color: #000;
+            box-shadow: 0 0 15px #00e5ff;
+        }
+
+        .loading-msg {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #2979ff;
+            margin-top: 50px;
+            font-family: 'Orbitron', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="viewer-header">
+        <a href="index.html" class="viewer-logo">DAMIONS<span>24/7</span></a>
+        <h1 id="page-title" class="viewer-title">Media Gallery</h1>
+        <a href="index.html" class="back-btn">Back to Home</a>
+    </header>
+
+    <main class="gallery-container">
+        <div id="gallery-grid" class="gallery-grid">
+            <div class="loading-msg">Loading Media...</div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderIndex = urlParams.get('folder') || 1;
+            const galleryGrid = document.getElementById('gallery-grid');
+            const pageTitle = document.getElementById('page-title');
+
+            pageTitle.textContent = `Media Folder ${folderIndex}`;
+            galleryGrid.innerHTML = ''; // Clear loading message
+
+            // Load images 1 to 20
+            for (let i = 1; i <= 20; i++) {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'gallery-item-container';
+
+                const img = document.createElement('img');
+                img.className = 'gallery-item';
+                // Use the correct folder naming convention: "media folder X"
+                img.src = `assets/images/media folder ${folderIndex}/${i}.png`;
+                img.alt = `Media ${i}`;
+
+                // Error handling: hide broken images
+                img.onerror = function () {
+                    imgContainer.style.display = 'none';
+                };
+
+                // Click to view in dedicated window
+                img.onclick = function () {
+                    window.open('imageviewer.html?img=' + encodeURIComponent(img.src), '_blank');
+                };
+
+                imgContainer.appendChild(img);
+                galleryGrid.appendChild(imgContainer);
+            }
+        });
+    </script>
+</body>
+
+</html>

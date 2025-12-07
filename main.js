@@ -3,12 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Background Image Loader with Error Handling ---
     function checkBackgroundImage(url, callback) {
         const img = new Image();
-        img.onload = function() {
+        img.onload = function () {
             console.log('Background image loaded successfully.');
             document.body.classList.add('bg-loaded');
             if (callback) callback(); // Run the callback function on success
         }
-        img.onerror = function() {
+        img.onerror = function () {
             console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check that the file exists and the path is correct. The site will use the fallback background color.`);
             document.body.classList.remove('bg-loaded');
             if (callback) callback(); // Also run callback on error so the site doesn't hang
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enterOverlay.style.opacity = '0';
         enterOverlay.style.visibility = 'hidden'; // Ensure it's hidden after fade
         // enterBg.classList.add('zooming'); // Removed
-        setTimeout(() => { 
+        setTimeout(() => {
             enterOverlay.style.display = 'none';
         }, 1000);
 
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             playPromise.catch(error => {
                 console.log("Autoplay was prevented. User interaction is needed to play audio.");
                 // If autoplay fails, ensure the icon reflects the muted state until the user clicks it.
-                setMuteState(true); 
+                setMuteState(true);
             });
         }
     });
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drop.style.animationDuration = `${Math.random() * 0.8 + 0.4}s`; // Faster, more varied duration
         drop.style.opacity = `${Math.random() * 0.5 + 0.3}`; // Random opacity
         drop.style.setProperty('--drift', `${(Math.random() - 0.5) * 20}px`); // Add horizontal drift
-        
+
         bloodRainContainer.appendChild(drop);
 
         // Remove the drop after it falls
@@ -186,11 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
             popupTitle.textContent = tip.title;
             popupText.textContent = tip.text;
             document.querySelector('.popup-icon').textContent = tip.icon;
-            
+
             if (infoPopup.style.display !== 'block') {
                 infoPopup.style.display = 'block';
             }
-            
+
             popupContent.style.opacity = '1';
         }, 300); // This duration should match the transition in your CSS
     }
@@ -299,89 +299,194 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.service-card, .cta-button, .nav-links a, .footer-links a, .read-more-btn, .dropdown a').forEach(el => {
         el.addEventListener('mouseenter', () => {
             hoverSound.currentTime = 0;
-            hoverSound.play().catch(e => {});
+            hoverSound.play().catch(e => { });
         });
         el.addEventListener('click', () => {
             clickSound.currentTime = 0;
-            clickSound.play().catch(e => {});
+            clickSound.play().catch(e => { });
         });
     });
 
-    // --- Engine Quiz ---
-    const quizContainer = document.getElementById('quiz');
-    const resultsContainer = document.getElementById('quiz-results');
-    const submitButton = document.getElementById('submit-quiz');
+    // --- Advanced Engine Quiz ---
+    const quizApp = document.getElementById('quiz-app');
 
-    const myQuestions = [
+    const questionBank = [
         {
             question: "What does ICE stand for?",
-            answers: {
-                a: "Internal Combustion Engine",
-                b: "Internal Cooling Engine",
-                c: "Icy Cool Engine"
-            },
-            correctAnswer: "a"
+            answers: ["Internal Combustion Engine", "Internal Cooling Engine", "Icy Cool Engine", "Integrated Circuit Energy"],
+            correct: 0
         },
         {
-            question: "Who is credited with inventing the first successful four-stroke engine?",
-            answers: {
-                a: "Karl Benz",
-                b: "Henry Ford",
-                c: "Nicolaus Otto"
-            },
-            correctAnswer: "c"
+            question: "Who invented the first successful four-stroke engine?",
+            answers: ["Karl Benz", "Henry Ford", "Nicolaus Otto", "Rudolf Diesel"],
+            correct: 2
         },
         {
             question: "What is the purpose of a crankshaft?",
-            answers: {
-                a: "To open and close the valves",
-                b: "To convert linear motion to rotational motion",
-                c: "To ignite the fuel"
-            },
-            correctAnswer: "b"
+            answers: ["To open valves", "Convert linear to rotational motion", "Ignite fuel", "Cool the engine"],
+            correct: 1
+        },
+        {
+            question: "Which component mixes air and fuel in older engines?",
+            answers: ["Fuel Injector", "Carburetor", "Alternator", "Distributor"],
+            correct: 1
+        },
+        {
+            question: "What does the 'W' in 5W-30 oil stand for?",
+            answers: ["Weight", "Winter", "Width", "Viscosity"],
+            correct: 1
+        },
+        {
+            question: "What part charges the battery while the engine runs?",
+            answers: ["Starter", "Alternator", "Distributor", "Coil Pack"],
+            correct: 1
+        },
+        {
+            question: "What causes a 'knocking' sound in an engine?",
+            answers: ["Low Oil", "Pre-ignition/Detonation", "Loose Belt", "Bad Spark Plug"],
+            correct: 1
+        },
+        {
+            question: "What is the function of a catalytic converter?",
+            answers: ["Increase Horsepower", "Reduce Exhaust Emissions", "Muffle Sound", "Cool Exhaust Gas"],
+            correct: 1
+        },
+        {
+            question: "Which stroke comes after Compression?",
+            answers: ["Intake", "Exhaust", "Power/Combustion", "Ignition"],
+            correct: 2
+        },
+        {
+            question: "What does RPM stand for?",
+            answers: ["Rotations Per Minute", "Revolutions Per Minute", "Rounds Per Minute", "Rate Per Mile"],
+            correct: 1
+        },
+        {
+            question: "What connects the piston to the crankshaft?",
+            answers: ["Pushrod", "Connecting Rod", "Camshaft", "Timing Belt"],
+            correct: 1
+        },
+        {
+            question: "What is a common sign of a blown head gasket?",
+            answers: ["Black Smoke", "Blue Smoke", "White Smoke/Milky Oil", "No Smoke"],
+            correct: 2
+        },
+        {
+            question: "What does a turbocharger use to spin?",
+            answers: ["Belt Drive", "Electric Motor", "Exhaust Gases", "Gear Drive"],
+            correct: 2
+        },
+        {
+            question: "What is the firing order of a standard Chevy V8?",
+            answers: ["1-8-4-3-6-5-7-2", "1-2-3-4-5-6-7-8", "1-5-4-2-6-3-7-8", "1-3-7-2-6-5-4-8"],
+            correct: 0
+        },
+        {
+            question: "What does OBD stand for?",
+            answers: ["On-Board Diagnostics", "Over-Board Data", "Oil Break Down", "Optimal Brake Distribution"],
+            correct: 0
         }
     ];
 
-    function buildQuiz(){
-        const output = [];
-        myQuestions.forEach((currentQuestion, questionNumber) => {
-            const answers = [];
-            for(letter in currentQuestion.answers){
-                answers.push(
-                    `<label>
-                        <input type="radio" name="question${questionNumber}" value="${letter}">
-                        ${letter} :
-                        ${currentQuestion.answers[letter]}
-                    </label>`
-                );
-            }
-            output.push(
-                `<div class="question"> ${currentQuestion.question} </div>
-                <div class="answers"> ${answers.join('')} </div>`
-            );
-        });
-        quizContainer.innerHTML = output.join('');
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    function startQuiz() {
+        // Select 5 random questions
+        const shuffled = [...questionBank].sort(() => 0.5 - Math.random());
+        currentQuestions = shuffled.slice(0, 5);
+        currentQuestionIndex = 0;
+        score = 0;
+        showQuestion();
     }
 
-    function showResults(){
-        const answerContainers = quizContainer.querySelectorAll('.answers');
-        let numCorrect = 0;
-        myQuestions.forEach((currentQuestion, questionNumber) => {
-            const answerContainer = answerContainers[questionNumber];
-            const selector = `input[name=question${questionNumber}]:checked`;
-            const userAnswer = (answerContainer.querySelector(selector) || {}).value;
-            if(userAnswer === currentQuestion.correctAnswer){
-                numCorrect++;
-                answerContainers[questionNumber].style.color = 'lightgreen';
+    function showQuestion() {
+        const q = currentQuestions[currentQuestionIndex];
+        const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
+
+        quizApp.innerHTML = `
+            <div class="quiz-progress-container">
+                <div class="quiz-progress-bar" style="width: ${progress}%"></div>
+            </div>
+            <div class="question-card">
+                <h3 class="question-text">${q.question}</h3>
+                <div class="answers-grid">
+                    ${q.answers.map((ans, i) => `
+                        <button class="answer-btn">${ans}</button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Re-attach event listeners since we wiped the DOM
+        // Note: onclick attributes are used for simplicity in this dynamic injection, 
+        // but we need to expose the handler to the global scope or attach differently.
+        // Better approach: Attach listeners after injection.
+        const btns = quizApp.querySelectorAll('.answer-btn');
+        btns.forEach((btn, i) => {
+            btn.onclick = () => handleAnswer(i, btn);
+        });
+    }
+
+    function handleAnswer(selectedIndex, btnElement) {
+        const q = currentQuestions[currentQuestionIndex];
+        const allBtns = quizApp.querySelectorAll('.answer-btn');
+
+        // Disable all buttons
+        allBtns.forEach(btn => btn.style.pointerEvents = 'none');
+
+        if (selectedIndex === q.correct) {
+            score++;
+            btnElement.classList.add('correct');
+        } else {
+            btnElement.classList.add('incorrect');
+            allBtns[q.correct].classList.add('correct');
+        }
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuestions.length) {
+                showQuestion();
             } else {
-                answerContainers[questionNumber].style.color = 'red';
+                showResults();
             }
-        });
-        resultsContainer.innerHTML = `${numCorrect} out of ${myQuestions.length}`;
+        }, 1500);
     }
 
-    buildQuiz();
-    submitButton.addEventListener('click', showResults);
+    function showResults() {
+        let rank = "Grease Monkey";
+        const percentage = (score / currentQuestions.length) * 100;
+
+        if (percentage === 100) rank = "Master Mechanic";
+        else if (percentage >= 80) rank = "Lead Technician";
+        else if (percentage >= 60) rank = "Certified Pro";
+        else if (percentage >= 40) rank = "Lube Tech";
+
+        quizApp.innerHTML = `
+            <div class="quiz-results-screen">
+                <div class="score-display">${score} / ${currentQuestions.length}</div>
+                <div class="rank-display">Rank: <span class="rank-title">${rank}</span></div>
+                <p>${getFeedback(percentage)}</p>
+                <button id="restart-quiz-btn" class="cta-button" style="margin-top: 20px;">Try Again</button>
+            </div>
+        `;
+
+        document.getElementById('restart-quiz-btn').addEventListener('click', startQuiz);
+    }
+
+    function getFeedback(percentage) {
+        if (percentage === 100) return "Flawless victory! You know your engines inside and out.";
+        if (percentage >= 80) return "Great job! You're ready for the shop floor.";
+        if (percentage >= 60) return "Not bad, but you might want to check the service manual.";
+        return "Back to school! Time to brush up on your mechanics.";
+    }
+
+    // Initialize Start Button
+    const startBtn = document.getElementById('start-quiz-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', startQuiz);
+    }
 
     // --- New WebGL Hero Shader ---
     // This code has been moved to shader.js

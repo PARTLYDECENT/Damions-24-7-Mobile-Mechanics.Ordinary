@@ -283,6 +283,16 @@
                 <a href="resources.html">Resources</a>
                 <a href="s2.html">S2</a>
                 <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank">3D Garage</a>
+                <div class="dropdown media-dropdown">
+                    <a href="#" class="dropbtn media-dropbtn">Media</a>
+                    <div class="dropdown-content media-dropdown-content">
+                        <a href="mediaviewer.html?folder=1" target="_blank">Media Folder 1</a>
+                        <a href="mediaviewer.html?folder=2" target="_blank">Media Folder 2</a>
+                        <a href="mediaviewer.html?folder=3" target="_blank">Media Folder 3</a>
+                        <a href="mediaviewer.html?folder=4" target="_blank">Media Folder 4</a>
+                        <a href="mediaviewer.html?folder=5" target="_blank">Media Folder 5</a>
+                    </div>
+                </div>
                 <div class="dropdown">
                     <a href="#" class="dropbtn">Games</a>
                     <div class="dropdown-content">
@@ -586,10 +596,13 @@
             </div>
 
             <div class="engine-quiz">
-                <h3>Engine Fun Facts Quiz</h3>
-                <div id="quiz"></div>
-                <button id="submit-quiz">Submit Answers</button>
-                <div id="quiz-results"></div>
+                <div id="quiz-app" class="quiz-container">
+                    <div class="quiz-start-screen">
+                        <h3>Master Mechanic Challenge</h3>
+                        <p>Test your knowledge of engines, history, and diagnostics.</p>
+                        <button id="start-quiz-btn" class="cta-button">Start Engine</button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -701,6 +714,8 @@
             </div>
         </div>
     </div>
+
+
 
     <audio id="hover-audio" src="./videos/impact.mp3" preload="auto"></audio>
     <audio id="background-music" src="./videos/rare1.mp3" preload="auto" loop></audio>
