@@ -11,10 +11,24 @@ import { VertexNormalsHelper } from 'three/addons/helpers/VertexNormalsHelper.js
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 
-let scene, camera, renderer, controls, model, composer, carPaintMaterial, dirLight, rimLight, mixer, animationClip, clock, ground, glitchPass, uvCheckerTexture;
+let scene, camera, renderer, controls, model, composer, carPaintMaterial, dirLight, rimLight, mixer, animationClip, clock, glitchPass, uvCheckerTexture;
 let pLight1, pLight2, pLight3, sparkles;
 let normalsHelper = [];
 let animatedMeshes = [];
+let labyrinthPlanes = [];
+let gridPositions = [];
+let lastShuffleTime = 0;
+let skyboxMesh, skyboxMaterial;
+let videoElement, videoTexture;
+let sound, audioLoader;
+let musicPlaying = false;
+let currentTrackIndex = 0;
+const playlist = ['s2.1.mp3', 's2.3.mp3', 's2.4.mp3'];
+
+// Ghost Truck
+let ghostTruck;
+let ghostTruckAngle = 0;
+
 const loadingManager = new THREE.LoadingManager();
 const loadingEl = document.getElementById('loading');
 const loadingProgressEl = document.getElementById('loading-progress');
@@ -48,6 +62,18 @@ const params = {
     noiseFreq: 1.0,
     showNormals: false,
     uvCheck: false,
+    labyrinthMode: true,
+    labyrinthSpeed: 1.0,
+    shuffleInterval: 1.5,
+    // Skybox Params
+    skyboxMode: true,
+    skyboxSpeed: 0.2,
+    skyboxScale: 1.0,
+    skyboxIntensity: 1.0,
+    // Video Skybox
+    videoSkybox: 'None',
+    // Music
+    musicVolume: 0.5,
 };
 
 const environments = {
@@ -56,6 +82,8 @@ const environments = {
     'Studio': 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr'
 };
 const envKeys = Object.keys(environments);
+
+const videoOptions = ['None', 'sky1.mp4', 'sky2.mp4']; // Updated video list
 
 const materials = {
     'Standard': { metalness: 0.9, roughness: 0.4 },
@@ -77,7 +105,7 @@ function init() {
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(4, 1.5, 5);
+    camera.position.set(5, 5, 7);
 
     const canvasContainer = document.getElementById('canvas-container');
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -92,37 +120,270 @@ function init() {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.minDistance = 2;
-    controls.maxDistance = 15;
-    controls.target.set(0, 0.5, 0);
+    controls.maxDistance = 20;
+    controls.target.set(0, 0, 0);
     controls.autoRotate = params.autoRotate;
     controls.autoRotateSpeed = params.autoRotateSpeed;
 
     updateEnvironment();
+    createSkybox();
     setupLighting();
-
-    const groundGeo = new THREE.PlaneGeometry(20, 20);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.2, metalness: 0.8 });
-    ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
+    createLabyrinthPlanes();
+    setupAudio();
 
     loadModel('assets/models/zombie.glb');
+    loadGhostTruck(); // Load Ghost Truck
+
     createSparkles();
     setupPostProcessing();
     createGUI();
 
     window.addEventListener('resize', onWindowResize);
+
+    const startAudio = () => {
+        if (!musicPlaying) {
+            playNextTrack();
+            musicPlaying = true;
+        }
+        if (videoElement) videoElement.play().catch(e => console.log("Video play failed:", e));
+
+        window.removeEventListener('click', startAudio);
+        window.removeEventListener('keydown', startAudio);
+    };
+    window.addEventListener('click', startAudio);
+    window.addEventListener('keydown', startAudio);
+}
+
+function setupAudio() {
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+    sound = new THREE.Audio(listener);
+    audioLoader = new THREE.AudioLoader(loadingManager);
+    sound.setVolume(params.musicVolume);
+
+    sound.onEnded = function () {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        playNextTrack();
+    };
+}
+
+function playNextTrack() {
+    if (!sound) return;
+    const track = playlist[currentTrackIndex];
+    const path = `assets/music/${track}`;
+
+    audioLoader.load(path, function (buffer) {
+        if (sound.isPlaying) sound.stop();
+        sound.setBuffer(buffer);
+        sound.setLoop(false);
+        sound.setVolume(params.musicVolume);
+        sound.play();
+    }, undefined, function (err) {
+        console.warn("Could not load music:", path);
+    });
+}
+
+function createSkybox() {
+    const geometry = new THREE.SphereGeometry(50, 64, 64);
+
+    const vertexShader = `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+            vUv = uv;
+            vPosition = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `;
+
+    const fragmentShader = `
+        uniform float uTime;
+        uniform float uSpeed;
+        uniform float uScale;
+        uniform float uIntensity;
+        varying vec2 vUv;
+        varying vec3 vPosition;
+
+        float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+        float noise(vec3 x) {
+            vec3 p = floor(x);
+            vec3 f = fract(x);
+            f = f * f * (3.0 - 2.0 * f);
+            float n = p.x + p.y * 57.0 + 113.0 * p.z;
+            return mix(mix(mix(hash(n + 0.0), hash(n + 1.0), f.x),
+                           mix(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
+                       mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                           mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+        }
+
+        float fbm(vec3 p) {
+            float f = 0.0;
+            f += 0.5000 * noise(p); p *= 2.02;
+            f += 0.2500 * noise(p); p *= 2.03;
+            f += 0.1250 * noise(p); p *= 2.01;
+            f += 0.0625 * noise(p);
+            return f;
+        }
+
+        void main() {
+            vec3 pos = normalize(vPosition) * uScale * 2.0;
+            float t = uTime * uSpeed * 0.1;
+
+            float stars = pow(noise(pos * 20.0), 20.0) * 2.0;
+            
+            vec3 cloudPos = pos + vec3(t * 0.5, t * 0.2, 0.0);
+            float n = fbm(cloudPos);
+            float n2 = fbm(cloudPos * 2.0 + vec3(n)); 
+            
+            vec3 darkSpace = vec3(0.0, 0.0, 0.05);
+            vec3 nebulaColor1 = vec3(0.1, 0.0, 0.3); 
+            vec3 nebulaColor2 = vec3(0.0, 0.2, 0.4); 
+            vec3 nebulaColor3 = vec3(0.4, 0.1, 0.1); 
+            
+            vec3 color = darkSpace;
+            color = mix(color, nebulaColor1, n * 1.5);
+            color = mix(color, nebulaColor2, n2 * 1.2);
+            color += nebulaColor3 * pow(n * n2, 2.0);
+            
+            color += vec3(stars);
+
+            gl_FragColor = vec4(color * uIntensity, 1.0);
+        }
+    `;
+
+    skyboxMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            uTime: { value: 0 },
+            uSpeed: { value: params.skyboxSpeed },
+            uScale: { value: params.skyboxScale },
+            uIntensity: { value: params.skyboxIntensity }
+        },
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        side: THREE.BackSide
+    });
+
+    skyboxMesh = new THREE.Mesh(geometry, skyboxMaterial);
+    skyboxMesh.visible = params.skyboxMode;
+    scene.add(skyboxMesh);
+}
+
+function updateVideoSkybox() {
+    if (params.videoSkybox === 'None') {
+        if (videoElement) {
+            videoElement.pause();
+            videoElement = null;
+        }
+        scene.background = null;
+        updateEnvironment();
+        return;
+    }
+
+    if (skyboxMesh) skyboxMesh.visible = false;
+
+    const videoPath = `assets/videos/${params.videoSkybox}`;
+
+    if (!videoElement) {
+        videoElement = document.createElement('video');
+        videoElement.loop = true;
+        videoElement.muted = true;
+        videoElement.playsInline = true;
+        videoElement.crossOrigin = 'anonymous';
+    }
+
+    videoElement.src = videoPath;
+    videoElement.play().catch(e => console.warn("Video autoplay blocked, waiting for interaction"));
+
+    videoTexture = new THREE.VideoTexture(videoElement);
+    videoTexture.colorSpace = THREE.SRGBColorSpace;
+    scene.background = videoTexture;
+    scene.environment = videoTexture;
+}
+
+function createLabyrinthPlanes() {
+    labyrinthPlanes.forEach(plane => scene.remove(plane));
+    labyrinthPlanes = [];
+    gridPositions = [];
+
+    // 4x4 Grid
+    const rows = 4;
+    const cols = 4;
+    const planeSize = 1.8;
+    const gap = 0.1;
+    const spacing = planeSize + gap;
+    const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const x = (c - (cols - 1) / 2) * spacing;
+            const z = (r - (rows - 1) / 2) * spacing;
+            gridPositions.push(new THREE.Vector3(x, -0.5, z));
+        }
+    }
+
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+
+    for (let i = 0; i < gridPositions.length; i++) {
+        const textureIndex = (i % 8) + 1;
+        const texturePath = `assets/images/tile${textureIndex}.png`;
+        const texture = textureLoader.load(texturePath);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        const material = new THREE.MeshStandardMaterial({
+            map: texture,
+            color: 0xffffff,
+            roughness: 0.4,
+            metalness: 0.5,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 1.0
+        });
+
+        const plane = new THREE.Mesh(geometry, material);
+        plane.receiveShadow = true;
+        plane.castShadow = true;
+        plane.rotation.x = -Math.PI / 2;
+
+        plane.position.copy(gridPositions[i]);
+
+        plane.userData = {
+            id: i,
+            currentGridIndex: i,
+            targetGridIndex: i,
+            startPos: gridPositions[i].clone(),
+            targetPos: gridPositions[i].clone(),
+            moveStartTime: 0,
+            isMoving: false,
+            moveDuration: 1.0
+        };
+
+        scene.add(plane);
+        labyrinthPlanes.push(plane);
+    }
 }
 
 function updateEnvironment() {
-    const rgbeLoader = new RGBELoader(loadingManager);
-    rgbeLoader.load(environments[params.environment], (texture) => {
-        texture.mapping = THREE.EquirectangularReflectionMapping;
-        scene.environment = texture;
-        scene.background = texture;
-        scene.backgroundBlurriness = params.backgroundBlur;
-    });
+    if (params.videoSkybox !== 'None') return;
+
+    if (params.skyboxMode) {
+        scene.background = null;
+        const rgbeLoader = new RGBELoader(loadingManager);
+        rgbeLoader.load(environments[params.environment], (texture) => {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            scene.environment = texture;
+        });
+        if (skyboxMesh) skyboxMesh.visible = true;
+    } else {
+        if (skyboxMesh) skyboxMesh.visible = false;
+        const rgbeLoader = new RGBELoader(loadingManager);
+        rgbeLoader.load(environments[params.environment], (texture) => {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            scene.environment = texture;
+            scene.background = texture;
+            scene.backgroundBlurriness = params.backgroundBlur;
+        });
+    }
 }
 
 function setupLighting() {
@@ -147,17 +408,30 @@ function loadModel(modelPath) {
     const loader = new GLTFLoader(loadingManager);
     loader.load(modelPath, (gltf) => {
         model = gltf.scene;
+
+        model.position.set(0, 0, 0);
+        model.rotation.set(0, 0, 0);
+        model.scale.set(1, 1, 1);
+        model.updateMatrixWorld(true);
+
         const box = new THREE.Box3().setFromObject(model);
         const size = box.getSize(new THREE.Vector3());
         const center = box.getCenter(new THREE.Vector3());
 
-        model.position.sub(center);
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+
         const scale = 2 / Math.max(size.x, size.y, size.z);
         model.scale.setScalar(scale);
-        model.position.y += size.y * scale / 2;
+
+        model.updateMatrixWorld(true);
+
+        const box2 = new THREE.Box3().setFromObject(model);
+        model.position.y -= box2.min.y;
+        model.position.y += 0.05;
 
         normalsHelper = [];
-        animatedMeshes = []; // Reset array
+        animatedMeshes = [];
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
@@ -179,7 +453,6 @@ function loadModel(modelPath) {
                             uniform float uNoiseSpeed;
                             uniform float uNoiseFreq;
                             uniform bool uVertexNoise;
-
                             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
                             vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
                             vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -242,7 +515,7 @@ function loadModel(modelPath) {
                             `
                         );
                         child.userData.shader = shader;
-                        animatedMeshes.push(child); // Cache the mesh
+                        animatedMeshes.push(child);
                     };
                 }
 
@@ -274,6 +547,37 @@ function loadModel(modelPath) {
     });
 }
 
+function loadGhostTruck() {
+    const loader = new GLTFLoader(loadingManager);
+    loader.load('assets/models/truck1.glb', (gltf) => {
+        ghostTruck = gltf.scene;
+
+        // Ghost Material
+        const ghostMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.3,
+            emissive: 0x0088aa,
+            emissiveIntensity: 0.5,
+            roughness: 0.0,
+            metalness: 1.0
+        });
+
+        ghostTruck.traverse((child) => {
+            if (child.isMesh) {
+                child.material = ghostMaterial;
+                child.castShadow = false;
+                child.receiveShadow = false;
+            }
+        });
+
+        ghostTruck.scale.set(0.5, 0.5, 0.5); // Smaller scale
+        scene.add(ghostTruck);
+    }, undefined, (error) => {
+        console.warn("Ghost truck failed to load:", error);
+    });
+}
+
 function setupPostProcessing() {
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
@@ -294,6 +598,19 @@ function createGUI() {
     envFolder.add(params, 'environment', envKeys).name('Scene').onChange(updateEnvironment);
     envFolder.add(params, 'backgroundBlur', 0, 1, 0.01).name('BG Blur').onChange(v => scene.backgroundBlurriness = v);
     envFolder.add({ cycle: () => { /* ... */ } }, 'cycle').name('Cycle Scene');
+
+    const skyboxFolder = envFolder.addFolder('Wild Skybox');
+    skyboxFolder.add(params, 'skyboxMode').name('Enable Shader').onChange(updateEnvironment);
+    skyboxFolder.add(params, 'skyboxSpeed', 0, 5).name('Speed').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uSpeed.value = v; });
+    skyboxFolder.add(params, 'skyboxScale', 0.1, 10).name('Scale').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uScale.value = v; });
+    skyboxFolder.add(params, 'skyboxIntensity', 0, 5).name('Intensity').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uIntensity.value = v; });
+
+    // Video Skybox
+    skyboxFolder.add(params, 'videoSkybox', videoOptions).name('Video Skybox').onChange(updateVideoSkybox);
+
+    const audioFolder = gui.addFolder('Music Player');
+    audioFolder.add(params, 'musicVolume', 0, 1).name('Volume').onChange(v => { if (sound) sound.setVolume(v); });
+    audioFolder.add({ next: () => { currentTrackIndex = (currentTrackIndex + 1) % playlist.length; playNextTrack(); } }, 'next').name('Next Track');
 
     const carFolder = gui.addFolder('Car Paint');
     carFolder.addColor(params, 'paintColor').name('Color').onChange(v => { if (carPaintMaterial) carPaintMaterial.color.set(v); });
@@ -324,6 +641,11 @@ function createGUI() {
     crazyFolder.add(params, 'cameraShake').name('Camera Shake');
     crazyFolder.add(params, 'xray').name('X-Ray Vision').onChange(toggleXRay);
     crazyFolder.add(params, 'sparkles').name('Show Sparkles').onChange(v => { if (sparkles) sparkles.visible = v; });
+
+    const labyrinthFolder = gui.addFolder('Labyrinth');
+    labyrinthFolder.add(params, 'labyrinthMode').name('Enable Labyrinth');
+    labyrinthFolder.add(params, 'labyrinthSpeed', 0.1, 5).name('Speed');
+    labyrinthFolder.add(params, 'shuffleInterval', 0.5, 5).name('Shuffle Interval');
 }
 
 function exportGLB() {
@@ -378,7 +700,7 @@ function createSparkles() {
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
         positions[i * 3] = (Math.random() - 0.5) * 10;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 10 + 2; // Keep above ground mostly
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 10 + 2;
         positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
     }
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -408,6 +730,124 @@ function animate() {
             shader.uniforms.uNoiseAmount.value = params.noiseAmount;
             shader.uniforms.uNoiseSpeed.value = params.noiseSpeed;
             shader.uniforms.uNoiseFreq.value = params.noiseFreq;
+        });
+    }
+
+    if (skyboxMaterial) {
+        skyboxMaterial.uniforms.uTime.value = time;
+    }
+
+    // Ghost Truck Animation
+    if (ghostTruck) {
+        ghostTruckAngle += delta * 0.2; // Slow orbit
+        const radius = 25;
+        ghostTruck.position.x = Math.cos(ghostTruckAngle) * radius;
+        ghostTruck.position.z = Math.sin(ghostTruckAngle) * radius;
+        ghostTruck.position.y = 0; // On ground
+        ghostTruck.lookAt(0, 0, 0); // Face center (or tangent if we want it driving forward)
+        ghostTruck.rotateY(-Math.PI / 2); // Adjust rotation to face forward along path
+    }
+
+    // --- Labyrinth Animation Logic (Armor Style) ---
+    if (params.labyrinthMode && labyrinthPlanes.length > 0) {
+        // Shuffle Trigger
+        if (time - lastShuffleTime > params.shuffleInterval) {
+            lastShuffleTime = time;
+
+            // Pick multiple pairs to swap for a "busy" mechanical look
+            const swaps = 2; // Swap 2 pairs at once
+            for (let s = 0; s < swaps; s++) {
+                const idx1 = Math.floor(Math.random() * labyrinthPlanes.length);
+                let idx2 = Math.floor(Math.random() * labyrinthPlanes.length);
+                while (idx1 === idx2) {
+                    idx2 = Math.floor(Math.random() * labyrinthPlanes.length);
+                }
+
+                const plane1 = labyrinthPlanes[idx1];
+                const plane2 = labyrinthPlanes[idx2];
+
+                if (!plane1.userData.isMoving && !plane2.userData.isMoving) {
+                    // Swap target grid indices
+                    const tempTarget = plane1.userData.targetGridIndex;
+                    plane1.userData.targetGridIndex = plane2.userData.targetGridIndex;
+                    plane2.userData.targetGridIndex = tempTarget;
+
+                    // Start Move
+                    plane1.userData.isMoving = true;
+                    plane1.userData.moveStartTime = time;
+                    plane1.userData.startPos.copy(plane1.position);
+                    plane1.userData.targetPos.copy(gridPositions[plane1.userData.targetGridIndex]);
+
+                    plane2.userData.isMoving = true;
+                    plane2.userData.moveStartTime = time;
+                    plane2.userData.startPos.copy(plane2.position);
+                    plane2.userData.targetPos.copy(gridPositions[plane2.userData.targetGridIndex]);
+                }
+            }
+        }
+
+        // Animation Update
+        labyrinthPlanes.forEach(plane => {
+            if (plane.userData.isMoving) {
+                const elapsed = time - plane.userData.moveStartTime;
+                const duration = plane.userData.moveDuration / params.labyrinthSpeed;
+                const progress = Math.min(elapsed / duration, 1.0);
+
+                // Armor Animation Phases:
+                // 0.0 - 0.2: Lift Up
+                // 0.2 - 0.8: Move to Target (while staying up)
+                // 0.8 - 1.0: Drop Down (Snap)
+
+                const baseHeight = -0.5; // New base height
+                const liftHeight = 0.0; // Lift up to 0 (which is 0.5 higher than base)
+                const currentPos = new THREE.Vector3();
+
+                if (progress < 0.2) {
+                    // Phase 1: Lift
+                    const liftProgress = progress / 0.2;
+                    // Ease out cubic
+                    const y = THREE.MathUtils.lerp(baseHeight, liftHeight, 1 - Math.pow(1 - liftProgress, 3));
+                    currentPos.copy(plane.userData.startPos);
+                    currentPos.y = y;
+
+                    // Tilt slightly
+                    plane.rotation.x = -Math.PI / 2 + Math.sin(liftProgress * Math.PI) * 0.1;
+                    plane.rotation.z = Math.sin(liftProgress * Math.PI) * 0.1;
+
+                } else if (progress < 0.8) {
+                    // Phase 2: Move
+                    const moveProgress = (progress - 0.2) / 0.6;
+                    // Smooth step
+                    const t = moveProgress * moveProgress * (3 - 2 * moveProgress);
+
+                    currentPos.lerpVectors(plane.userData.startPos, plane.userData.targetPos, t);
+                    currentPos.y = liftHeight; // Stay lifted
+
+                    // Mechanical wobble
+                    plane.rotation.z = Math.sin(moveProgress * Math.PI * 4) * 0.05;
+                    plane.rotation.x = -Math.PI / 2;
+
+                } else {
+                    // Phase 3: Drop
+                    const dropProgress = (progress - 0.8) / 0.2;
+                    // Ease in bounce-like (just fast drop)
+                    const y = THREE.MathUtils.lerp(liftHeight, baseHeight, dropProgress * dropProgress);
+                    currentPos.copy(plane.userData.targetPos);
+                    currentPos.y = y;
+
+                    plane.rotation.x = -Math.PI / 2;
+                    plane.rotation.z = 0;
+                }
+
+                plane.position.copy(currentPos);
+
+                if (progress >= 1.0) {
+                    plane.userData.isMoving = false;
+                    plane.position.copy(plane.userData.targetPos); // Ensure exact final pos
+                    plane.rotation.x = -Math.PI / 2; // Ensure flat
+                    plane.rotation.z = 0;
+                }
+            }
         });
     }
 

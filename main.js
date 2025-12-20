@@ -98,38 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // --- Blood Rain Animation ---
-    const bloodRainContainer = document.getElementById('blood-rain');
-
-    function createRaindrop() {
-        const drop = document.createElement('div');
-        drop.classList.add('raindrop');
-        drop.style.left = `${Math.random() * 100}vw`;
-        drop.style.animationDuration = `${Math.random() * 0.8 + 0.4}s`; // Faster, more varied duration
-        drop.style.opacity = `${Math.random() * 0.5 + 0.3}`; // Random opacity
-        drop.style.setProperty('--drift', `${(Math.random() - 0.5) * 20}px`); // Add horizontal drift
-
-        bloodRainContainer.appendChild(drop);
-
-        // Remove the drop after it falls
-        drop.addEventListener('animationend', () => {
-            drop.remove();
-        });
-    }
-
-    function rainBurst() {
-        const burstSize = Math.floor(Math.random() * 5) + 1; // 1 to 5 drops per burst
-        for (let i = 0; i < burstSize; i++) {
-            setTimeout(createRaindrop, Math.random() * 1000); // create drops within a 1 second window
-        }
-    }
-
-    function generateRain() {
-        rainBurst();
-        setTimeout(generateRain, Math.random() * 5000 + 3000); // new burst every 3 to 8 seconds
-    }
-
-    generateRain();
+    // --- Rain Logic Replaced by Shader ---
 
     // --- Upgraded Info Popup Logic ---
     const infoPopup = document.getElementById('info-popup');

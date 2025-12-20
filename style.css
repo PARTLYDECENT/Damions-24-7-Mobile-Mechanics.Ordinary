@@ -527,6 +527,147 @@ body.bg-loaded {
     }
 }
 
+/* --- Advanced Animation Styles --- */
+
+/* 3D Tilt Support */
+.service-card,
+.news-card,
+.feature-item {
+    transition: transform 0.1s ease-out;
+    /* Fast transition for smooth mouse following */
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+/* Magnetic Button Glow */
+.cta-button,
+.nav-links a {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.3s ease, background 0.3s ease;
+}
+
+.cta-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.cta-button:hover::after {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Glitch Effect */
+.glitch-effect {
+    position: relative;
+}
+
+.glitch-effect::before,
+.glitch-effect::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-dark);
+    /* Match background to hide original */
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    opacity: 0;
+}
+
+.glitch-effect.active-glitch::before {
+    left: -2px;
+    text-shadow: 2px 0 #ff00c1;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim-1 0.5s infinite linear alternate-reverse;
+    opacity: 1;
+}
+
+.glitch-effect.active-glitch::after {
+    left: 2px;
+    text-shadow: -2px 0 #00fff9;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim-2 0.5s infinite linear alternate-reverse;
+    opacity: 1;
+}
+
+@keyframes glitch-anim-1 {
+    0% {
+        clip: rect(20px, 9999px, 15px, 0);
+    }
+
+    20% {
+        clip: rect(50px, 9999px, 60px, 0);
+    }
+
+    40% {
+        clip: rect(10px, 9999px, 85px, 0);
+    }
+
+    60% {
+        clip: rect(80px, 9999px, 5px, 0);
+    }
+
+    80% {
+        clip: rect(30px, 9999px, 40px, 0);
+    }
+
+    100% {
+        clip: rect(60px, 9999px, 70px, 0);
+    }
+}
+
+@keyframes glitch-anim-2 {
+    0% {
+        clip: rect(10px, 9999px, 80px, 0);
+    }
+
+    20% {
+        clip: rect(70px, 9999px, 20px, 0);
+    }
+
+    40% {
+        clip: rect(30px, 9999px, 10px, 0);
+    }
+
+    60% {
+        clip: rect(90px, 9999px, 50px, 0);
+    }
+
+    80% {
+        clip: rect(15px, 9999px, 30px, 0);
+    }
+
+    100% {
+        clip: rect(55px, 9999px, 65px, 0);
+    }
+}
+
+/* Enhanced Scroll Reveal */
+.animate-on-scroll {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(50px) scale(0.95);
+    transition: opacity 0.8s ease-out, filter 0.8s ease-out, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-on-scroll.loaded {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+}
+
 /* --- Enter Overlay --- */
 #enter-overlay {
     position: fixed;
@@ -534,12 +675,22 @@ body.bg-loaded {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, #1a2238 0%, #0a0f1a 100%);
+    /* background: radial-gradient(circle at center, #1a2238 0%, #0a0f1a 100%); REMOVED for shader */
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
     transition: opacity 1s ease, visibility 1s ease;
+}
+
+#enter-shader-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
 }
 
 .enter-content {
@@ -652,33 +803,16 @@ body.bg-loaded {
     }
 }
 
-/* --- Blood Rain Animation --- */
-#blood-rain {
+/* --- Rain Shader Canvas --- */
+#rain-canvas {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     z-index: 9998;
-    /* Below the enter overlay, but above everything else */
+    /* Below enter overlay, above content */
     pointer-events: none;
-    /* Make sure it doesn't interfere with clicks */
-    overflow: hidden;
-}
-
-.raindrop {
-    position: absolute;
-    bottom: 100%;
-    width: 2px;
-    height: 80px;
-    background: linear-gradient(to bottom, rgba(0, 245, 212, 0), rgba(0, 245, 212, 0.8));
-    animation: fall linear infinite;
-}
-
-@keyframes fall {
-    to {
-        transform: translateY(100vh);
-    }
 }
 
 /* --- Info Popup --- */
@@ -825,14 +959,7 @@ body.bg-loaded {
     /* Styles for these can be copied from your original CSS if needed for full functionality */
 }
 
-.animate-on-scroll {
-    opacity: 0;
-    transition: all 0.8s ease-out;
-}
 
-.animate-on-scroll.loaded {
-    opacity: 1;
-}
 
 /* --- Rolling Banner --- */
 .rolling-banner {

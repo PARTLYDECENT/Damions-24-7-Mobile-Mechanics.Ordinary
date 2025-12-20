@@ -260,16 +260,20 @@
     <button id="sidebar-open-btn" class="sidebar-toggle-btn open-btn">🔧</button>
 
     <div id="enter-overlay">
+        <canvas id="enter-shader-canvas"></canvas>
         <div class="enter-content">
             <h1 class="enter-title">DAMIONS<span class="highlight">24/7</span></h1>
             <p class="enter-subtitle">MOBILE MECHANICS</p>
             <div class="enter-divider"></div>
             <p class="enter-status">SYSTEM READY</p>
             <button id="enter-btn" class="enter-button">INITIALIZE SYSTEM</button>
+            <p
+                style="color: #ff8a8a; font-size: 0.8rem; margin-top: 10px; opacity: 0.8; text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);">
+                Warning: Works slow on FB app</p>
         </div>
     </div>
 
-    <div id="blood-rain"></div>
+    <canvas id="rain-canvas"></canvas>
 
     <header class="header" id="header">
         <div class="nav-container">
@@ -344,7 +348,8 @@
 
     <main class="main-content">
         <section class="hero" id="home">
-            <div id="hero-slideshow-container"></div>
+            <canvas id="hero-shader-canvas"></canvas>
+            <!-- <div id="hero-slideshow-container"></div> REMOVED for shader -->
             <!-- <canvas id="hero-shader-canvas"></canvas> --> <!-- Replaced by slideshow -->
             <div class="hero-content animate-on-scroll">
                 <h1>Your 24/7 Mobile Mechanic Solution</h1>
@@ -696,6 +701,8 @@
             </div>
             <img src="banner.png" alt="Banner" class="footer-banner">
             <p class="copyright">&copy; 2025 Damions 24/7 Mobile Mechanics. All Rights Reserved.</p>
+            <p style="font-size: 0.7rem; opacity: 0.5; margin-top: 5px;">Developed using experimental AI tools from
+                Google's advanced beta testing program.</p>
         </div>
     </footer>
 
@@ -725,6 +732,10 @@
     <script src="main.js"></script>
     <script src="videoplayer.js"></script>
     <script src="hero_slideshow.js"></script>
+    <script src="enter_shader.js"></script>
+    <script src="hero_shader.js"></script>
+    <script src="ui_effects.js"></script>
+    <script src="rain_shader.js"></script>
     <script src="shader.js"></script> <!-- Keep for hero if still used -->
 </body>
 
