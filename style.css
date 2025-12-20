@@ -1877,3 +1877,14 @@ body.bg-loaded {
         grid-template-columns: 1fr;
     }
 }
+/* --- Mobile Touch Fixes --- */
+#canvas-container {
+    touch-action: none; /* Prevent scrolling while interacting with 3D scene */
+}
+
+@media (max-width: 768px) {
+    /* Ensure UI elements are easily tappable */
+    .cta-button, .nav-links a, .service-card {
+        cursor: pointer;
+    }
+}
