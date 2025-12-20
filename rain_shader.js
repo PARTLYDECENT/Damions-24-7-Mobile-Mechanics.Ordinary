@@ -132,7 +132,7 @@ if (!rainGl) {
 
     // Resize
     function resize() {
-        const pixelRatio = window.devicePixelRatio || 1;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2 for performance
         rainCanvas.width = window.innerWidth * pixelRatio;
         rainCanvas.height = window.innerHeight * pixelRatio;
         rainGl.viewport(0, 0, rainCanvas.width, rainCanvas.height);
