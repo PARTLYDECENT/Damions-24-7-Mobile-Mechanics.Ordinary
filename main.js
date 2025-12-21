@@ -16,34 +16,36 @@ document.addEventListener('DOMContentLoaded', () => {
         img.src = url;
     }
 
-    // --- Centralized Panel Shader Animation ---
+    // --- Centralized Panel Shader Animation (Unified) ---
     function initializeAndAnimateShaders() {
-        const panelShaders = [];
+        if (typeof UnifiedPanelShader === 'undefined') {
+            console.error("UnifiedPanelShader class not found!");
+            return;
+        }
+
+        const unifiedShader = new UnifiedPanelShader('unified-panel-canvas');
+
+        // Target the SECTION IDs, not the canvas IDs
         const panelConfigs = [
-            { id: 'services-canvas', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
-            { id: 'why-us-canvas', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
-            { id: 'news-canvas', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
-            { id: 'video-promo-canvas', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
-            { id: 'slideshow-section-canvas', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
-            { id: 'videoplayer-section-canvas', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
-            { id: 'facts-canvas', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
-            { id: 'engine-bay-canvas', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } },
-            { id: 'service-area-canvas', options: { color: [0.1, 0.6, 0.4], speed: 0.3 } },
-            { id: 'faq-canvas', options: { color: [0.5, 0.2, 0.5], speed: 0.6 } }
+            { id: 'services', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
+            { id: 'why-us', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
+            { id: 'news', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
+            { id: 'video-promo', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
+            { id: 'slideshow-section', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
+            { id: 'videoplayer-section', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
+            { id: 'facts', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
+            { id: 'engine-bay', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } },
+            { id: 'service-area', options: { color: [0.1, 0.6, 0.4], speed: 0.3 } },
+            { id: 'faq', options: { color: [0.5, 0.2, 0.5], speed: 0.6 } }
         ];
 
         panelConfigs.forEach(config => {
-            const canvas = document.getElementById(config.id);
-            if (canvas && typeof PanelShader !== 'undefined') {
-                panelShaders.push(new PanelShader(canvas, config.options));
-            }
+            unifiedShader.addPanel(config.id, config.options);
         });
 
-        // Master animation loop for all panel shaders
+        // Master animation loop for the unified shader
         function animateShaders(time) {
-            panelShaders.forEach(shader => {
-                shader.update(time);
-            });
+            unifiedShader.update(time);
             requestAnimationFrame(animateShaders);
         }
         requestAnimationFrame(animateShaders);
