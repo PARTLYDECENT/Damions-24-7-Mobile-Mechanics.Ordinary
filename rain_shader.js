@@ -146,6 +146,9 @@ if (!rainGl) {
     function render(time) {
         time *= 0.001; // Convert to seconds
 
+        // Ensure this program is active before setting uniforms
+        rainGl.useProgram(shaderProgram);
+
         rainGl.clearColor(0.0, 0.0, 0.0, 0.0); // Transparent background
         rainGl.clear(rainGl.COLOR_BUFFER_BIT);
 

@@ -119,12 +119,12 @@ if (!wrenchGL) {
 
     const vertexShader = createShader(wrenchGL, wrenchGL.VERTEX_SHADER, chassisVertexShader);
     const fragmentShader = createShader(wrenchGL, wrenchGL.FRAGMENT_SHADER, fluidDynamicsFragmentShader);
-    
+
     if (!vertexShader || !fragmentShader) {
         console.error('Failed to create shaders');
         document.querySelector('.hero').style.backgroundColor = '#0D0221';
     } else {
-    
+
         const program = wrenchGL.createProgram();
         wrenchGL.attachShader(program, vertexShader);
         wrenchGL.attachShader(program, fragmentShader);
@@ -147,13 +147,13 @@ if (!wrenchGL) {
             wrenchGL.bindBuffer(wrenchGL.ARRAY_BUFFER, positionBuffer);
             wrenchGL.bufferData(wrenchGL.ARRAY_BUFFER, new Float32Array([
                 -1, -1,
-                 1, -1,
-                -1,  1,
-                -1,  1,
-                 1, -1,
-                 1,  1
+                1, -1,
+                -1, 1,
+                -1, 1,
+                1, -1,
+                1, 1
             ]), wrenchGL.STATIC_DRAW);
-            
+
             wrenchGL.enableVertexAttribArray(positionAttributeLocation);
             wrenchGL.vertexAttribPointer(positionAttributeLocation, 2, wrenchGL.FLOAT, false, 0, 0);
 
@@ -169,28 +169,31 @@ if (!wrenchGL) {
             let startTime = performance.now();
             const render = (currentTime) => {
                 const elapsedTime = (currentTime - startTime) * 0.001;
-                
+
+                // Ensure this program is active before setting uniforms
+                wrenchGL.useProgram(program);
+
                 // Dynamic canvas sizing
                 const displayWidth = engineDisplay.clientWidth;
                 const displayHeight = engineDisplay.clientHeight;
-                
+
                 if (engineDisplay.width !== displayWidth || engineDisplay.height !== displayHeight) {
                     engineDisplay.width = displayWidth;
                     engineDisplay.height = displayHeight;
                     wrenchGL.viewport(0, 0, engineDisplay.width, engineDisplay.height);
                 }
-                
+
                 // Set uniforms
                 wrenchGL.uniform2f(resolutionUniformLocation, engineDisplay.width, engineDisplay.height);
                 wrenchGL.uniform1f(timeUniformLocation, elapsedTime);
                 wrenchGL.uniform2f(mouseUniformLocation, mouseX, mouseY);
-                
+
                 // Draw
                 wrenchGL.drawArrays(wrenchGL.TRIANGLES, 0, 6);
-                
+
                 requestAnimationFrame(render);
             };
-            
+
             requestAnimationFrame(render);
         }
     }
