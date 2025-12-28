@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Wrench - Command Center</title>
+    <link rel="stylesheet" href="hub.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="icon">🔧</span> DIGITAL WRENCH
+            </div>
+            <ul class="nav-links">
+                <li class="active"><a href="hub.html">Command Center</a></li>
+                <li><a href="waveform.html">Waveform Viewer</a></li>
+                <li><a href="ev_safety.html">EV Safety Protocol</a></li>
+                <li><a href="kanban.html">Shop Ops (Kanban)</a></li>
+                <li><a href="#">J2534 Portal</a></li>
+                <li><a href="#">Parts Intelligence</a></li>
+            </ul>
+            <div class="user-profile">
+                <div class="avatar">DT</div>
+                <div class="info">
+                    <span class="name">Damion T.</span>
+                    <span class="role">Master Tech</span>
+                </div>
+            </div>
+        </nav>
+
+        <main class="dashboard">
+            <header class="top-bar">
+                <h1>Command Center</h1>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search VIN, TSB, or Component...">
+                </div>
+            </header>
+
+            <div class="grid-container">
+                <!-- Quick VIN Decode Widget -->
+                <div class="widget vin-decoder">
+                    <h2>Quick VIN Decode</h2>
+                    <div class="input-group">
+                        <input type="text" placeholder="Enter VIN..." class="vin-input">
+                        <button class="btn-primary">Decode</button>
+                    </div>
+                    <div class="recent-vins">
+                        <span class="tag">1GCEC19...</span>
+                        <span class="tag">JM1FE...</span>
+                    </div>
+                </div>
+
+                <!-- Shop Capacity Widget -->
+                <div class="widget shop-capacity">
+                    <h2>Shop Capacity</h2>
+                    <div class="capacity-meter">
+                        <div class="meter-bg">
+                            <div class="meter-fill" style="width: 75%;"></div>
+                        </div>
+                        <span class="percentage">75%</span>
+                    </div>
+                    <p class="status">3 Bays Active / 1 Open</p>
+                </div>
+
+                <!-- Recent TSBs Widget -->
+                <div class="widget recent-tsbs">
+                    <h2>Recent TSBs</h2>
+                    <ul class="tsb-list">
+                        <li>
+                            <span class="tsb-id">TSB-23-01</span>
+                            <span class="tsb-desc">Ford 10R80 Shift Flare</span>
+                        </li>
+                        <li>
+                            <span class="tsb-id">TSB-22-14</span>
+                            <span class="tsb-desc">GM 5.3L Lifter Tick</span>
+                        </li>
+                        <li>
+                            <span class="tsb-id">TSB-23-05</span>
+                            <span class="tsb-desc">Tesla Model 3 HV Isolation</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Saved Waveforms Widget -->
+                <div class="widget saved-waveforms">
+                    <h2>Saved Waveforms</h2>
+                    <div class="waveform-preview">
+                        <!-- Placeholder for a mini chart or list -->
+                        <div class="waveform-item">
+                            <span class="name">2018 F-150 Cam/Crank</span>
+                            <span class="date">Today</span>
+                        </div>
+                        <div class="waveform-item">
+                            <span class="name">Civic 1.5T MAF</span>
+                            <span class="date">Yesterday</span>
+                        </div>
+                    </div>
+                    <a href="waveform.html" class="btn-text">View All &rarr;</a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

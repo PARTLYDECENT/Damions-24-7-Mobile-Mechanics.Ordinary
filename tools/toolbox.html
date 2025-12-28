@@ -309,7 +309,53 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* --- Digital Wrench Button & Panel --- */
+        .tool-btn {
+            background: var(--primary-color);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 20px;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+        }
+
+        .tool-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+        }
+
+        #digital-wrench-panel {
+            position: relative;
+            width: 450px;
+            padding: 20px;
+            background: rgba(26, 34, 56, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: none;
+            /* Hidden by default */
+        }
+
+        #digital-wrench-panel.active {
+            display: block;
+        }
     </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -319,6 +365,7 @@
     </div>
 
     <div id="tools-column">
+        <button id="digital-wrench-btn" class="tool-btn">Digital Wrench</button>
         <div id="calculator-panel">
             <h2 class="calculator-title">Tire Size Calculator</h2>
 
@@ -418,6 +465,34 @@
                 <ul id="diagnosis-list">
                     <!-- Results will be populated here -->
                 </ul>
+            </div>
+        </div>
+        <div id="digital-wrench-panel">
+            <h2 class="calculator-title">Digital Wrench</h2>
+            <p style="text-align: center; color: var(--text-gray);">Interactive Torque Specs Database</p>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <input type="text" id="wrench-search" placeholder="Search Bolt/Nut Size..." style="text-align: left;">
+            </div>
+
+            <div id="wrench-results" style="max-height: 200px; overflow-y: auto;">
+                <!-- Placeholder results -->
+                <div class="result-item" style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-light);">Lug Nuts</span>
+                    <span style="color: var(--accent-color);">80-100 ft-lbs</span>
+                </div>
+                <div class="result-item" style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-light);">Oil Drain Plug</span>
+                    <span style="color: var(--accent-color);">20-25 ft-lbs</span>
+                </div>
+                <div class="result-item" style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-light);">Spark Plugs</span>
+                    <span style="color: var(--accent-color);">10-15 ft-lbs</span>
+                </div>
+                <div class="result-item" style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-light);">Caliper Bolts</span>
+                    <span style="color: var(--accent-color);">40-50 ft-lbs</span>
+                </div>
             </div>
         </div>
     </div>
@@ -580,6 +655,43 @@
                 }
 
                 resultsPanel.style.display = 'block';
+            });
+
+            // --- Digital Wrench Logic ---
+            const wrenchBtn = document.getElementById('digital-wrench-btn');
+            const wrenchPanel = document.getElementById('digital-wrench-panel');
+            const wrenchSearch = document.getElementById('wrench-search');
+            const wrenchResults = document.getElementById('wrench-results');
+
+            wrenchBtn.addEventListener('click', () => {
+                // Toggle panel visibility
+                if (wrenchPanel.style.display === 'block') {
+                    wrenchPanel.style.display = 'none';
+                    wrenchBtn.classList.remove('active');
+                } else {
+                    // Hide other panels if needed, or just show this one
+                    // For now, let's just toggle this one. 
+                    // Ideally, we might want to hide others to avoid clutter, 
+                    // but the user didn't explicitly ask for a tab system.
+                    // Let's keep it simple and just toggle.
+                    wrenchPanel.style.display = 'block';
+                    wrenchBtn.classList.add('active');
+                }
+            });
+
+            // Simple search filter
+            wrenchSearch.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const items = wrenchResults.querySelectorAll('.result-item');
+
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(term)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
             });
         });
     </script>

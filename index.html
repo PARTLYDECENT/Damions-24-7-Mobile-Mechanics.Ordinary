@@ -583,8 +583,10 @@
                     transportation and paved the way for the modern world.</p>
             </div>
 
-            <div class="interactive-engine-diagram">
-                <h3>Explore the V8</h3>
+            <div class="interactive-engine-diagram" style="position: relative;">
+                <canvas id="engine-bay-canvas"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; pointer-events: none;"></canvas>
+                <h3 style="position: relative; z-index: 1;">Explore the V8</h3>
                 <div class="engine-v8">
                     <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
                     <map name="v8map">

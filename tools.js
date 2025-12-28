@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -29,6 +30,70 @@ const playlist = ['s2.1.mp3', 's2.3.mp3', 's2.4.mp3'];
 let ghostTruck;
 let ghostTruckAngle = 0;
 
+// Parade
+let paradeGroup;
+let paradeMeshes = [];
+let paradeActive = false;
+
+// TTS Narrator
+let narratorTimer;
+let voices = [];
+const s2Facts = [
+    // --- S2 Teasers ---
+    "The S2 features a carbon steel chassis, the specific alloy details of which are yet to be fully disclosed.",
+    "Unlike many modern supercars, the S2 is not a monocoque. It favors a robust, modular frame design.",
+    "At the heart of the S2 lies a V-Twin engine, integrated seamlessly to lower the center of gravity.",
+    "The S2 possesses a chimerical ability to absorb and adapt any engineering concept. We try everything.",
+    "The S2's V-Twin integration pays homage to the raw, mechanical connection of early open-wheel racers.",
+    "Carbon steel provides the S2 with a compliant yet rigid backbone, offering a different feel than brittle composites.",
+    "We don't just build; we absorb concepts. The S2 is a chimera of the best automotive ideas from history.",
+    "The S2 is a testbed for integrating disparate mechanical systems into one cohesive, high-speed unit.",
+
+    // --- IndyCar History & Tech ---
+    "The Offenhauser engine dominated American open-wheel racing for decades, winning the Indy 500 27 times.",
+    "In 1967, the STP-Paxton Turbocar nearly won Indy with a turbine engine. The S2 shares that spirit of radical innovation.",
+    "The 1994 Penske PC-23 used a secret Mercedes pushrod engine, the 500I, to dominate the Indy 500. It was developed in just 25 weeks.",
+    "Ground effects were pioneered in IndyCar by the Chaparral 2K, using venturi tunnels to glue the car to the track.",
+    "A.J. Foyt is the only driver to win the Indy 500 in both front and rear-engine cars. Adaptability is everything.",
+    "The March 86C chassis won the Indy 500 five years in a row in the mid-80s. Consistency breeds legends.",
+    "IndyCar engines in the 90s, like the Honda and Ford-Cosworth V8s, screamed at over 16,000 RPM.",
+    "The 'Split' between CART and the IRL in 1996 changed the trajectory of American open-wheel racing forever.",
+    "Modern IndyCars use the Dallara DW12 chassis, named in honor of the late Dan Wheldon.",
+    "The aeroscreen, introduced in 2020, is a titanium-framed ballistic screen that can withstand a 2-pound object striking it at 220 mph.",
+    "Rick Mears is one of only four drivers to win the Indy 500 four times, known as the 'Rocket' for his pole positions.",
+    "The Indianapolis Motor Speedway is so large that the Vatican City, Yankee Stadium, the Rose Bowl, and the Roman Colosseum could all fit inside the oval.",
+    "Methanol was the fuel of choice for decades in IndyCar before the switch to Ethanol blends for safety and sustainability.",
+    "The Reynard 94I won on its debut at Surfers Paradise in 1994, starting a chassis dynasty that lasted for years.",
+    "Active suspension was briefly tested in IndyCar before being banned, but the S2 explores similar concepts in its digital twin.",
+
+    // --- Ford Racing Heritage ---
+    "The Ford-Cosworth DFV is the most successful racing engine of all time, winning 155 Grands Prix and numerous IndyCar races.",
+    "Ford's rivalry with Ferrari led to the GT40, which broke Ferrari's streak and won Le Mans four times in a row from 1966 to 1969.",
+    "In 1965, Jim Clark won the Indy 500 in a Lotus 38 powered by a Ford V8, ending the era of the front-engine roadster.",
+    "The Ford EcoBoost V6 in the Chip Ganassi Racing Riley DP car brought twin-turbo power back to endurance racing dominance.",
+    "Ford's 'Cammer' 427 SOHC engine was banned from NASCAR for being too powerful, a badge of honor we respect.",
+    "A.J. Foyt won his fourth Indy 500 in 1977 driving a Coyote chassis powered by a Ford V8.",
+    "The Ford GTE program took the class win at Le Mans in 2016, exactly 50 years after their first overall victory.",
+
+    // --- Chevy Racing Heritage ---
+    "The Ilmor-built Chevy 265A V8, known as 'The Beast', was a pushrod engine designed specifically to exploit a loophole for the 1994 Indy 500.",
+    "Chevrolet's Small Block V8 is the most produced engine in history and has won more races in American motorsport than any other.",
+    "Corvette Racing has dominated the 24 Hours of Le Mans GT class for two decades, proving the reliability of the pushrod V8.",
+    "The current IndyCar era features a battle between the Chevy 2.2-liter twin-turbo V6 and its Honda rival.",
+    "Mark Donohue's 'Unfair Advantage' philosophy with the Penske-Chevy partnership set the standard for engineering dominance.",
+    "The Chevy Monte Carlo is the winningest nameplate in NASCAR Cup Series history.",
+    "In the late 80s, the Chevy Indy V8 powered legends like Rick Mears and Emerson Fittipaldi to Indy 500 victories.",
+    "The C8.R Corvette uses a flat-plane crank V8, a departure from tradition that screams at high RPMs.",
+
+    // --- Exotic & Engineering ---
+    "Exotic cycle carts often utilize chromoly steel tubing for its high strength-to-weight ratio.",
+    "The S2's suspension geometry is tuned to handle the unique physics of a lightweight, high-torque platform.",
+    "We study the Lotus 56 turbine car not for its silence, but for its relentless, linear torque delivery.",
+    "The principle of 'adding lightness', coined by Colin Chapman, is the guiding star of the S2's development.",
+    "Aerodynamic efficiency isn't just about downforce; it's about drag reduction. The S2 slices the air like a scalpel.",
+    "The S2 is designed to be a canvas for mechanical expression, much like the garage-built specials of the 1950s."
+];
+
 const loadingManager = new THREE.LoadingManager();
 const loadingEl = document.getElementById('loading');
 const loadingProgressEl = document.getElementById('loading-progress');
@@ -39,7 +104,7 @@ const params = {
     backgroundBlur: 0.5,
     exposure: 1.0,
     autoRotate: true,
-    autoRotateSpeed: 0.5,
+    autoRotateSpeed: 0.25, // Halved speed
     paintColor: '#c0c0c0',
     bloom: true,
     bloomStrength: 0.3,
@@ -63,13 +128,22 @@ const params = {
     showNormals: false,
     uvCheck: false,
     labyrinthMode: true,
-    labyrinthSpeed: 1.0,
-    shuffleInterval: 1.5,
+    labyrinthSpeed: 0.5, // Slower default
+    shuffleInterval: 3.0, // Slower shuffle
+    // Parade Params
+    paradeMode: false,
+    paradeSpeed: 0.5,
+    paradeSpread: 2.0,
+    // Narrator Params
+    narratorEnabled: false,
+    narratorInterval: 15,
+    narratorVolume: 0.8,
     // Skybox Params
     skyboxMode: true,
-    skyboxSpeed: 0.2,
-    skyboxScale: 1.0,
-    skyboxIntensity: 1.0,
+    dimensionScale: 1.5,
+    timeScale: 0.2,
+    alienIntensity: 1.5,
+    colorShift: 0.0,
     // Video Skybox
     videoSkybox: 'None',
     // Music
@@ -91,6 +165,7 @@ const materials = {
     'Matte': { metalness: 0.3, roughness: 0.8 },
 };
 
+initTTS();
 init();
 animate();
 
@@ -104,8 +179,8 @@ function init() {
     };
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(5, 5, 7);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000); // Limited FOV (was 60)
+    camera.position.set(15, 20, 25);
 
     const canvasContainer = document.getElementById('canvas-container');
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -120,8 +195,11 @@ function init() {
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.minDistance = 2;
-    controls.maxDistance = 20;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5; // Slower manual rotation
+    controls.panSpeed = 0.5; // Slower manual panning
+    controls.minDistance = 10; // More restricted zoom in
+    controls.maxDistance = 60; // More restricted zoom out
     controls.target.set(0, 0, 0);
     controls.autoRotate = params.autoRotate;
     controls.autoRotateSpeed = params.autoRotateSpeed;
@@ -185,28 +263,27 @@ function playNextTrack() {
 }
 
 function createSkybox() {
-    const geometry = new THREE.SphereGeometry(50, 64, 64);
+    const geometry = new THREE.SphereGeometry(500, 64, 64);
 
     const vertexShader = `
-        varying vec2 vUv;
-        varying vec3 vPosition;
+        varying vec3 vWorldPosition;
         void main() {
-            vUv = uv;
-            vPosition = position;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPosition.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPosition;
         }
     `;
 
     const fragmentShader = `
         uniform float uTime;
-        uniform float uSpeed;
         uniform float uScale;
+        uniform float uTimeScale;
         uniform float uIntensity;
-        varying vec2 vUv;
-        varying vec3 vPosition;
+        uniform float uColorShift;
+        varying vec3 vWorldPosition;
 
+        // 4D Noise / Domain Warping
         float hash(float n) { return fract(sin(n) * 43758.5453123); }
-
         float noise(vec3 x) {
             vec3 p = floor(x);
             vec3 f = fract(x);
@@ -220,34 +297,51 @@ function createSkybox() {
 
         float fbm(vec3 p) {
             float f = 0.0;
-            f += 0.5000 * noise(p); p *= 2.02;
-            f += 0.2500 * noise(p); p *= 2.03;
-            f += 0.1250 * noise(p); p *= 2.01;
-            f += 0.0625 * noise(p);
+            float amp = 0.5;
+            for(int i=0; i<6; i++) {
+                f += amp * noise(p);
+                p *= 2.0;
+                amp *= 0.5;
+            }
             return f;
         }
 
-        void main() {
-            vec3 pos = normalize(vPosition) * uScale * 2.0;
-            float t = uTime * uSpeed * 0.1;
+        // Palette function (IQ style)
+        vec3 palette(float t) {
+            vec3 a = vec3(0.5, 0.5, 0.5);
+            vec3 b = vec3(0.5, 0.5, 0.5);
+            vec3 c = vec3(1.0, 1.0, 1.0);
+            vec3 d = vec3(0.263, 0.416, 0.557) + uColorShift;
+            return a + b * cos(6.28318 * (c * t + d));
+        }
 
-            float stars = pow(noise(pos * 20.0), 20.0) * 2.0;
+        void main() {
+            vec3 dir = normalize(vWorldPosition);
+            float time = uTime * uTimeScale;
             
-            vec3 cloudPos = pos + vec3(t * 0.5, t * 0.2, 0.0);
-            float n = fbm(cloudPos);
-            float n2 = fbm(cloudPos * 2.0 + vec3(n)); 
+            // Domain Warping
+            vec3 p = dir * uScale + vec3(time * 0.1);
+            float q = fbm(p);
             
-            vec3 darkSpace = vec3(0.0, 0.0, 0.05);
-            vec3 nebulaColor1 = vec3(0.1, 0.0, 0.3); 
-            vec3 nebulaColor2 = vec3(0.0, 0.2, 0.4); 
-            vec3 nebulaColor3 = vec3(0.4, 0.1, 0.1); 
+            vec3 r = vec3(0.0);
+            r.x = fbm(p + 1.0 * q + vec3(1.7, 9.2, 5.2) + 0.15 * time);
+            r.y = fbm(p + 1.0 * q + vec3(8.3, 2.8, 1.1) + 0.126 * time);
             
-            vec3 color = darkSpace;
-            color = mix(color, nebulaColor1, n * 1.5);
-            color = mix(color, nebulaColor2, n2 * 1.2);
-            color += nebulaColor3 * pow(n * n2, 2.0);
+            float f = fbm(p + r);
+
+            // Color Mapping
+            vec3 color = palette(f + q + time * 0.2);
             
-            color += vec3(stars);
+            // Darken voids
+            color *= pow(f, 0.5);
+            
+            // Add "stars" or digital artifacts
+            float star = noise(dir * 100.0 + time);
+            if (star > 0.98) color += vec3(1.0) * (star - 0.98) * 50.0;
+
+            // Vignette/Atmosphere fade
+            float horizon = abs(dir.y);
+            color = mix(color, vec3(0.0), pow(1.0 - horizon, 5.0));
 
             gl_FragColor = vec4(color * uIntensity, 1.0);
         }
@@ -256,9 +350,10 @@ function createSkybox() {
     skyboxMaterial = new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: 0 },
-            uSpeed: { value: params.skyboxSpeed },
-            uScale: { value: params.skyboxScale },
-            uIntensity: { value: params.skyboxIntensity }
+            uScale: { value: params.dimensionScale },
+            uTimeScale: { value: params.timeScale },
+            uIntensity: { value: params.alienIntensity },
+            uColorShift: { value: params.colorShift }
         },
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
@@ -268,6 +363,10 @@ function createSkybox() {
     skyboxMesh = new THREE.Mesh(geometry, skyboxMaterial);
     skyboxMesh.visible = params.skyboxMode;
     scene.add(skyboxMesh);
+}
+
+function updateSunPosition() {
+    // No-op for this shader
 }
 
 function updateVideoSkybox() {
@@ -307,10 +406,10 @@ function createLabyrinthPlanes() {
     labyrinthPlanes = [];
     gridPositions = [];
 
-    // 4x4 Grid
-    const rows = 4;
-    const cols = 4;
-    const planeSize = 1.8;
+    // 20x20 Grid (5x larger)
+    const rows = 20;
+    const cols = 20;
+    const planeSize = 0.8;
     const gap = 0.1;
     const spacing = planeSize + gap;
     const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
@@ -407,6 +506,9 @@ function setupLighting() {
 
 function loadModel(modelPath) {
     const loader = new GLTFLoader(loadingManager);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
     loader.load(modelPath, (gltf) => {
         model = gltf.scene;
 
@@ -422,14 +524,14 @@ function loadModel(modelPath) {
         model.position.x -= center.x;
         model.position.z -= center.z;
 
-        const scale = 2 / Math.max(size.x, size.y, size.z);
+        const scale = 6 / Math.max(size.x, size.y, size.z);
         model.scale.setScalar(scale);
 
         model.updateMatrixWorld(true);
 
         const box2 = new THREE.Box3().setFromObject(model);
         model.position.y -= box2.min.y;
-        model.position.y += 0.05;
+        model.position.y += 0.5;
 
         normalsHelper = [];
         animatedMeshes = [];
@@ -550,6 +652,9 @@ function loadModel(modelPath) {
 
 function loadGhostTruck() {
     const loader = new GLTFLoader(loadingManager);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
     loader.load('assets/models/truck1.glb', (gltf) => {
         ghostTruck = gltf.scene;
 
@@ -600,11 +705,12 @@ function createGUI() {
     envFolder.add(params, 'backgroundBlur', 0, 1, 0.01).name('BG Blur').onChange(v => scene.backgroundBlurriness = v);
     envFolder.add({ cycle: () => { /* ... */ } }, 'cycle').name('Cycle Scene');
 
-    const skyboxFolder = envFolder.addFolder('Wild Skybox');
+    const skyboxFolder = envFolder.addFolder('Dimensional Rift');
     skyboxFolder.add(params, 'skyboxMode').name('Enable Shader').onChange(updateEnvironment);
-    skyboxFolder.add(params, 'skyboxSpeed', 0, 5).name('Speed').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uSpeed.value = v; });
-    skyboxFolder.add(params, 'skyboxScale', 0.1, 10).name('Scale').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uScale.value = v; });
-    skyboxFolder.add(params, 'skyboxIntensity', 0, 5).name('Intensity').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uIntensity.value = v; });
+    skyboxFolder.add(params, 'dimensionScale', 0.1, 5).name('Dim Scale').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uScale.value = v; });
+    skyboxFolder.add(params, 'timeScale', 0, 2).name('Time Warp').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uTimeScale.value = v; });
+    skyboxFolder.add(params, 'alienIntensity', 0, 5).name('Intensity').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uIntensity.value = v; });
+    skyboxFolder.add(params, 'colorShift', 0, 1).name('Color Shift').onChange(v => { if (skyboxMaterial) skyboxMaterial.uniforms.uColorShift.value = v; });
 
     // Video Skybox
     skyboxFolder.add(params, 'videoSkybox', videoOptions).name('Video Skybox').onChange(updateVideoSkybox);
@@ -645,8 +751,109 @@ function createGUI() {
 
     const labyrinthFolder = gui.addFolder('Labyrinth');
     labyrinthFolder.add(params, 'labyrinthMode').name('Enable Labyrinth');
-    labyrinthFolder.add(params, 'labyrinthSpeed', 0.1, 5).name('Speed');
-    labyrinthFolder.add(params, 'shuffleInterval', 0.5, 5).name('Shuffle Interval');
+    labyrinthFolder.add(params, 'labyrinthSpeed', 0.1, 2).name('Speed');
+    labyrinthFolder.add(params, 'shuffleInterval', 1.0, 10).name('Shuffle Interval');
+
+    const paradeFolder = gui.addFolder('Honda Parade');
+    paradeFolder.add(params, 'paradeMode').name('Enable Parade').onChange(toggleParade);
+    paradeFolder.add(params, 'paradeSpeed', 0, 2).name('Speed');
+    paradeFolder.add(params, 'paradeSpread', 0, 10).name('Spread');
+
+    const narratorFolder = gui.addFolder('S2 Narrator');
+    narratorFolder.add(params, 'narratorEnabled').name('Enable Voice').onChange(toggleNarrator);
+    narratorFolder.add(params, 'narratorInterval', 5, 60).name('Interval (s)');
+    narratorFolder.add(params, 'narratorVolume', 0, 1).name('Volume');
+}
+
+function initTTS() {
+    if ('speechSynthesis' in window) {
+        voices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+            voices = window.speechSynthesis.getVoices();
+        };
+    }
+}
+
+function speakRandomFact() {
+    if (!params.narratorEnabled) return;
+
+    const fact = s2Facts[Math.floor(Math.random() * s2Facts.length)];
+    const utterance = new SpeechSynthesisUtterance(fact);
+
+    // Try to find a female voice
+    const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google US English'));
+    if (femaleVoice) utterance.voice = femaleVoice;
+
+    utterance.volume = params.narratorVolume;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    window.speechSynthesis.speak(utterance);
+
+    // Schedule next
+    const delay = params.narratorInterval * 1000;
+    clearTimeout(narratorTimer);
+    narratorTimer = setTimeout(speakRandomFact, delay + (Math.random() * 5000));
+}
+
+function toggleNarrator(enabled) {
+    if (enabled) {
+        // Ensure voices are loaded
+        if (voices.length === 0 && 'speechSynthesis' in window) {
+            voices = window.speechSynthesis.getVoices();
+        }
+        speakRandomFact();
+    } else {
+        clearTimeout(narratorTimer);
+        window.speechSynthesis.cancel();
+    }
+}
+
+function toggleParade(value) {
+    if (value) {
+        if (!paradeGroup) createDisassemblyParade();
+        paradeGroup.visible = true;
+        paradeActive = true;
+    } else {
+        if (paradeGroup) paradeGroup.visible = false;
+        paradeActive = false;
+    }
+}
+
+function createDisassemblyParade() {
+    if (!model) return;
+
+    paradeGroup = new THREE.Group();
+    scene.add(paradeGroup);
+    paradeMeshes = [];
+
+    // Clone the model to avoid messing up the original
+    const clone = model.clone();
+
+    // Extract all meshes
+    clone.traverse((child) => {
+        if (child.isMesh) {
+            const mesh = child.clone();
+            // Reset transforms to handle them manually in world space relative to group
+            mesh.position.set(0, 0, 0);
+            mesh.rotation.set(0, 0, 0);
+            mesh.scale.setScalar(1);
+
+            // Store original data if we wanted to reassemble, but for now just random ID
+            mesh.userData.paradeId = Math.random() * 100;
+            mesh.userData.paradeOffset = new THREE.Vector3(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 5,
+                (Math.random() - 0.5) * 10
+            );
+
+            paradeGroup.add(mesh);
+            paradeMeshes.push(mesh);
+        }
+    });
+
+    // Center the group
+    paradeGroup.position.set(0, 5, 0);
 }
 
 function exportGLB() {
@@ -749,6 +956,31 @@ function animate() {
         ghostTruck.rotateY(-Math.PI / 2); // Adjust rotation to face forward along path
     }
 
+    // Parade Animation
+    if (paradeActive && paradeGroup) {
+        paradeGroup.rotation.y += delta * 0.1 * params.paradeSpeed;
+
+        paradeMeshes.forEach((mesh, i) => {
+            const t = time * params.paradeSpeed + i * 0.1;
+
+            // "Honda" Exploded View Motion
+            // 1. Radial expansion
+            const spread = params.paradeSpread;
+            const ix = (i % 5) - 2;
+            const iy = (Math.floor(i / 5) % 5) - 2;
+            const iz = (Math.floor(i / 25)) - 2;
+
+            // Lissajous-like floating
+            mesh.position.x = Math.sin(t * 0.5 + i) * spread * 2 + ix * spread;
+            mesh.position.y = Math.cos(t * 0.3 + i) * spread + iy * spread * 0.5;
+            mesh.position.z = Math.sin(t * 0.7 + i) * spread * 2 + iz * spread;
+
+            // Slow rotation of individual parts
+            mesh.rotation.x = t * 0.2;
+            mesh.rotation.y = t * 0.3;
+        });
+    }
+
     // --- Labyrinth Animation Logic (Armor Style) ---
     if (params.labyrinthMode && labyrinthPlanes.length > 0) {
         // Shuffle Trigger
@@ -756,7 +988,7 @@ function animate() {
             lastShuffleTime = time;
 
             // Pick multiple pairs to swap for a "busy" mechanical look
-            const swaps = 2; // Swap 2 pairs at once
+            const swaps = 10; // Increased swaps for larger grid
             for (let s = 0; s < swaps; s++) {
                 const idx1 = Math.floor(Math.random() * labyrinthPlanes.length);
                 let idx2 = Math.floor(Math.random() * labyrinthPlanes.length);
@@ -789,6 +1021,14 @@ function animate() {
 
         // Animation Update
         labyrinthPlanes.forEach(plane => {
+            // Wave Effect
+            if (!plane.userData.isMoving) {
+                const dist = Math.sqrt(plane.position.x * plane.position.x + plane.position.z * plane.position.z);
+                const waveY = Math.sin(dist * 0.5 - time * 2.0) * 0.2;
+                plane.position.y = -0.5 + waveY;
+                plane.userData.startPos.y = plane.position.y; // Update start pos for next move
+            }
+
             if (plane.userData.isMoving) {
                 const elapsed = time - plane.userData.moveStartTime;
                 const duration = plane.userData.moveDuration / params.labyrinthSpeed;

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Wrench - Shop Ops</title>
+    <link rel="stylesheet" href="hub.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .kanban-board {
+            display: flex;
+            gap: 1rem;
+            height: calc(100vh - 150px);
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .column {
+            background-color: var(--bg-panel);
+            min-width: 300px;
+            width: 300px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-count {
+            background-color: var(--bg-hover);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .column-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .kanban-card {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+
+        .kanban-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-id {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .tech-avatar {
+            width: 24px;
+            height: 24px;
+            background-color: var(--bg-hover);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .status-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .priority-high {
+            border-left: 3px solid var(--accent-danger);
+        }
+
+        .priority-med {
+            border-left: 3px solid var(--accent-warning);
+        }
+
+        .priority-low {
+            border-left: 3px solid var(--accent-success);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="icon">🔧</span> DIGITAL WRENCH
+            </div>
+            <ul class="nav-links">
+                <li><a href="hub.html">Command Center</a></li>
+                <li><a href="waveform.html">Waveform Viewer</a></li>
+                <li><a href="ev_safety.html">EV Safety Protocol</a></li>
+                <li class="active"><a href="kanban.html">Shop Ops (Kanban)</a></li>
+                <li><a href="#">J2534 Portal</a></li>
+                <li><a href="#">Parts Intelligence</a></li>
+            </ul>
+        </nav>
+
+        <main class="dashboard">
+            <header class="top-bar">
+                <h1>Shop Operations</h1>
+                <div class="actions">
+                    <button class="btn-primary">+ New RO</button>
+                </div>
+            </header>
+
+            <div class="kanban-board">
+                <!-- Intake -->
+                <div class="column" id="col-intake">
+                    <div class="column-header">
+                        Intake <span class="card-count">2</span>
+                    </div>
+                    <div class="column-content" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="kanban-card priority-med" draggable="true" ondragstart="drag(event)" id="card-1">
+                            <div class="card-header">
+                                <span class="card-id">RO-1024</span>
+                                <span class="status-tag">Waiting</span>
+                            </div>
+                            <div class="card-title">2015 Honda Civic</div>
+                            <div class="card-meta">
+                                <span>Brake Noise</span>
+                                <div class="tech-avatar">?</div>
+                            </div>
+                        </div>
+                        <div class="kanban-card priority-low" draggable="true" ondragstart="drag(event)" id="card-2">
+                            <div class="card-header">
+                                <span class="card-id">RO-1025</span>
+                                <span class="status-tag">Scheduled</span>
+                            </div>
+                            <div class="card-title">2020 Ford F-150</div>
+                            <div class="card-meta">
+                                <span>Oil Change</span>
+                                <div class="tech-avatar">?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagnosing -->
+                <div class="column" id="col-diag">
+                    <div class="column-header">
+                        Diagnosing <span class="card-count">1</span>
+                    </div>
+                    <div class="column-content" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="kanban-card priority-high" draggable="true" ondragstart="drag(event)" id="card-3">
+                            <div class="card-header">
+                                <span class="card-id">RO-1021</span>
+                                <span class="status-tag">Active</span>
+                            </div>
+                            <div class="card-title">2018 Chevy Silverado</div>
+                            <div class="card-meta">
+                                <span>Misfire Cyl 4</span>
+                                <div class="tech-avatar">DT</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waiting for Parts -->
+                <div class="column" id="col-parts">
+                    <div class="column-header">
+                        Waiting Parts <span class="card-count">1</span>
+                    </div>
+                    <div class="column-content" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="kanban-card priority-med" draggable="true" ondragstart="drag(event)" id="card-4">
+                            <div class="card-header">
+                                <span class="card-id">RO-1019</span>
+                                <span class="status-tag">Ordered</span>
+                            </div>
+                            <div class="card-title">2012 Toyota Camry</div>
+                            <div class="card-meta">
+                                <span>Water Pump</span>
+                                <div class="tech-avatar">JS</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wrenching -->
+                <div class="column" id="col-wrench">
+                    <div class="column-header">
+                        Wrenching <span class="card-count">0</span>
+                    </div>
+                    <div class="column-content" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Empty -->
+                    </div>
+                </div>
+
+                <!-- QC / Ready -->
+                <div class="column" id="col-qc">
+                    <div class="column-header">
+                        QC / Ready <span class="card-count">1</span>
+                    </div>
+                    <div class="column-content" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div class="kanban-card priority-low" draggable="true" ondragstart="drag(event)" id="card-5">
+                            <div class="card-header">
+                                <span class="card-id">RO-1015</span>
+                                <span class="status-tag">Done</span>
+                            </div>
+                            <div class="card-title">2021 Tesla Model 3</div>
+                            <div class="card-meta">
+                                <span>Tire Rotation</span>
+                                <div class="tech-avatar">DT</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="kanban.js"></script>
+</body>
+
+</html>

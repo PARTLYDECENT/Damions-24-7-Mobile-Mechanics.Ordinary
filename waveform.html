@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Wrench - Waveform Viewer</title>
+    <link rel="stylesheet" href="hub.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .waveform-container {
+            background-color: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--bg-panel);
+            border-radius: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .control-group select,
+        .control-group input {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .overlay-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-success);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <span class="icon">🔧</span> DIGITAL WRENCH
+            </div>
+            <ul class="nav-links">
+                <li><a href="hub.html">Command Center</a></li>
+                <li class="active"><a href="waveform.html">Waveform Viewer</a></li>
+                <li><a href="ev_safety.html">EV Safety Protocol</a></li>
+                <li><a href="kanban.html">Shop Ops (Kanban)</a></li>
+                <li><a href="#">J2534 Portal</a></li>
+                <li><a href="#">Parts Intelligence</a></li>
+            </ul>
+        </nav>
+
+        <main class="dashboard">
+            <header class="top-bar">
+                <h1>Waveform Viewer</h1>
+                <div class="actions">
+                    <button class="btn-primary">Upload CSV</button>
+                </div>
+            </header>
+
+            <div class="waveform-container">
+                <canvas id="waveformCanvas"></canvas>
+                <div class="overlay-info">
+                    Cursor A: 12.4V<br>
+                    Cursor B: 0.2V<br>
+                    Delta: 12.2V
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>Timebase</label>
+                    <select id="timebase">
+                        <option value="10">10ms/div</option>
+                        <option value="20">20ms/div</option>
+                        <option value="50">50ms/div</option>
+                        <option value="100">100ms/div</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Voltage Scale (Ch A)</label>
+                    <select id="vScale">
+                        <option value="1">1V/div</option>
+                        <option value="2">2V/div</option>
+                        <option value="5">5V/div</option>
+                        <option value="10">10V/div</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Trigger</label>
+                    <select id="trigger">
+                        <option value="auto">Auto</option>
+                        <option value="normal">Normal</option>
+                        <option value="single">Single</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="waveform.js"></script>
+</body>
+
+</html>
