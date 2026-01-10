@@ -27,16 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Target the SECTION IDs, not the canvas IDs
         const panelConfigs = [
-            { id: 'services', options: { color: [0.0, 0.5, 0.6], speed: 0.5 } },
-            { id: 'why-us', options: { color: [0.1, 0.3, 0.7], speed: 0.3 } },
-            { id: 'news', options: { color: [0.2, 0.4, 0.5], speed: 0.6 } },
-            { id: 'video-promo', options: { color: [0.1, 0.5, 0.5], speed: 0.4 } },
-            { id: 'slideshow-section', options: { color: [0.3, 0.3, 0.6], speed: 0.7 } },
-            { id: 'videoplayer-section', options: { color: [0.2, 0.5, 0.7], speed: 0.5 } },
-            { id: 'facts', options: { color: [0.1, 0.4, 0.6], speed: 0.3 } },
-            { id: 'engine-bay', options: { color: [0.4, 0.2, 0.1], speed: 0.4 } },
-            { id: 'service-area', options: { color: [0.1, 0.6, 0.4], speed: 0.3 } },
-            { id: 'faq', options: { color: [0.5, 0.2, 0.5], speed: 0.6 } }
+            { id: 'services', options: { color: [0.0, 0.8, 1.0], speed: 0.3, effect: 'CyberGrid' } },
+            { id: 'why-us', options: { color: [0.1, 0.3, 0.7], speed: 0.3, effect: 'TechNoise' } },
+            { id: 'news', options: { color: [0.0, 1.0, 0.5], speed: 0.8, effect: 'DigitalRain' } },
+            { id: 'video-promo', options: { color: [0.5, 0.0, 1.0], speed: 0.4, effect: 'PlasmaField' } },
+            { id: 'slideshow-section', options: { color: [0.0, 1.0, 0.8], speed: 0.5, effect: 'CyberTunnel3D' } },
+            { id: 'videoplayer-section', options: { color: [0.2, 0.5, 0.7], speed: 0.5, effect: 'CyberGrid' } },
+            { id: 'facts', options: { color: [0.1, 0.4, 0.6], speed: 0.3, effect: 'TechNoise' } },
+            { id: 'engine-bay', options: { color: [1.0, 0.5, 0.0], speed: 0.3, effect: 'HoloEngine3D' } },
+            { id: 'service-area', options: { color: [0.1, 0.6, 0.4], speed: 0.3, effect: 'TechNoise' } },
+            { id: 'faq', options: { color: [0.5, 0.2, 0.5], speed: 0.6, effect: 'PlasmaField' } }
         ];
 
         panelConfigs.forEach(config => {
