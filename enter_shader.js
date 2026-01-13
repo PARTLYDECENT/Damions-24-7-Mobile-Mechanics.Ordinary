@@ -17,6 +17,7 @@ if (!enterGl) {
         precision highp float;
         uniform float uTime;
         uniform vec2 uResolution;
+        uniform float uWarp; // NEW: Warp factor
 
         // Colors
         const vec3 COLOR_YELLOW = vec3(0.99, 0.85, 0.05); // BD Yellow
@@ -58,6 +59,10 @@ if (!enterGl) {
 
             // Global Animation
             float t = uTime * 2.0;
+            
+            // Warp Distortion
+            p.z += uWarp * 2.0; 
+            p.xy *= 1.0 - uWarp * 0.1;
 
             // --- The Robot Head / Sensor Unit ---
             vec3 pHead = p;
@@ -66,7 +71,7 @@ if (!enterGl) {
             pHead.y -= sin(uTime) * 0.1;
             
             // Complex Rotation (Scanning)
-            pHead.xz *= rot(sin(uTime * 0.5) * 0.5);
+            pHead.xz *= rot(sin(uTime * 0.5) * 0.5 + uWarp * 2.0); // Spin fast on warp
             
             // 1. Main Housing (Yellow Box)
             float housing = sdBox(pHead, vec3(0.6, 0.4, 0.8));
@@ -113,8 +118,12 @@ if (!enterGl) {
              // Ideally we pass this out from GetDist but this is WebGL 1.0 safe
              
              vec3 pHead = p;
+            // Warp Distortion for coloring logic too
+            pHead.z += uWarp * 2.0; 
+            pHead.xy *= 1.0 - uWarp * 0.1;
+
              pHead.y -= sin(uTime) * 0.1;
-             pHead.xz *= rot(sin(uTime * 0.5) * 0.5);
+             pHead.xz *= rot(sin(uTime * 0.5) * 0.5 + uWarp * 2.0);
              
              vec3 pEye = pHead; 
              pEye.z -= 0.85;
@@ -185,7 +194,7 @@ if (!enterGl) {
             
             // Sensor Glow
             if (mat == 3) {
-                return COLOR_SENSOR * 2.0 + sin(uTime * 10.0) * 0.5; 
+                return COLOR_SENSOR * 2.0 + sin(uTime * 10.0 + uWarp * 20.0) * 0.5; 
             }
 
             // Ambient
@@ -205,7 +214,7 @@ if (!enterGl) {
             vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
 
             // Camera System
-            vec3 ro = vec3(0.0, 0.5, -3.5); // Camera Position
+            vec3 ro = vec3(0.0, 0.5, -3.5 + uWarp * 4.0); // Camera Position moves IN
             vec3 lookAt = vec3(0.0, 0.0, 0.0);
             float zoom = 1.0;
             
@@ -213,6 +222,10 @@ if (!enterGl) {
             vec3 r = normalize(cross(vec3(0.0, 1.0, 0.0), f));
             vec3 u = cross(f, r);
             vec3 rd = normalize(f * zoom + r * uv.x + u * uv.y);
+            
+            // FOV Warp
+            rd.z += uWarp;
+            rd = normalize(rd);
 
             // Render
             float d = RayMarch(ro, rd);
@@ -225,13 +238,20 @@ if (!enterGl) {
                 float t = -(ro.y + 1.5) / rd.y; // Floor at y = -1.5
                 if (t > 0.0) {
                      vec3 pPlane = ro + rd * t;
-                     // Grid pattern
+                     // Grid pattern - Move with warp
+                     pPlane.z += uTime * 2.0 + uWarp * 10.0;
                      vec2 g = abs(fract(pPlane.xz) - 0.5);
                      float gridLine = smoothstep(0.48, 0.5, max(g.x, g.y));
                      
                      // Distance fade
-                     float fade = smoothstep(5.0, 0.0, length(pPlane.xz));
+                     float fade = smoothstep(5.0 + uWarp * 10.0, 0.0, length(pPlane.xz - vec2(0, uWarp*10.0)));
                      color += vec3(0.2) * gridLine * fade;
+                     
+                     // Speed Lines during warp
+                     if(uWarp > 0.1) {
+                         float lines = smoothstep(0.8, 1.0, sin(uv.x * 40.0 + uv.y * 40.0 - uTime * 20.0));
+                         color += vec3(0.5, 0.8, 1.0) * lines * uWarp * 0.5;
+                     }
                 }
             } else {
                 vec3 p = ro + rd * d;
@@ -263,6 +283,9 @@ if (!enterGl) {
             
             // Gamma Correction
             color = pow(color, vec3(0.4545));
+            
+            // White out on max warp
+            color = mix(color, vec3(1.0), smoothstep(4.0, 5.0, uWarp));
 
             gl_FragColor = vec4(color, 1.0);
         }
@@ -301,6 +324,18 @@ if (!enterGl) {
             const positionAttributeLocation = enterGl.getAttribLocation(shaderProgram, 'aVertexPosition');
             const timeUniformLocation = enterGl.getUniformLocation(shaderProgram, 'uTime');
             const resolutionUniformLocation = enterGl.getUniformLocation(shaderProgram, 'uResolution');
+            const warpUniformLocation = enterGl.getUniformLocation(shaderProgram, 'uWarp');
+
+            let warpValue = 0.0;
+            window.triggerIntroWarp = () => {
+                const startTime = performance.now();
+                const animateWarp = (now) => {
+                    const elapsed = (now - startTime) / 1000;
+                    warpValue = Math.min(elapsed * 2.0, 5.0); // Ramp up warp to 5.0
+                    if (elapsed < 2.0) requestAnimationFrame(animateWarp);
+                };
+                requestAnimationFrame(animateWarp);
+            };
 
             // Buffer
             const positionBuffer = enterGl.createBuffer();
@@ -335,6 +370,7 @@ if (!enterGl) {
 
                 enterGl.uniform1f(timeUniformLocation, time);
                 enterGl.uniform2f(resolutionUniformLocation, enterCanvas.width, enterCanvas.height);
+                if (warpUniformLocation) enterGl.uniform1f(warpUniformLocation, warpValue);
 
                 enterGl.drawArrays(enterGl.TRIANGLE_STRIP, 0, 4);
 

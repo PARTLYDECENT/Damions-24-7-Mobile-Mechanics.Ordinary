@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial state from localStorage
     setMuteState(isMuted);
 
+    /* HANDLED BY INTRO.JS
     enterBtn.addEventListener('click', () => {
         enterOverlay.style.opacity = '0';
         enterOverlay.style.visibility = 'hidden'; // Ensure it's hidden after fade
@@ -90,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+    */
 
     muteBtn.addEventListener('click', () => {
         setMuteState(!isMuted);
@@ -114,32 +116,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const mechanicTips = [
         {
             title: "Beyond the Jump Start",
-            text: "Our emergency services cover more than just batteries. We can diagnose starter failures, alternator issues, and fuel delivery problems on the spot, often getting you running without a tow.",
+            text: "My emergency services cover more than just batteries. I can diagnose starter failures, alternator issues, and fuel delivery problems on the spot, often getting you running without a tow.",
             icon: "🚨"
         },
         {
             title: "The Mobile Command Center",
-            text: "Our diagnostic tablets are dealership-level tools. We can reprogram keys, diagnose complex CAN bus communication errors, and analyze live sensor data right at your curb.",
+            text: "My diagnostic tablets are dealership-level tools. I can reprogram keys, diagnose complex CAN bus communication errors, and analyze live sensor data right at your curb.",
             icon: "🔍"
         },
         {
             title: "The Myth of 'Squeaky' Brakes",
-            text: "While squeaking can indicate worn pads, it can also be caused by moisture or dust. We measure pad thickness and check for rotor warping to give you an accurate and honest assessment.",
+            text: "While squeaking can indicate worn pads, it can also be caused by moisture or dust. I measure pad thickness and check for rotor warping to give you an accurate and honest assessment.",
             icon: "🛑"
         },
         {
             title: "The Heart of the Machine",
-            text: "Modern engines are complex. We carry specialized tools like digital borescopes to inspect cylinder walls and thermal cameras to spot hidden heat issues, preventing catastrophic failures.",
+            text: "Modern engines are complex. I carry specialized tools like digital borescopes to inspect cylinder walls and thermal cameras to spot hidden heat issues, preventing catastrophic failures.",
             icon: "⚙️"
         },
         {
             title: "Chasing the Gremlins",
-            text: "Electrical issues can be frustrating. We use advanced circuit testers and wiring diagrams to trace parasitic draws that kill your battery and fix faulty connections that other shops might miss.",
+            text: "Electrical issues can be frustrating. I use advanced circuit testers and wiring diagrams to trace parasitic draws that kill your battery and fix faulty connections that other shops might miss.",
             icon: "🔋"
         },
         {
             title: "Uptime is Everything",
-            text: "For our fleet clients, we create a custom digital profile for each vehicle, tracking maintenance history and predicting future needs to maximize reliability and minimize costly downtime.",
+            text: "For my fleet clients, I create a custom digital profile for each vehicle, tracking maintenance history and predicting future needs to maximize reliability and minimize costly downtime.",
             icon: "🚛"
         }
     ];
@@ -709,3 +711,53 @@ if (symptomSelector) {
         resultsPanel.style.display = 'block';
     });
 }
+
+// --- Hero Typing Animation ---
+window.startHeroTyping = () => {
+    const heroTitle = document.querySelector('.hero h1');
+    const heroSubtitle = document.querySelector('.hero p');
+
+    if (heroTitle && heroSubtitle) {
+        // Store original text
+        const titleText = heroTitle.innerText || "Your 24/7 Mobile Mechanic Solution";
+        const subtitleText = heroSubtitle.innerText || "Expert Auto Repair & Diagnostics • Anytime, Anywhere";
+
+        // Clear text
+        heroTitle.innerHTML = "";
+        heroSubtitle.innerHTML = "";
+        heroTitle.style.opacity = '1'; // Ensure visible container
+        heroSubtitle.style.opacity = '1';
+
+        // Helper
+        const typeProp = (element, text, speed, delay) => {
+            setTimeout(() => {
+                let i = 0;
+                // Cursor effect
+                element.style.borderRight = "2px solid #00f2ea";
+
+                const timer = setInterval(() => {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(timer);
+                        // Blinking cursor after finish
+                        element.style.animation = "blink-cursor 0.7s step-end infinite";
+                        setTimeout(() => { element.style.borderRight = "none"; element.style.animation = "none"; }, 3000);
+                    }
+                }, speed);
+            }, delay);
+        };
+
+        // Run
+        typeProp(heroTitle, titleText, 50, 500); // Start after flash
+        typeProp(heroSubtitle, subtitleText, 30, 2500); // Start after title
+    }
+};
+
+// Add CSS keyframe for cursor if not exists (done via JS for component isolation)
+const styleSheet = document.createElement("style");
+styleSheet.innerText = `
+    @keyframes blink-cursor { 50% { border-color: transparent; } }
+`;
+document.head.appendChild(styleSheet);

@@ -152,6 +152,100 @@ const ShaderLibrary = {
         }
     `,
 
+    // --- Dancing Tiles (Bouncing Cube Grid) ---
+    DancingTiles: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        mat2 rot(float a) {
+            float s = sin(a);
+            float c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+
+        float sdBox(vec3 p, vec3 b) {
+            vec3 q = abs(p) - b;
+            return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+        }
+
+        float GetDist(vec3 p) {
+            // Repetitive domain
+            vec3 q = p;
+            
+            // Grid ID for randomizing motion
+            vec2 id = floor((q.xz + 2.0) / 4.0);
+            
+            q.xz = mod(q.xz + 2.0, 4.0) - 2.0; 
+            
+            // Dancing Motion: Height varies with time and position
+            float dance = sin(u_time * 2.0 + id.x * 2.1 + id.y * 3.3) * 0.5;
+            q.y -= dance;
+            
+            // Rotate each tile based on global pos
+            q.xz *= rot(sin(u_time + length(id)) * 0.5);
+
+            float box = sdBox(q, vec3(0.5, 0.1, 0.5)); // Widen scale
+            
+            return box;
+        }
+
+        vec3 GetNormal(vec3 p) {
+            float d = GetDist(p);
+            vec2 e = vec2(0.01, 0.0);
+            return normalize(d - vec3(
+                GetDist(p - e.xyy),
+                GetDist(p - e.yxy),
+                GetDist(p - e.yyx)
+            ));
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            float t = u_time * u_speed;
+            
+            // Camera moving forward
+            vec3 ro = vec3(0.0, 5.0, -t * 5.0);
+            vec3 rd = normalize(vec3(uv, 1.0));
+            rd.yz *= rot(0.5); // Look down
+            
+            float dO = 0.0;
+            vec3 col = vec3(0.0);
+            
+            for(int i=0; i<64; i++) {
+                vec3 p = ro + rd * dO;
+                float dS = GetDist(p);
+                dO += dS;
+                
+                if(dS < 0.01) {
+                    vec3 n = GetNormal(p);
+                    // Light from cursor direction concept or swirling light
+                    vec3 l = normalize(vec3(sin(t), 2.0, cos(t)));
+                    float dif = max(dot(n, l), 0.1);
+                    col = u_color * dif;
+                    
+                    // Rim/Neon Edge
+                    float rim = 1.0 - max(dot(n, -rd), 0.0);
+                    col += pow(rim, 3.0) * vec3(1.0, 1.0, 1.0);
+                    
+                    break;
+                }
+                if(dO > 100.0) {
+                     // Background/Void
+                     col = vec3(0.05, 0.05, 0.1) * (1.0 - uv.y);
+                     break;
+                }
+            }
+            
+            // Fog
+            col = mix(col, vec3(0.05, 0.05, 0.1), smoothstep(0.0, 80.0, dO));
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
     // --- Digital Rain 3D (Matrix Code Tunnel) ---
     DigitalRain: `
         precision highp float;
@@ -310,137 +404,131 @@ const ShaderLibrary = {
         }
     `,
 
-    // --- Hero Core 3D (Raymarching) ---
+    // --- Hero Core 3D (Quantum Foam - Optimized) ---
     HeroCore3D: `
-        precision highp float;
+        precision mediump float;
         uniform vec2 u_resolution;
         uniform float u_time;
         uniform vec3 u_color;
         uniform vec2 u_mouse;
 
-        #define MAX_STEPS 100
-        #define MAX_DIST 100.0
-        #define SURF_DIST 0.01
-
-        // Rotation matrix
-        mat2 rot(float a) {
-            float s = sin(a);
-            float c = cos(a);
-            return mat2(c, -s, s, c);
+        // Fast hash
+        float hash12(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
         }
 
-        // SDF Primitives
-        float sdBox(vec3 p, vec3 b) {
-            vec3 q = abs(p) - b;
-            return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+        float hash13(vec3 p) {
+            return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453);
         }
 
-        float sdOctahedron(vec3 p, float s) {
-            p = abs(p);
-            return (p.x + p.y + p.z - s) * 0.57735027;
+        vec3 hash33(vec3 p) {
+            p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+            p += dot(p, p.yxz + 19.19);
+            return fract((p.xxy + p.yxx) * p.zyx);
         }
 
-        // Scene Description
-        float GetDist(vec3 p) {
-            // Rotate the whole world slowly
-            p.xz *= rot(u_time * 0.2);
-            p.xy *= rot(u_time * 0.1);
-
-            // Center Core (Octahedron)
-            vec3 pCore = p;
-            float scale = 1.0 + sin(u_time * 2.0) * 0.1; // Pulse
-            float core = sdOctahedron(pCore, 1.2 * scale);
-
-            // Orbiting rings/boxes
-            vec3 pRing = p;
-            pRing.xz *= rot(u_time);
-            pRing.x -= 2.0; 
-            float ringBox = sdBox(pRing, vec3(0.2, 0.5, 0.2));
+        // Simplified 2D Voronoi (much faster than 3D)
+        float voronoi2D(vec2 p) {
+            vec2 cell = floor(p);
+            vec2 frac = fract(p);
             
-            vec3 pRing2 = p;
-            pRing2.yz *= rot(u_time * 1.5);
-            pRing2.y -= 2.0;
-            float ringBox2 = sdBox(pRing2, vec3(0.5, 0.2, 0.2));
-
-            // Combine
-            float d = min(core, min(ringBox, ringBox2));
+            float minDist = 1.0;
             
-            // Cutout effect (Boolean sub)
-            float cutout = sdBox(p, vec3(20.0, 0.1, 0.1));
-            d = max(d, -cutout);
-
-            return d;
-        }
-
-        float RayMarch(vec3 ro, vec3 rd) {
-            float dO = 0.0;
-            for(int i=0; i<MAX_STEPS; i++) {
-                vec3 p = ro + rd * dO;
-                float dS = GetDist(p);
-                dO += dS;
-                if(dO > MAX_DIST || dS < SURF_DIST) break;
+            for(int x = -1; x <= 1; x++) {
+                for(int y = -1; y <= 1; y++) {
+                    vec2 neighbor = vec2(float(x), float(y));
+                    vec2 point = hash33(vec3(cell + neighbor, 0.0)).xy;
+                    point = 0.5 + 0.4 * sin(u_time * 0.3 + 6.28 * point);
+                    
+                    vec2 diff = neighbor + point - frac;
+                    float dist = length(diff);
+                    minDist = min(minDist, dist);
+                }
             }
-            return dO;
+            
+            return minDist;
         }
 
-        vec3 GetNormal(vec3 p) {
-            float d = GetDist(p);
-            vec2 e = vec2(0.01, 0.0);
-            vec3 n = d - vec3(
-                GetDist(p-e.xyy),
-                GetDist(p-e.yxy),
-                GetDist(p-e.yyx)
-            );
-            return normalize(n);
+        // Simplified particle field (fewer particles)
+        float particles(vec3 p, float t) {
+            float intensity = 0.0;
+            
+            // Only 12 particles instead of 32
+            for(int i = 0; i < 12; i++) {
+                float fi = float(i);
+                vec3 seed = vec3(fi * 0.1, fi * 0.2, fi * 0.3);
+                vec3 particlePos = hash33(seed) * 8.0 - 4.0;
+                particlePos += sin(t * 0.5 + seed * 6.28) * 1.5;
+                
+                float dist = length(p - particlePos);
+                intensity += 0.08 / (dist * dist + 0.02);
+            }
+            
+            return intensity;
+        }
+
+        // Simple energy waves
+        float energyField(vec3 p, float t) {
+            return sin(p.x * 2.0 + t * 2.0) * cos(p.y * 2.0 - t * 1.5) * sin(p.z * 2.0 + t);
         }
 
         void main() {
             vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
-
-            // Camera System
-            vec3 ro = vec3(0.0, 0.0, -5.0); // Camera origin
-            vec3 rd = normalize(vec3(uv.x, uv.y, 1.0)); // Ray direction
-
-            float d = RayMarch(ro, rd);
-
-            vec3 col = vec3(0.0);
-
-            if(d < MAX_DIST) {
-                vec3 p = ro + rd * d;
-                vec3 n = GetNormal(p);
-                vec3 r = reflect(rd, n);
-
-                // Lighting
-                vec3 lightPos = vec3(2.0, 4.0, -3.0);
-                // Rotate light
-                lightPos.xz *= rot(u_time);
-                
-                vec3 l = normalize(lightPos - p);
-                
-                // Diffuse
-                float dif = clamp(dot(n, l), 0.0, 1.0);
-                
-                // Specular
-                float spec = pow(max(dot(r, l), 0.0), 32.0);
-
-                // Base Color logic
-                vec3 baseColor = u_color;
-                // Add some variation based on position
-                baseColor += cos(p * 2.0 + u_time) * 0.2;
-
-                col = baseColor * dif + vec3(1.0) * spec;
-                
-                // Fresnel rim
-                float fresnel = pow(1.0 + dot(rd, n), 4.0);
-                col += fresnel * vec3(0.5, 0.8, 1.0);
-            }
-
-            // Glow / Fog
-            col += vec3(0.1, 0.2, 0.4) * (0.05 / (0.01 + length(uv)));
             
-            // Gamma correction
+            float t = u_time * 0.5;
+            
+            // Simple ray setup
+            vec3 rayDir = normalize(vec3(uv, 1.5));
+            vec3 rayOrigin = vec3(0.0, 0.0, t * 2.0);
+            
+            vec3 col = vec3(0.0);
+            float depth = 0.0;
+            
+            // Reduced iterations: 32 instead of 64
+            for(int i = 0; i < 32; i++) {
+                vec3 p = rayOrigin + rayDir * depth;
+                
+                // Use 2D Voronoi on XY plane (much faster)
+                float cellDist = voronoi2D(p.xy * 0.5 + p.z * 0.1);
+                float cellGlow = smoothstep(0.15, 0.0, cellDist);
+                
+                // Particle field
+                float particleGlow = particles(p, t) * 0.015;
+                
+                // Energy waves
+                float energy = energyField(p, t);
+                float energyGlow = smoothstep(0.6, 0.9, abs(energy)) * 0.3;
+                
+                // Simpler colors
+                col += vec3(0.3, 0.6, 1.0) * cellGlow * 0.04;
+                col += vec3(0.0, 1.0, 0.8) * particleGlow;
+                col += vec3(1.0, 0.3, 0.8) * energyGlow * 0.06;
+                
+                depth += 0.2;
+                if(depth > 8.0) break;
+            }
+            
+            // Background
+            col += vec3(0.05, 0.1, 0.2) * (1.0 - length(uv) * 0.5);
+            
+            // Occasional sparkles (cheaper check)
+            if(hash12(floor(uv * 50.0) + t) > 0.995) {
+                col += vec3(0.5);
+            }
+            
+            // Vignette
+            col *= 1.0 - length(uv) * 0.5;
+            
+            // Simple interference
+            col += vec3(0.5, 0.7, 1.0) * sin(uv.x * 30.0 + t * 2.0) * sin(uv.y * 30.0 - t) * 0.015;
+            
+            // Boost blues
+            col.b *= 1.15;
+            
+            // Tone map and gamma
+            col = col / (1.0 + col);
             col = pow(col, vec3(0.4545));
-
+            
             gl_FragColor = vec4(col, 1.0);
         }
     `,
@@ -567,6 +655,131 @@ const ShaderLibrary = {
             // Fade edges
             col *= 1.0 - length(uv) * 0.5;
 
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Alien Habitat 3D (Bio-Mechanical Tunnel) ---
+    AlienHabitat: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+        uniform vec2 u_mouse;
+
+        mat2 rot(float a) {
+            float s = sin(a);
+            float c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+
+        // Smooth min function for organic blending
+        float smin(float a, float b, float k) {
+            float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+            return mix(b, a, h) - k * h * (1.0 - h);
+        }
+
+        float map(vec3 p) {
+            // Twist the tunnel
+            p.xy *= rot(p.z * 0.1);
+            
+            // Main tunnel shape (hexagonal-ish)
+            vec3 q = p;
+            q.xy *= rot(u_time * 0.1); // Slow rotation
+            float angle = atan(q.y, q.x);
+            float r = length(q.xy);
+            // Hexagonal shaping
+            float hex = cos(angle * 6.0 + p.z * 0.5) * 0.2; 
+            float tunnel = 2.0 - r + hex;
+            
+            // Secondary structure (ribs)
+            float ribs = sin(p.z * 4.0) * 0.1;
+            
+            // Organic bulbs/bumps
+            float bulbs = length(fract(p * 0.5) - 0.5) - 0.2;
+            
+            // Combine
+            float d = max(-tunnel, 0.0); // Inside the tunnel
+            d = smin(d, bulbs, 0.2); // Blend bumps
+            d += ribs * 0.5; // Add ribs
+            
+            // Floor flattening (optional, commented out)
+            // d = smin(d, p.y + 1.2, 0.5);
+            
+            return d * 0.5; // Scale down for safety
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            
+            // Movement
+            float t = u_time * u_speed * 1.5;
+            vec3 ro = vec3(0.0, 0.0, t);
+            vec3 rd = normalize(vec3(uv, 1.5)); // FOV 
+            
+            // Mouse look
+            rd.yz *= rot((u_mouse.y - 0.5) * 1.0);
+            rd.xz *= rot((u_mouse.x - 0.5) * 1.0);
+            
+            // Raymarch
+            float d = 0.0;
+            float totalDist = 0.0;
+            vec3 p = ro;
+            
+            // Volumetric accumulation
+            vec3 accumColor = vec3(0.0);
+            
+            for(int i = 0; i < 80; i++) {
+                p = ro + rd * totalDist;
+                d = map(p);
+                
+                // Fog/Glow accumulation based on distance from walls
+                float glow = exp(-d * 3.0);
+                accumColor += u_color * glow * 0.015;
+                
+                if(d < 0.002 || totalDist > 30.0) break;
+                totalDist += d * 0.8;
+            }
+            
+            // Surface lighting
+            vec3 col = vec3(0.0);
+            if(totalDist < 30.0) {
+                // Normal calculation
+                vec2 e = vec2(0.01, 0.0);
+                vec3 n = normalize(vec3(
+                    map(p + e.xyy) - map(p - e.xyy),
+                    map(p + e.yxy) - map(p - e.yxy),
+                    map(p + e.yyx) - map(p - e.yyx)
+                ));
+                
+                // Lighting
+                vec3 lightPos = ro + vec3(0.0, 0.0, 2.0); // Light attached to camera
+                vec3 l = normalize(lightPos - p);
+                float diff = max(0.0, dot(n, l));
+                
+                // Specular
+                vec3 ref = reflect(-l, n);
+                float spec = pow(max(0.0, dot(ref, -rd)), 16.0);
+                
+                // Fresnel
+                float fresnel = pow(1.0 - max(0.0, dot(n, -rd)), 3.0);
+                
+                // Base material color
+                col = u_color * 0.2 + diff * u_color * 0.5 + spec * vec3(1.0);
+                col += fresnel * vec3(0.5, 0.8, 1.0) * 0.5;
+            }
+            
+            // Blend surface with volumetric glow
+            col += accumColor;
+            
+            // Distance fog
+            col = mix(col, vec3(0.0), smoothstep(10.0, 30.0, totalDist));
+            
+            // Final adjustments
+            // Vignette
+            col *= 1.0 - length(uv) * 0.4;
+            
             gl_FragColor = vec4(col, 1.0);
         }
     `

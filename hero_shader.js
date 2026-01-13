@@ -13,7 +13,7 @@ if (!heroGl) {
     `;
 
     // Fragment Shader - Use from library or fallback
-    const fsSource = window.ShaderLibrary && window.ShaderLibrary.HeroCore3D ? window.ShaderLibrary.HeroCore3D : `
+    const fsSource = window.ShaderLibrary && window.ShaderLibrary.DancingTiles ? window.ShaderLibrary.DancingTiles : `
         precision mediump float;
         void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); } // Error fallback
     `;
@@ -100,7 +100,7 @@ if (!heroGl) {
                 heroGl.uniform2f(resolutionLoc, heroCanvas.width, heroCanvas.height);
                 heroGl.uniform1f(timeLoc, time);
                 // Hero Color: Cyan/Blue/Purple mix (passed as base color)
-                heroGl.uniform3f(colorLoc, 0.0, 0.8, 1.0);
+                heroGl.uniform3f(colorLoc, 0.2, 0.4, 1.0);
                 heroGl.uniform2f(mouseLoc, mouseX, mouseY);
                 heroGl.uniform1f(speedLoc, 0.5);
 
