@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cursor Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            min-height: 100vh;
+            cursor: url('logo_cursor.png'), auto;
+        }
+
+        .test-area {
+            background: #111;
+            border: 2px solid #00f2ea;
+            padding: 40px;
+            margin: 20px 0;
+            min-height: 200px;
+        }
+
+        button {
+            background: #00f2ea;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: url('logo_cursor.png'), pointer;
+            margin: 10px;
+        }
+
+        .info {
+            background: #222;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #00f2ea;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Cursor Test Page</h1>
+
+    <div class="info">
+        <h2>Testing logo_cursor.png</h2>
+        <p>Move your mouse around this page. You should see your custom cursor.</p>
+        <p id="cursor-info">Checking cursor file...</p>
+    </div>
+
+    <div class="test-area">
+        <h3>Test Area 1</h3>
+        <p>Move your cursor here. Does it show the custom cursor?</p>
+        <button>Hover over this button</button>
+        <button>And this one too</button>
+    </div>
+
+    <div class="test-area">
+        <h3>Image Info</h3>
+        <p>Cursor image path: <code>logo_cursor.png</code></p>
+        <p>Image exists: <span id="exists">Checking...</span></p>
+        <p>Image size: <span id="size">Checking...</span></p>
+        <img id="cursor-preview" src="logo_cursor.png"
+            style="border: 2px solid #00f2ea; background: #fff; padding: 10px;">
+    </div>
+
+    <script>
+        // Test if the cursor image loads
+        const img = new Image();
+        img.onload = function () {
+            document.getElementById('exists').textContent = '✅ YES';
+            document.getElementById('exists').style.color = '#0f0';
+            document.getElementById('size').textContent = `${this.width}x${this.height}px`;
+
+            if (this.width > 128 || this.height > 128) {
+                document.getElementById('cursor-info').innerHTML =
+                    '⚠️ <strong>WARNING:</strong> Cursor image is ' + this.width + 'x' + this.height +
+                    'px. Browsers typically limit cursor images to 128x128px. Your cursor may not display correctly.';
+                document.getElementById('cursor-info').style.color = '#ff0';
+            } else if (this.width > 32 || this.height > 32) {
+                document.getElementById('cursor-info').innerHTML =
+                    '✅ Cursor image loaded (' + this.width + 'x' + this.height +
+                    'px). This should work, but smaller (32x32) is recommended for best compatibility.';
+                document.getElementById('cursor-info').style.color = '#0f0';
+            } else {
+                document.getElementById('cursor-info').innerHTML =
+                    '✅ Cursor image loaded (' + this.width + 'x' + this.height +
+                    'px). Perfect size!';
+                document.getElementById('cursor-info').style.color = '#0f0';
+            }
+        };
+
+        img.onerror = function () {
+            document.getElementById('exists').textContent = '❌ NO - File not found!';
+            document.getElementById('exists').style.color = '#f00';
+            document.getElementById('cursor-info').innerHTML =
+                '❌ <strong>ERROR:</strong> logo_cursor.png could not be loaded. Check the file path.';
+            document.getElementById('cursor-info').style.color = '#f00';
+        };
+
+        img.src = 'logo_cursor.png';
+    </script>
+</body>
+
+</html>

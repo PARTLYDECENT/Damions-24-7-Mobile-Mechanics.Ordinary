@@ -42,6 +42,16 @@ body {
     background-color: var(--bg-dark);
     /* Default background color */
     overflow-x: hidden;
+    cursor: url('logo_cursor.png'), auto;
+}
+
+a,
+button,
+.clickable,
+select,
+input[type="submit"],
+.cta-button {
+    cursor: url('logo_cursor.png'), pointer;
 }
 
 body.bg-loaded {
