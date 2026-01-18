@@ -264,19 +264,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Sound Effects ---
-    const hoverSound = new Audio('./videos/impact.mp3'); // Assuming a more subtle hover sound
+    // const hoverSound = new Audio('./videos/impact.mp3'); // Disabled: User reported this file is too large/wrong for hover
     const clickSound = document.getElementById('hover-audio'); // Use the preloaded element
-    hoverSound.volume = 0.2;
-    clickSound.volume = 0.4;
+    // hoverSound.volume = 0.2;
+    if (clickSound) clickSound.volume = 0.4;
 
     document.querySelectorAll('.service-card, .cta-button, .nav-links a, .footer-links a, .read-more-btn, .dropdown a').forEach(el => {
+        /* Hover sound disabled globally
         el.addEventListener('mouseenter', () => {
+            // Prevent hover sound on the Enter Button to avoid double-audio with background music
+            if (el.id === 'enter-btn') return;
+
             hoverSound.currentTime = 0;
             hoverSound.play().catch(e => { });
         });
+        */
         el.addEventListener('click', () => {
-            clickSound.currentTime = 0;
-            clickSound.play().catch(e => { });
+            if (clickSound) {
+                clickSound.currentTime = 0;
+                clickSound.play().catch(e => { });
+            }
         });
     });
 

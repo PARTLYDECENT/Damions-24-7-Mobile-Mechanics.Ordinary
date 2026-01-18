@@ -148,12 +148,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 5. Interaction - The "Spectacular" Exit
+    // Use a global flag to prevent multiple plays
+    let musicStarted = false;
+
     enterBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopImmediatePropagation(); // Stop default fade out in main.js if conflicting
 
-        // Play Sound
-        if (bgMusic) bgMusic.play().catch(console.error);
+        // Play Sound - only if not already started
+        if (bgMusic && !musicStarted) {
+            musicStarted = true;
+            bgMusic.currentTime = 0; // Reset to beginning
+            bgMusic.play().catch(console.error);
+        }
 
         // WARP SPEED
         if (window.triggerIntroWarp) {
