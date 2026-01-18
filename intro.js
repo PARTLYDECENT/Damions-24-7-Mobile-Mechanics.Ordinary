@@ -216,6 +216,25 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.body.appendChild(introImg);
 
+            // --- TENTACLE OS BANNER INJECTION ---
+            const banner = document.createElement('div');
+            banner.className = 'tentacle-os-banner';
+            const bannerText = document.createElement('div');
+            bannerText.className = 'tentacle-os-text';
+            // Duplicate text for scrolling effect
+            const textContent = "TENTACLE OS // SYSTEM INITIALIZED // CONNECTING TO NEURAL NET // ACCESSING SECTOR 7 // DOWNLOAD RATE: 500 TB/s // WELCOME USER_001 // SYSTEM INTEGRITY: 100% // ";
+            bannerText.textContent = textContent.repeat(10); // Repeat to fill space
+            banner.appendChild(bannerText);
+            document.body.appendChild(banner);
+            // -------------------------------------
+
+            // --- TENTACLE OVERLAY ---
+            if (window.TentacleOverlay) {
+                window.TentacleOverlay.start();
+            }
+            // ------------------------
+
+
             // Reveal image while flash is still covering, then fade flash
             requestAnimationFrame(() => {
                 introImg.style.opacity = '1';
@@ -228,8 +247,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 introImg.style.transition = 'opacity 1s ease';
                 introImg.style.opacity = '0'; // Fade out image to reveal site
 
+                // Fade out banner too
+                if (banner) {
+                    banner.style.transition = 'opacity 1s ease';
+                    banner.style.opacity = '0';
+                }
+
                 setTimeout(() => {
                     introImg.remove();
+                    if (banner) banner.remove(); // Remove banner DOM
+
+                    if (window.TentacleOverlay) {
+                        window.TentacleOverlay.stop();
+                    }
 
                     // Trigger site animations
                     document.querySelectorAll('.animate-on-scroll').forEach(el => {

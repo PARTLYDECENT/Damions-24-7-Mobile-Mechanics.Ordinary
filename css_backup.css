@@ -820,8 +820,7 @@ body.bg-loaded {
     width: 100vw;
     height: 100vh;
     /* background: radial-gradient(circle at center, #1a2238 0%, #0a0f1a 100%); REMOVED for shader */
-    background: url('assets/images/introbg.jpeg') no-repeat center center;
-    background-size: contain;
+    background: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2043,71 +2042,4 @@ body.bg-loaded {
     .service-card {
         cursor: pointer;
     }
-}
-
-/* --- Tentacle OS Rolling Banner (2026 Vibe) --- */
-.tentacle-os-banner {
-    position: absolute;
-    bottom: 10%;
-    /* Vertically centered relative to image or just above bottom */
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: rgba(10, 20, 30, 0.85);
-    /* Dark semi-transparent */
-    backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(0, 242, 234, 0.5);
-    /* Cyan glow border */
-    border-bottom: 1px solid rgba(138, 43, 226, 0.5);
-    /* Purple glow border */
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    z-index: 10001;
-    /* Above the intro image buffer */
-    box-shadow: 0 0 20px rgba(0, 242, 234, 0.2);
-    pointer-events: none;
-    transform: skewY(-2deg);
-    /* Futuristic skew */
-}
-
-.tentacle-os-text {
-    font-family: "Share Tech Mono", monospace;
-    font-size: 1.5rem;
-    white-space: nowrap;
-    color: #fff;
-    text-shadow:
-        0 0 5px #00f2ea,
-        0 0 10px #00f2ea,
-        0 0 20px #8a2be2;
-    animation: scroll-left 120s linear infinite;
-    padding-left: 100%;
-    /* Start from off-screen */
-}
-
-@keyframes scroll-left {
-    0% {
-        transform: translateX(0);
-    }
-
-    100% {
-        transform: translateX(-100%);
-    }
-}
-
-/* Glitch overlay effect */
-.tentacle-os-banner::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(0deg,
-            transparent 0,
-            transparent 2px,
-            rgba(0, 242, 234, 0.05) 3px,
-            rgba(0, 242, 234, 0.05) 4px);
-    pointer-events: none;
-    z-index: 2;
 }

@@ -230,7 +230,7 @@ if (!enterGl) {
             // Render
             float d = RayMarch(ro, rd);
             
-            vec3 color = vec3(0.05, 0.05, 0.06); // Dark background
+            vec3 color = vec3(0.0, 0.0, 0.0); // Transparent base
             
             // Background Grid (Infinite Floor)
             if (d > MAX_DIST) {
@@ -287,7 +287,23 @@ if (!enterGl) {
             // White out on max warp
             color = mix(color, vec3(1.0), smoothstep(4.0, 5.0, uWarp));
 
-            gl_FragColor = vec4(color, 1.0);
+            // --- Transparency Logic ---
+            float alpha = 0.0;
+            if (d < MAX_DIST) {
+                alpha = 1.0;
+            } else {
+                // Background grid alpha
+                alpha = smoothstep(0.0, 0.2, length(color));
+            }
+            
+            // HUD alpha contribution
+            alpha = max(alpha, lidar);
+            alpha = max(alpha, abs(sin(gl_FragColor.y * 0.5 + uTime * 5.0) * 0.02)); // Scanline alpha
+
+            // Ensure warp whiteout is opaque
+            alpha = max(alpha, smoothstep(4.0, 5.0, uWarp));
+
+            gl_FragColor = vec4(color, alpha);
         }
     `;
 
@@ -361,7 +377,7 @@ if (!enterGl) {
             function render(time) {
                 time *= 0.001; // Convert to seconds
 
-                enterGl.clearColor(0.0, 0.0, 0.0, 1.0);
+                enterGl.clearColor(0.0, 0.0, 0.0, 0.0);
                 enterGl.clear(enterGl.COLOR_BUFFER_BIT);
 
                 enterGl.enableVertexAttribArray(positionAttributeLocation);
