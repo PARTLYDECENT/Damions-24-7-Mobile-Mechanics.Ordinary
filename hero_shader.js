@@ -13,7 +13,7 @@ if (!heroGl) {
     `;
 
     // Fragment Shader - Use from library or fallback
-    const fsSource = window.ShaderLibrary && window.ShaderLibrary.DancingTiles ? window.ShaderLibrary.DancingTiles : `
+    const fsSource = window.ShaderLibrary && window.ShaderLibrary.HexGrille ? window.ShaderLibrary.HexGrille : `
         precision mediump float;
         void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); } // Error fallback
     `;
@@ -99,10 +99,10 @@ if (!heroGl) {
                 // Update Uniforms
                 heroGl.uniform2f(resolutionLoc, heroCanvas.width, heroCanvas.height);
                 heroGl.uniform1f(timeLoc, time);
-                // Hero Color: Cyan/Blue/Purple mix (passed as base color)
-                heroGl.uniform3f(colorLoc, 0.2, 0.4, 1.0);
+                // Hero Color: Mechanic blue/grey
+                heroGl.uniform3f(colorLoc, 0.2, 0.4, 0.6);
                 heroGl.uniform2f(mouseLoc, mouseX, mouseY);
-                heroGl.uniform1f(speedLoc, 0.5);
+                heroGl.uniform1f(speedLoc, 0.2);
 
                 heroGl.drawArrays(heroGl.TRIANGLE_STRIP, 0, 4);
 

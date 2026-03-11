@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
     <meta name="description"
-        content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
+        content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are.">
     <meta property="og:title" content="Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance">
     <meta property="og:description"
-        content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are. Call 724-964-2936">
+        content="Professional mobile mechanic services available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are.">
     <meta property="og:image" content="v8.png">
     <meta property="og:url" content="">
     <!-- URL left empty as it's not known, but image is key for the preview issue -->
@@ -169,6 +169,22 @@
 </head>
 
 <body>
+    <!-- 2x2 Tiled Background Grid -->
+    <div id="bg-grid">
+        <div class="bg-tile">
+            <div class="bg-tile-inner" id="bg-tile-0"></div>
+        </div>
+        <div class="bg-tile">
+            <div class="bg-tile-inner" id="bg-tile-1"></div>
+        </div>
+        <div class="bg-tile">
+            <div class="bg-tile-inner" id="bg-tile-2"></div>
+        </div>
+        <div class="bg-tile">
+            <div class="bg-tile-inner" id="bg-tile-3"></div>
+        </div>
+    </div>
+
     <canvas id="unified-panel-canvas"></canvas>
     <!-- Functions Sidebar -->
     <div id="functions-sidebar" class="functions-sidebar">
@@ -270,16 +286,15 @@
     <div id="enter-overlay">
         <canvas id="enter-shader-canvas"></canvas>
         <div class="enter-content">
-            <h1 class="enter-title">DAMIONS<span class="highlight">24/7</span></h1>
-            <p class="enter-subtitle">MOBILE MECHANICS</p>
+            <h1 class="enter-title">DAMION'S <span class="highlight">24/7</span></h1>
+            <p class="enter-subtitle">MOBILE AUTOMOTIVE SOLUTIONS</p>
             <div class="enter-divider"></div>
-            <p class="enter-status">SYSTEM READY</p>
-            <button id="enter-btn" class="enter-button">INITIALIZE SYSTEM</button>
-
+            <p class="enter-status">READY FOR INITIALIZATION</p>
+            <button id="enter-btn" class="enter-button">START SYSTEM</button>
         </div>
     </div>
 
-    <canvas id="rain-canvas"></canvas>
+
 
     <header class="header" id="header">
         <div class="nav-container">
@@ -361,16 +376,16 @@
                 <h1>Your 24/7 Mobile Mechanic Solution</h1>
                 <p>Expert auto repair and maintenance, wherever you are. Professional, reliable service that comes
                     directly to you, day or night.</p>
-                <a href="tel:724-964-2936" class="cta-button">Call Now: 724-964-2936</a>
+                <a href="#services" class="cta-button">View Our Services</a>
             </div>
         </section>
 
         <section class="section" id="services">
 
             <div class="container">
-                <h2 class="section-title">Our Core Services</h2>
-                <p class="section-subtitle">We offer a comprehensive range of mobile mechanic services to cover all your
-                    vehicle's needs, 24/7.</p>
+                <h2 class="section-title">Superior Mobility</h2>
+                <p class="section-subtitle">Comprehensive automotive care delivered directly to your location, 24 hours
+                    a day.</p>
                 <div class="services-grid">
                     <div class="service-card animate-on-scroll"
                         data-tooltip="System Interrupt Handler: Rapid deployment protocol for critical system failures. On-site diagnostics and hardware intervention.">
@@ -439,11 +454,11 @@
                             knowledge.</p>
                     </div>
                     <div class="feature-item animate-on-scroll"
-                        data-tooltip="Data Transparency Protocol: All work orders and cost estimates are logged to an immutable blockchain for client verification. No hidden variables.">
-                        <div class="feature-icon"> прозрачность</div>
-                        <h3>Transparent Pricing</h3>
-                        <p>No surprises. We provide clear, upfront estimates before any work begins so you know exactly
-                            what to expect.</p>
+                        data-tooltip="Data Transparency Protocol: All work orders and cost estimates are provided upfront with no hidden fees.">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Transparent Estimates</h3>
+                        <p>No surprises. We provide clear, upfront cost estimates before any work begins so you know
+                            exactly what to expect.</p>
                     </div>
                     <div class="feature-item animate-on-scroll"
                         data-tooltip="Hyper-Local Deployment: Our mobile units are dispatched to your precise coordinates, bypassing traditional service infrastructure.">
@@ -751,7 +766,7 @@
     <script src="console.js"></script>
     <script src="hero_shader.js"></script>
     <script src="ui_effects.js"></script>
-    <script src="rain_shader.js"></script>
+
     <script src="shader.js"></script> <!-- Keep for hero if still used -->
 </body>
 

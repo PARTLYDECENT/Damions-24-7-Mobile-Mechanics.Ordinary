@@ -1,19 +1,74 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Background Image Loader with Error Handling ---
-    function checkBackgroundImage(url, callback) {
-        const img = new Image();
-        img.onload = function () {
-            console.log('Background image loaded successfully.');
-            document.body.classList.add('bg-loaded');
-            if (callback) callback(); // Run the callback function on success
+    // --- Tiled Background Grid Logic ---
+    function initBackgroundGrid(callback) {
+        const totalImages = 8;
+        const totalTiles = 4;
+        const imagePool = [];
+        for (let i = 1; i <= totalImages; i++) {
+            imagePool.push(`assets/images/bg${i}.jpg`);
         }
-        img.onerror = function () {
-            console.error(`CRITICAL ERROR: Failed to load background image at '${url}'. Check that the file exists and the path is correct. The site will use the fallback background color.`);
-            document.body.classList.remove('bg-loaded');
-            if (callback) callback(); // Also run callback on error so the site doesn't hang
+
+        // State
+        let currentActiveIndices = [];
+        const tiles = [
+            document.getElementById('bg-tile-0'),
+            document.getElementById('bg-tile-1'),
+            document.getElementById('bg-tile-2'),
+            document.getElementById('bg-tile-3')
+        ];
+
+        // Ensure we have unique random numbers
+        function getUniqueRandoms(count, max, exclude = []) {
+            let nums = new Set();
+            while (nums.size < count) {
+                let r = Math.floor(Math.random() * max);
+                if (!exclude.includes(r)) nums.add(r);
+            }
+            return Array.from(nums);
         }
-        img.src = url;
+
+        // Initialize grid
+        currentActiveIndices = getUniqueRandoms(totalTiles, totalImages);
+
+        tiles.forEach((tile, idx) => {
+            if (tile) {
+                tile.style.backgroundImage = `url('${imagePool[currentActiveIndices[idx]]}')`;
+            }
+        });
+
+        const gridContainer = document.getElementById('bg-grid');
+        if (gridContainer) gridContainer.classList.add('loaded');
+
+        // Start swap loop
+        setInterval(() => {
+            // Pick a random tile to change
+            const tileToChangeIdx = Math.floor(Math.random() * totalTiles);
+            const tileElement = tiles[tileToChangeIdx];
+
+            // Pick a new random image not currently shown
+            const newImageIndices = getUniqueRandoms(1, totalImages, currentActiveIndices);
+            const newImageIdx = newImageIndices[0];
+
+            if (tileElement) {
+                // Fade out
+                tileElement.classList.add('fading');
+
+                setTimeout(() => {
+                    // Swap image while faded out
+                    tileElement.style.backgroundImage = `url('${imagePool[newImageIdx]}')`;
+                    currentActiveIndices[tileToChangeIdx] = newImageIdx;
+
+                    // Fade back in
+                    setTimeout(() => {
+                        tileElement.classList.remove('fading');
+                    }, 100);
+                }, 2000); // Wait for CSS transition (2s fade out)
+            }
+
+        }, 6000); // Swap a tile every 6 seconds
+
+        if (callback) callback();
     }
 
     // --- Centralized Panel Shader Animation (Unified) ---
@@ -27,16 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Target the SECTION IDs, not the canvas IDs
         const panelConfigs = [
-            { id: 'services', options: { color: [0.0, 0.8, 1.0], speed: 0.3, effect: 'CyberGrid' } },
-            { id: 'why-us', options: { color: [0.1, 0.3, 0.7], speed: 0.3, effect: 'TechNoise' } },
-            { id: 'news', options: { color: [0.0, 1.0, 0.5], speed: 0.8, effect: 'DigitalRain' } },
-            { id: 'video-promo', options: { color: [0.5, 0.0, 1.0], speed: 0.4, effect: 'PlasmaField' } },
-            { id: 'slideshow-section', options: { color: [0.0, 1.0, 0.8], speed: 0.5, effect: 'CyberTunnel3D' } },
-            { id: 'videoplayer-section', options: { color: [0.2, 0.5, 0.7], speed: 0.5, effect: 'CyberGrid' } },
-            { id: 'facts', options: { color: [0.1, 0.4, 0.6], speed: 0.3, effect: 'TechNoise' } },
-            { id: 'engine-bay', options: { color: [1.0, 0.5, 0.0], speed: 0.3, effect: 'HoloEngine3D' } },
-            { id: 'service-area', options: { color: [0.1, 0.6, 0.4], speed: 0.3, effect: 'TechNoise' } },
-            { id: 'faq', options: { color: [0.5, 0.2, 0.5], speed: 0.6, effect: 'PlasmaField' } }
+            { id: 'services', options: { color: [0.6, 0.7, 0.8], speed: 0.3, effect: 'MechanicGears' } },
+            { id: 'why-us', options: { color: [0.8, 0.6, 0.2], speed: 0.2, effect: 'OilSlick' } },
+            { id: 'news', options: { color: [0.4, 0.4, 0.45], speed: 0.2, effect: 'DiamondPlate' } },
+            { id: 'video-promo', options: { color: [0.3, 0.5, 0.6], speed: 0.2, effect: 'HexGrille' } },
+            { id: 'slideshow-section', options: { color: [0.9, 0.7, 0.1], speed: 0.3, effect: 'OilSlick' } },
+            { id: 'videoplayer-section', options: { color: [0.5, 0.6, 0.7], speed: 0.3, effect: 'MechanicGears' } },
+            { id: 'facts', options: { color: [0.2, 0.3, 0.4], speed: 0.3, effect: 'DiamondPlate' } },
+            { id: 'engine-bay', options: { color: [0.8, 0.3, 0.1], speed: 0.2, effect: 'HexGrille' } },
+            { id: 'service-area', options: { color: [0.4, 0.5, 0.6], speed: 0.2, effect: 'MechanicGears' } },
+            { id: 'faq', options: { color: [0.5, 0.5, 0.55], speed: 0.2, effect: 'HexGrille' } }
         ];
 
         panelConfigs.forEach(config => {
@@ -52,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Start the background image check, and once it's done, initialize the shaders.
-    checkBackgroundImage('assets/images/bg1.jpg', initializeAndAnimateShaders);
+    initBackgroundGrid(initializeAndAnimateShaders);
 
     // --- Audio & Site Entry ---
     const enterOverlay = document.getElementById('enter-overlay');
@@ -471,20 +526,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New WebGL Hero Shader ---
     // This code has been moved to shader.js
 
-    // --- Animated Favicon Logic ---
+    // --- Animated Favicon Logic (Smooth Spinning Gear) ---
     const favicon = document.getElementById('favicon');
-    const faviconFrames = [
-        // Wrench
-        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>',
-        // Gear
-        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>',
-        // V8
-        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>V8</text></svg>',
-        // Blood Moon
-        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩸</text></svg>',
-        // Skull
-        'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💀</text></svg>'
-    ];
+    const faviconFrames = [];
+
+    // Generate 12 frames for a smooth 360-degree rotation
+    for (let i = 0; i < 12; i++) {
+        let angle = i * 30; // 30 degrees per frame
+        // Using a clear cyan hex gear unicode character, rotating around center (50, 50)
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="rotate(${angle} 50 50)"><text x="50" y="80" font-size="90" text-anchor="middle" fill="#00f2ea">⚙</text></g></svg>`;
+        // URL encode the SVG
+        let encodedSvg = svg.replace(/</g, "%3C").replace(/>/g, "%3E").replace(/"/g, "%22").replace(/#/g, "%23");
+        faviconFrames.push(`data:image/svg+xml,${encodedSvg}`);
+    }
 
     let currentFrame = 0;
     setInterval(() => {
@@ -492,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFrame = (currentFrame + 1) % faviconFrames.length;
             favicon.href = faviconFrames[currentFrame];
         }
-    }, 1000); // Change icon every 1 second
+    }, 120); // Smooth spin (120ms per frame)
 
     // --- Dramatic Hero Slideshow ---
     const slideshowContainer = document.getElementById('hero-slideshow-container');
@@ -765,6 +819,8 @@ window.startHeroTyping = () => {
 // Add CSS keyframe for cursor if not exists (done via JS for component isolation)
 const styleSheet = document.createElement("style");
 styleSheet.innerText = `
-    @keyframes blink-cursor { 50% { border-color: transparent; } }
+    @keyframes blink-cursor {
+        50% { border-color: transparent; }
+    }
 `;
 document.head.appendChild(styleSheet);

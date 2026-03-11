@@ -10,15 +10,222 @@
  */
 
 const ShaderLibrary = {
-    // --- Common Vertex Shader ---
-    vertex: `
-        attribute vec2 a_position;
+    // --- Mechanic Gears (2D Fast SDF) ---
+    MechanicGears: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        mat2 rot2D(float a) {
+            float s = sin(a), c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+
+        // 2D Gear SDF
+        float sdGear(vec2 p, float radius, float teeth, float toothDepth) {
+            float a = atan(p.y, p.x);
+            float r = length(p);
+            // Profile of the gear
+            float gear = radius + toothDepth * cos(a * teeth);
+            return r - gear;
+        }
+
         void main() {
-            gl_Position = vec4(a_position, 0.0, 1.0);
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            float t = u_time * u_speed;
+            
+            vec3 col = vec3(0.0);
+            
+            // Multiple gears
+            for(int i = 0; i < 3; i++) {
+                vec2 p = uv;
+                // Offset and scale each gear
+                float fi = float(i);
+                p.x -= sin(fi * 2.1) * 0.5;
+                p.y -= cos(fi * 1.3) * 0.4;
+                p *= 1.0 + fi * 0.5;
+                
+                // Rotate gears interlocking
+                p *= rot2D(t * (mod(fi, 2.0) == 0.0 ? 1.0 : -1.0) * (0.5 / (1.0+fi)));
+                
+                // Gear parameters
+                float r = 0.3;
+                float teeth = 12.0;
+                float depth = 0.05;
+                
+                float d = sdGear(p, r, teeth, depth);
+                
+                // Inner hole
+                d = max(d, -(length(p) - 0.1));
+                
+                // Metallic look
+                float fw = fwidth(d);
+                float alpha = smoothstep(fw, -fw, d);
+                
+                // Simple lighting/bevel
+                vec2 e = vec2(0.01, 0.0);
+                vec2 n = normalize(vec2(
+                    sdGear(p + e.xy, r, teeth, depth) - sdGear(p - e.xy, r, teeth, depth),
+                    sdGear(p + e.yx, r, teeth, depth) - sdGear(p - e.yx, r, teeth, depth)
+                ));
+                
+                vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+                float diff = max(dot(vec3(n, 0.5), lightDir), 0.0);
+                
+                vec3 gearCol = mix(u_color * 0.3, u_color, diff);
+                gearCol += pow(diff, 8.0) * vec3(1.0); // Highlight
+                
+                col = mix(col, gearCol, alpha);
+            }
+            
+            // Background grid
+            vec2 grid = fract(uv * 10.0) - 0.5;
+            float gridLines = smoothstep(0.45, 0.5, abs(grid.x)) + smoothstep(0.45, 0.5, abs(grid.y));
+            col += u_color * gridLines * 0.1 * (1.0 - length(uv));
+
+            gl_FragColor = vec4(col, 1.0);
         }
     `,
 
-    // --- Tech Noise 3D (Volumetric Noise Cloud) ---
+    // --- Oil Slick (Fast 2D Check/Fluid) ---
+    OilSlick: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+            uv.x *= u_resolution.x / u_resolution.y;
+            
+            float t = u_time * u_speed * 0.5;
+            
+            // Warp space
+            vec2 p = uv * 3.0;
+            for(int i = 1; i <= 3; i++) {
+                vec2 newp = p;
+                newp.x += 0.6 / float(i) * sin(float(i) * p.y + t + 0.3);
+                newp.y += 0.6 / float(i) * cos(float(i) * p.x + t + 0.3);
+                p = newp;
+            }
+            
+            // Generate iridescent colors
+            vec3 col = vec3(
+                0.5 * sin(3.0 * p.x) + 0.5,
+                0.5 * sin(3.0 * p.y) + 0.5,
+                sin(p.x + p.y)
+            );
+            
+            // Mix with user color to fit theme
+            col = mix(u_color * 0.2, col, 0.6);
+            
+            // Add some "oil" darkness
+            col *= smoothstep(0.0, 2.0, length(p - vec2(1.5)));
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Hex Grille (Fast 2D Metal) ---
+    HexGrille: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        float hexDistance(vec2 p) {
+            p = abs(p);
+            float d = dot(p, normalize(vec2(1.0, 1.73)));
+            return max(d, p.x);
+        }
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy / u_resolution.y;
+            float t = u_time * u_speed * 2.0;
+            
+            // Scale grid
+            vec2 p = uv * 15.0;
+            
+            // Hex grid coordinates
+            vec2 r = vec2(1.0, 1.73);
+            vec2 h = r * 0.5;
+            vec2 a = mod(p, r) - h;
+            vec2 b = mod(p - h, r) - h;
+            vec2 gv = dot(a, a) < dot(b, b) ? a : b;
+            
+            float d = hexDistance(gv);
+            
+            // Shape the holes
+            float hole = smoothstep(0.4, 0.5, d);
+            
+            // Metallic Lighting
+            vec3 lightNode = vec3(sin(t)*0.5 + 0.5, cos(t)*0.5 + 0.5, 1.0);
+            float diff = dot(normalize(vec3(gv, 0.2)), normalize(lightNode));
+            
+            vec3 metal = mix(vec3(0.1), vec3(0.8), diff);
+            metal *= u_color; // Tint
+            
+            // Punch holes
+            vec3 col = mix(vec3(0.02), metal, hole);
+            
+            // Sweep highlight
+            float sweep = sin(uv.x * 5.0 + uv.y * 5.0 - t * 2.0);
+            col += smoothstep(0.9, 1.0, sweep) * hole * 0.5;
+
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Diamond Plate (Fast 2D Metal) ---
+    DiamondPlate: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / u_resolution.y;
+            float t = u_time * u_speed;
+            
+            vec2 st = uv * 5.0;
+            vec2 id = floor(st);
+            vec2 f = fract(st) - 0.5;
+            
+            // Rotate alternating cells
+            if(mod(id.x + id.y, 2.0) == 0.0) {
+                f = vec2(f.y, -f.x);
+            }
+            
+            // Diamond shape
+            float d = length(max(abs(f) - vec2(0.1, 0.3), 0.0));
+            float shape = smoothstep(0.05, 0.0, d);
+            
+            // Simple metallic lighting
+            vec3 lightPos = vec3(sin(t)*2.0, cos(t)*2.0, 1.0);
+            vec3 n = normalize(vec3(f.x * shape, f.y * shape, 0.1));
+            float diff = max(dot(n, normalize(lightPos)), 0.0);
+            
+            vec3 col = mix(vec3(0.1), vec3(0.6), diff) * u_color;
+            
+            // Bevel highlight
+            col += pow(diff, 16.0) * vec3(1.0) * shape;
+
+            // Background metal
+            col = mix(vec3(0.2) * u_color, col, shape);
+            
+            // Dark vignette
+            col *= 1.0 - length(uv) * 0.4;
+
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Common Vertex Shader ---
     TechNoise: `
         precision highp float;
         uniform vec2 u_resolution;
@@ -781,6 +988,139 @@ const ShaderLibrary = {
             col *= 1.0 - length(uv) * 0.4;
             
             gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Exotic Fractal 3D (Glowing KIFS) ---
+    ExoticFractal: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+        
+        mat2 rot(float a) {
+            float s = sin(a), c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+        
+        float map(vec3 p) {
+            float d = 1.0;
+            p.xz *= rot(u_time * 0.2 * u_speed);
+            p.xy *= rot(u_time * 0.1 * u_speed);
+            for(int i = 0; i < 6; i++) {
+                p.xyz = abs(p.xyz) - 1.0;
+                p.xz *= rot(1.2);
+                p.yz *= rot(0.7);
+                p *= 2.0;
+                d *= 0.5;
+            }
+            return (length(p) - 1.5) * d;
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            vec3 ro = vec3(0.0, 0.0, -4.0 + sin(u_time*0.5)*0.5);
+            vec3 rd = normalize(vec3(uv, 1.0));
+            float t = 0.0;
+            vec3 col = vec3(0.0);
+            
+            for(int i=0; i<64; i++) {
+                vec3 p = ro + rd * t;
+                float d = map(p);
+                col += u_color * 0.015 / (0.05 + abs(d)); // Exotic volumetric glow
+                if(d < 0.001 || t > 12.0) break;
+                t += d * 0.8;
+            }
+            
+            // Exotic color shifting
+            vec3 shiftColor = mix(vec3(1.0, 0.1, 0.6), vec3(0.1, 0.9, 1.0), sin(u_time + length(col))*0.5+0.5);
+            col *= shiftColor;
+            col = pow(col, vec3(0.8)); // Gamma correction for pop
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Cosmic Nebula (Fluid Volumetric Noise) ---
+    CosmicNebula: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+        
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453123); }
+        float noise(vec2 p) {
+            vec2 i = floor(p), f = fract(p);
+            vec2 u = f*f*(3.0-2.0*f);
+            return mix(mix(hash(i+vec2(0,0)), hash(i+vec2(1,0)), u.x),
+                       mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
+        }
+        
+        float fbm(vec2 x) {
+            float v = 0.0, a = 0.5;
+            for (int i=0; i<6; i++) {
+                v += a * noise(x);
+                x = x * 2.0 + u_time * 0.1 * u_speed;
+                a *= 0.5;
+            }
+            return v;
+        }
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy / u_resolution.xy * 2.0 - 1.0;
+            uv.x *= u_resolution.x / u_resolution.y;
+            
+            float t = u_time * u_speed;
+            
+            vec2 q = vec2(fbm(uv + vec2(0.0)), fbm(uv + vec2(5.2, 1.3)));
+            vec2 r = vec2(fbm(uv + 4.0 * q + vec2(1.7, 9.2) + t*0.2), 
+                          fbm(uv + 4.0 * q + vec2(8.3, 2.8) - t*0.1));
+            float f = fbm(uv + 4.0 * r + t * 0.3);
+            
+            // Deep, exotic space colors
+            vec3 col = mix(vec3(0.05, 0.0, 0.15), vec3(0.6, 0.0, 0.4), clamp(f*f*4.0, 0.0, 1.0));
+            col = mix(col, vec3(0.0, 0.7, 0.9), clamp(length(q), 0.0, 1.0));
+            col = mix(col, u_color + vec3(0.5, 0.2, 0.8), clamp(length(r.x), 0.0, 1.0));
+            
+            col = (f*f*f + 0.6*f*f + 0.5*f) * col * 2.5; // High contrast glow
+            
+            // Stars overlay
+            float star = step(0.995, hash(uv * 100.0 + trunc(t)));
+            col += vec3(star) * (sin(t * 10.0 + uv.x * 50.0) * 0.5 + 0.5);
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+
+    // --- Quantum Fluid (Domain Warped Caustics) ---
+    QuantumFluid: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / u_resolution.y;
+            float t = u_time * u_speed * 0.5;
+            
+            vec3 col = vec3(0.0);
+            
+            for(float i = 1.0; i < 6.0; i++) {
+                uv.x += 0.6 / i * cos(i * 2.5 * uv.y + t);
+                uv.y += 0.6 / i * cos(i * 1.5 * uv.x + t);
+            }
+            
+            float intensity = 0.5 / abs(sin(uv.x + uv.y));
+            col = u_color * intensity * vec3(0.5, 0.8, 1.0);
+            
+            // Chroma shift
+            col.r += 0.2 / abs(cos(uv.x * 2.0 + t));
+            col.b += 0.2 / abs(sin(uv.y * 2.0 - t));
+            
+            gl_FragColor = vec4(col * 0.3, 1.0); // Soften the burn
         }
     `
 };
