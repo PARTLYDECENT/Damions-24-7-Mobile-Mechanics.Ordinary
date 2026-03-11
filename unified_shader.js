@@ -39,8 +39,8 @@ class UnifiedPanelShader {
     getProgramWrapper(effectName) {
         // Default to TechNoise if effect not found
         if (!window.ShaderLibrary[effectName]) {
-            console.warn(`Effect '${effectName}' not found in library. Defaulting to TechNoise.`);
-            effectName = 'TechNoise';
+            console.warn(`Effect '${effectName}' not found in library. Defaulting to MechanicGears.`);
+            effectName = 'MechanicGears';
         }
 
         if (this.programs.has(effectName)) {
@@ -111,7 +111,7 @@ class UnifiedPanelShader {
     addPanel(sectionId, options) {
         const element = document.getElementById(sectionId);
         if (element) {
-            const effectName = options.effect || 'TechNoise';
+            const effectName = options.effect || 'MechanicGears';
             const programWrapper = this.getProgramWrapper(effectName);
 
             if (programWrapper) {

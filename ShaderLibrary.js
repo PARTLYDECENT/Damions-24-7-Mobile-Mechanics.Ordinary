@@ -61,7 +61,7 @@ const ShaderLibrary = {
                 d = max(d, -(length(p) - 0.1));
                 
                 // Metallic look
-                float fw = fwidth(d);
+                float fw = max(2.0 / min(u_resolution.x, u_resolution.y), 0.001);
                 float alpha = smoothstep(fw, -fw, d);
                 
                 // Simple lighting/bevel
@@ -226,6 +226,13 @@ const ShaderLibrary = {
     `,
 
     // --- Common Vertex Shader ---
+    vertex: `
+        attribute vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    `,
+
     TechNoise: `
         precision highp float;
         uniform vec2 u_resolution;

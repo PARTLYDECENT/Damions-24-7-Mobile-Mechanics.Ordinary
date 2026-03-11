@@ -320,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Sound Effects ---
     // const hoverSound = new Audio('./videos/impact.mp3'); // Disabled: User reported this file is too large/wrong for hover
+    const hoverSound = new Audio(); // Dummy sound to avoid reference errors
     const clickSound = document.getElementById('hover-audio'); // Use the preloaded element
     // hoverSound.volume = 0.2;
     if (clickSound) clickSound.volume = 0.4;
