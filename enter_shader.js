@@ -58,11 +58,11 @@ if (!enterGl) {
             col = mix(col, vec3(0.05), aperture); // Dark inside aperture
             col = mix(col, metalCol * (0.8 + 0.2 * sin(r * 50.0)), gearRing > 0.0 ? 1.0 : 0.0); // Metallic ring
             
-            // Outer grid lines
-            vec2 gridUV = uv * 10.0 * rot(-uTime * 0.2);
-            vec2 grid = fract(gridUV) - 0.5;
-            float gridLines = smoothstep(0.45, 0.5, abs(grid.x)) + smoothstep(0.45, 0.5, abs(grid.y));
-            col += vec3(0.0, 0.4, 0.6) * gridLines * 0.2 * smoothstep(0.4, 0.6, r);
+            // High-Tech Cartesian grid
+            vec2 gridUV = uv * 6.0;
+            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / 0.05;
+            float gridLines = 1.0 - min(grid.x, grid.y);
+            col += vec3(0.0, 0.6, 1.0) * smoothstep(0.9, 1.0, gridLines) * 0.25 * (1.0 - r);
             
             // White out on max warp
             col = mix(col, vec3(1.0), smoothstep(4.0, 5.0, uWarp));

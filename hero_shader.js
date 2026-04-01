@@ -99,10 +99,10 @@ if (!heroGl) {
                 // Update Uniforms
                 heroGl.uniform2f(resolutionLoc, heroCanvas.width, heroCanvas.height);
                 heroGl.uniform1f(timeLoc, time);
-                // Hero Color: Mechanic blue/grey
-                heroGl.uniform3f(colorLoc, 0.2, 0.4, 0.6);
+                // Hero Color: Dynamic High-Tech Cyan (Reverted)
+                heroGl.uniform3f(colorLoc, 0.0, 0.6, 0.8);
                 heroGl.uniform2f(mouseLoc, mouseX, mouseY);
-                heroGl.uniform1f(speedLoc, 0.2);
+                heroGl.uniform1f(speedLoc, 0.15);
 
                 heroGl.drawArrays(heroGl.TRIANGLE_STRIP, 0, 4);
 

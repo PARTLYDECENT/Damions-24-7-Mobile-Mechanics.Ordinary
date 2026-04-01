@@ -80,10 +80,17 @@ const ShaderLibrary = {
                 col = mix(col, gearCol, alpha);
             }
             
-            // Background grid
-            vec2 grid = fract(uv * 10.0) - 0.5;
-            float gridLines = smoothstep(0.45, 0.5, abs(grid.x)) + smoothstep(0.45, 0.5, abs(grid.y));
-            col += u_color * gridLines * 0.1 * (1.0 - length(uv));
+            // Background grid - ENHANCED
+            vec2 gridUV = uv * 8.0;
+            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / 0.05;
+            float gridLines = 1.0 - min(grid.x, grid.y);
+            gridLines = smoothstep(0.0, 1.0, gridLines);
+            col += u_color * gridLines * 0.15 * (1.0 - length(uv));
+            
+            // Primary Cartesian Grid
+            vec2 cartesian = abs(fract(uv * 2.0 - 0.5) - 0.5) / 0.01;
+            float line = 1.0 - min(cartesian.x, cartesian.y);
+            col += vec3(0.0, 1.0, 1.0) * smoothstep(0.95, 1.0, line) * 0.1;
 
             gl_FragColor = vec4(col, 1.0);
         }
@@ -172,6 +179,11 @@ const ShaderLibrary = {
             // Punch holes
             vec3 col = mix(vec3(0.02), metal, hole);
             
+            // Cartesian Overlay
+            vec2 cartesian = abs(fract(uv * 4.0 - 0.5) - 0.5) / 0.02;
+            float line = 1.0 - min(cartesian.x, cartesian.y);
+            col += vec3(0.0, 0.8, 1.0) * smoothstep(0.9, 1.0, line) * 0.2;
+
             // Sweep highlight
             float sweep = sin(uv.x * 5.0 + uv.y * 5.0 - t * 2.0);
             col += smoothstep(0.9, 1.0, sweep) * hole * 0.5;
@@ -218,6 +230,12 @@ const ShaderLibrary = {
             // Background metal
             col = mix(vec3(0.2) * u_color, col, shape);
             
+            // Cartesian Overlay
+            vec2 gridUV = uv * 4.0;
+            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / 0.02;
+            float gridLines = 1.0 - min(grid.x, grid.y);
+            col += vec3(0.0, 1.0, 1.0) * smoothstep(0.95, 1.0, gridLines) * 0.15;
+
             // Dark vignette
             col *= 1.0 - length(uv) * 0.4;
 
@@ -1128,6 +1146,89 @@ const ShaderLibrary = {
             col.b += 0.2 / abs(sin(uv.y * 2.0 - t));
             
             gl_FragColor = vec4(col * 0.3, 1.0); // Soften the burn
+        }
+    `,
+
+    // --- Advanced 3D Grid (Infinite Tech Plane) ---
+    AdvancedGrid3D: `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec3 u_color;
+        uniform float u_speed;
+        uniform vec2 u_mouse;
+
+        mat2 rot(float a) {
+            float s = sin(a), c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            float t = u_time * u_speed;
+            
+            // Camera setup - moving forward
+            vec3 ro = vec3(0.0, 1.0, -t * 8.0);
+            vec3 rd = normalize(vec3(uv, 1.0));
+            
+            // Perspective Tilt + Mouse Interaction
+            rd.yz *= rot(0.6 + (u_mouse.y - 0.5) * 0.2);
+            rd.xz *= rot((u_mouse.x - 0.5) * 0.3);
+
+            // Ray-plane intersection
+            float dist = ro.y / -rd.y;
+            vec3 col = vec3(0.0);
+            
+            if (dist > 0.0 && dist < 120.0) {
+                vec3 p = ro + rd * dist;
+                
+                // Primary Structural Grid
+                vec2 g1 = abs(fract(p.xz * 0.4 - 0.5) - 0.5) / (0.015 * dist);
+                float line1 = 1.0 - min(g1.x, g1.y);
+                float grid1 = smoothstep(0.0, 1.0, line1);
+                
+                // Secondary Micro-Grid
+                vec2 g2 = abs(fract(p.xz * 2.0 - 0.5) - 0.5) / (0.005 * dist);
+                float line2 = 1.0 - min(g2.x, g2.y);
+                float grid2 = smoothstep(0.0, 1.0, line2) * 0.4;
+                
+                // Tertiary Data Stream Grid
+                vec2 g3 = abs(fract(p.xz * 10.0 - 0.5) - 0.5) / (0.002 * dist);
+                float line3 = 1.0 - min(g3.x, g3.y);
+                float grid3 = smoothstep(0.0, 1.0, line3) * 0.2;
+                
+                // Atmospheric Falloff
+                float fog = exp(-dist * 0.025);
+                
+                // Combine Grids with Amber Bloom
+                float finalGrid = (grid1 + grid2 + grid3) * fog;
+                col = u_color * finalGrid;
+                
+                // Volumetric Nodes / Intersections
+                float nodes = sin(p.x * 0.8) * sin(p.z * 0.8);
+                nodes = pow(max(0.0, nodes), 20.0) * abs(sin(t * 1.5 + p.x));
+                col += vec3(1.0, 0.8, 0.2) * nodes * fog * 0.8;
+                
+                // Moving Scanlines
+                float scan = smoothstep(0.9, 1.0, sin(p.z * 0.1 - t * 2.0));
+                col += u_color * scan * fog * 0.3;
+                
+                // Floor Glow
+                col += u_color * 0.05 * fog;
+            }
+            
+            // Horizon Bloom / Atmosphere
+            float horizon = smoothstep(0.0, -0.2, rd.y);
+            col += u_color * horizon * 0.4 * exp(-abs(uv.x) * 2.0);
+            
+            // Digital "Interference" at top
+            float noise = fract(sin(dot(uv + t, vec2(12.9898, 78.233))) * 43758.5453);
+            col += u_color * 0.02 * noise * (1.0 - uv.y);
+            
+            // Vignette for focus
+            col *= 1.5 - length(uv);
+
+            gl_FragColor = vec4(col, 1.0);
         }
     `
 };
