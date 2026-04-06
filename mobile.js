@@ -38,6 +38,14 @@
         style.textContent = `
         /* ═══ MOBILE DRAWER NAV ═══ */
         @media (max-width: 1024px) {
+            .header {
+                z-index: 100000 !important;
+            }
+            body.drawer-open .rolling-banner {
+                opacity: 0 !important;
+                pointer-events: none !important;
+                z-index: -10 !important;
+            }
             /* Override the default nav-links behavior */
             .nav-links {
                 display: none !important;
@@ -638,6 +646,7 @@
             navLinks.classList.add('mobile-open');
             overlay.classList.add('visible');
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('drawer-open');
             newToggle.textContent = '✕';
         }
 
@@ -645,6 +654,7 @@
             navLinks.classList.remove('mobile-open');
             overlay.classList.remove('visible');
             document.body.style.overflow = '';
+            document.body.classList.remove('drawer-open');
             newToggle.textContent = '☰';
         }
 
