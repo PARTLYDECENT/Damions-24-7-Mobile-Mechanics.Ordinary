@@ -596,6 +596,85 @@ document.addEventListener('DOMContentLoaded', () => {
         const dummyAudio = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
         hoverSound.src = dummyAudio;
     }
+
+    // --- Dynamic Products Dropdown Logic ---
+    function populateProductsDropdown() {
+        const dropdownContent = document.getElementById('products-dropdown-content');
+        if (!dropdownContent) return;
+
+        // Base products that should always exist (fallback)
+        const baseProducts = [
+            { name: 'Homestead 1', path: 'Products/Homestead1.html' }
+        ];
+
+        // Format names (e.g., homestead1.html -> Homestead 1)
+        function formatName(filename) {
+            return filename
+                .replace('.html', '')
+                .replace(/([a-z])([0-9])/g, '$1 $2') // Add space before numbers
+                .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+                .trim()
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        async function fetchProducts() {
+            try {
+                // Try to get a directory listing (works on most dev servers)
+                const response = await fetch('Products/');
+                if (!response.ok) throw new Error('Directory listing not available');
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
+
+                const productFiles = links
+                    .map(link => link.getAttribute('href'))
+                    .filter(href => href && href.endsWith('.html') && !href.includes('index.html'))
+                    .map(file => {
+                        const filename = decodeURIComponent(file.split('/').pop());
+                        return {
+                            name: formatName(filename),
+                            path: `Products/${filename}`
+                        };
+                    });
+
+                if (productFiles.length > 0) {
+                    renderProducts(productFiles);
+                } else {
+                    renderProducts(baseProducts);
+                }
+            } catch (error) {
+                console.warn("Could not fetch Products directory dynamically, using fallback.", error);
+                renderProducts(baseProducts);
+            }
+        }
+
+        function renderProducts(products) {
+            // Remove duplicates (by path)
+            const uniqueProducts = [];
+            const seen = new Set();
+            products.forEach(p => {
+                const fullPath = p.path.startsWith('Products/') ? p.path : `Products/${p.path}`;
+                if (!seen.has(fullPath)) {
+                    seen.add(fullPath);
+                    uniqueProducts.push({ ...p, path: fullPath });
+                }
+            });
+
+            if (uniqueProducts.length > 0) {
+                dropdownContent.innerHTML = uniqueProducts
+                    .map(p => `<a href="${p.path}">${p.name}</a>`)
+                    .join('');
+            }
+        }
+
+        fetchProducts();
+    }
+
+    populateProductsDropdown();
 });
 
 // --- FAQ Accordion ---

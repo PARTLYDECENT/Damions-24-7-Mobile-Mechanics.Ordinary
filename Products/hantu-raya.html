@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hantu-Raya Exoskeletal 3D Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #111; color: white; font-family: sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; }
+        .interactive { pointer-events: auto; }
+        
+        /* Marquee Styles */
+        .marquee-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            background: rgba(255, 68, 0, 0.85); /* Match the chassis orange */
+            border-top: 2px solid #ff8800;
+            color: #111;
+            padding: 8px 0;
+            z-index: 20;
+            font-weight: 900;
+            font-size: 1.25rem;
+            letter-spacing: 0.3em;
+            pointer-events: none;
+            box-shadow: 0 -4px 15px rgba(255, 68, 0, 0.4);
+        }
+        .marquee-text {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 12s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="marquee-container">
+        <div class="marquee-text">
+            /// HANTU-RAYA EXOSKELETAL CONCEPT /// EXPERIMENTAL TUBE CHASSIS /// PROJECT HANTU-RAYA /// V-TWIN POWERED ///
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="interactive max-w-md bg-black/60 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl">
+            <h1 class="text-2xl font-bold text-orange-500 mb-2">Hantu-Raya Exoskeletal Concept</h1>
+            <p class="text-sm text-gray-300 mb-4">Featuring a true structural subframe, A-arm suspension, and heavily triangulated body-tubes.</p>
+            
+            <div class="space-y-2 text-xs text-gray-400">
+                <p><strong class="text-white">Left Click + Drag:</strong> Rotate Camera</p>
+                <p><strong class="text-white">Scroll Wheel:</strong> Zoom In/Out</p>
+            </div>
+
+            <div class="mt-6 flex space-x-3">
+                <button id="btn-autorotate" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg">
+                    Pause Rotation
+                </button>
+            </div>
+        </div>
+        
+        <div class="text-right text-xs text-gray-500 pb-10 pr-2">
+            Engineered with Three.js
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        window.onload = function() {
+            init3DScene();
+        };
+
+        function init3DScene() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene Setup
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            scene.fog = new THREE.Fog(0x1a1a1a, 4, 20);
+
+            // Camera Setup
+            const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            
+            // Renderer Setup
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(5, 10, 7);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 5;
+            dirLight.shadow.camera.bottom = -5;
+            dirLight.shadow.camera.left = -5;
+            dirLight.shadow.camera.right = 5;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.PointLight(0xff8800, 0.6, 10);
+            fillLight.position.set(-5, 2, -5);
+            scene.add(fillLight);
+
+            // Environment
+            const gridHelper = new THREE.GridHelper(20, 40, 0x333333, 0x1a1a1a);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            const planeGeo = new THREE.PlaneGeometry(30, 30);
+            const planeMat = new THREE.MeshStandardMaterial({ color: 0x0f0f0f, roughness: 0.9, metalness: 0.1 });
+            const plane = new THREE.Mesh(planeGeo, planeMat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.receiveShadow = true;
+            scene.add(plane);
+
+            // --- CHASSIS GENERATION ---
+            const chassisGroup = new THREE.Group();
+            scene.add(chassisGroup);
+
+            // Materials
+            const primaryTubeMat = new THREE.MeshStandardMaterial({ color: 0xff4400, roughness: 0.3, metalness: 0.5 });
+            const secondaryTubeMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.4, metalness: 0.4 });
+            const subframeMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.7, metalness: 0.6 });
+            const steelMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.8 });
+            const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1 });
+            const shockMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, roughness: 0.2, metalness: 0.8 }); // Coilover blue
+
+            const thick = 0.035; // Main roll hoops and subframe rails
+            const thin = 0.02;   // Triangulation
+
+            // Tube generation helper
+            function createTube(p1, p2, material, radius) {
+                const distance = p1.distanceTo(p2);
+                const geometry = new THREE.CylinderGeometry(radius, radius, distance, 10);
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(p1).lerp(p2, 0.5);
+                mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                chassisGroup.add(mesh);
+                return mesh;
+            }
+
+            // --- NODE COORDINATES ---
+            // Widths
+            const wS = 0.35; // Subframe half-width (narrow)
+            const wB = 0.75; // Beltline half-width (wide for passengers)
+            const wR = 0.50; // Roof half-width (tapered)
+
+            // Heights
+            const y0 = 0.15; // Belly pan
+            const y1 = 0.40; // Subframe top / Floor
+            const y2 = 0.95; // Beltline / Shoulders
+            const y3 = 1.55; // Roof
+
+            // Lengths (Z-axis, positive is front)
+            const zN = 1.5;   // Nose
+            const zFA = 1.1;  // Front Axle
+            const zD = 1.25;  // Dash/Cowl
+            const zBP = 0.1;  // B-Pillar (Behind seats)
+            const zC = -0.4;  // Cradle start
+            const zRA = -1.0; // Rear Axle
+            const zT = -1.4;  // Tail
+
+            const n = {
+                // L0: BELLY PAN (Subframe Bottom)
+                l0_n_l: new THREE.Vector3(-wS, y0, zN),   l0_n_r: new THREE.Vector3(wS, y0, zN),
+                l0_fa_l: new THREE.Vector3(-wS, y0, zFA), l0_fa_r: new THREE.Vector3(wS, y0, zFA),
+                l0_bp_l: new THREE.Vector3(-wS, y0, zBP), l0_bp_r: new THREE.Vector3(wS, y0, zBP),
+                l0_ra_l: new THREE.Vector3(-wS, y0, zRA), l0_ra_r: new THREE.Vector3(wS, y0, zRA),
+                l0_t_l: new THREE.Vector3(-wS, y0, zT),   l0_t_r: new THREE.Vector3(wS, y0, zT),
+
+                // L1: FLOOR (Subframe Top)
+                l1_n_l: new THREE.Vector3(-wS, y1, zN),   l1_n_r: new THREE.Vector3(wS, y1, zN),
+                l1_fa_l: new THREE.Vector3(-wS, y1, zFA), l1_fa_r: new THREE.Vector3(wS, y1, zFA),
+                l1_d_l: new THREE.Vector3(-wS, y1, zD),   l1_d_r: new THREE.Vector3(wS, y1, zD),
+                l1_bp_l: new THREE.Vector3(-wS, y1, zBP), l1_bp_r: new THREE.Vector3(wS, y1, zBP),
+                l1_c_l: new THREE.Vector3(-wS, y1, zC),   l1_c_r: new THREE.Vector3(wS, y1, zC),
+                l1_ra_l: new THREE.Vector3(-wS, y1, zRA), l1_ra_r: new THREE.Vector3(wS, y1, zRA),
+                l1_t_l: new THREE.Vector3(-wS, y1, zT),   l1_t_r: new THREE.Vector3(wS, y1, zT),
+
+                // L2: BELTLINE (The "Body" wide section)
+                l2_n_l: new THREE.Vector3(-wS+0.1, y2, zN-0.1), l2_n_r: new THREE.Vector3(wS-0.1, y2, zN-0.1), // Nose taper
+                l2_d_l: new THREE.Vector3(-wB, y2, zD),         l2_d_r: new THREE.Vector3(wB, y2, zD),         // Wide dash
+                l2_bp_l: new THREE.Vector3(-wB, y2, zBP),       l2_bp_r: new THREE.Vector3(wB, y2, zBP),       // Wide B-pillar
+                l2_c_l: new THREE.Vector3(-wS-0.1, y2, zC),     l2_c_r: new THREE.Vector3(wS+0.1, y2, zC),     // Taper back to engine
+                l2_t_l: new THREE.Vector3(-wS, y2, zT),         l2_t_r: new THREE.Vector3(wS, y2, zT),         // Tail top
+
+                // L3: ROOF
+                l3_f_l: new THREE.Vector3(-wR, y3, zD),   l3_f_r: new THREE.Vector3(wR, y3, zD),
+                l3_r_l: new THREE.Vector3(-wR, y3, zBP),  l3_r_r: new THREE.Vector3(wR, y3, zBP),
+            };
+
+            // --- BUILD THE CHASSIS ---
+
+            // 1. Subframe Box (Darker grey, thick tubes)
+            const sub = [
+                ['l0_n_l', 'l0_fa_l'], ['l0_fa_l', 'l0_bp_l'], ['l0_bp_l', 'l0_ra_l'], ['l0_ra_l', 'l0_t_l'],
+                ['l0_n_r', 'l0_fa_r'], ['l0_fa_r', 'l0_bp_r'], ['l0_bp_r', 'l0_ra_r'], ['l0_ra_r', 'l0_t_r'],
+                ['l1_n_l', 'l1_fa_l'], ['l1_fa_l', 'l1_d_l'],  ['l1_d_l', 'l1_bp_l'],  ['l1_bp_l', 'l1_c_l'], ['l1_c_l', 'l1_ra_l'], ['l1_ra_l', 'l1_t_l'],
+                ['l1_n_r', 'l1_fa_r'], ['l1_fa_r', 'l1_d_r'],  ['l1_d_r', 'l1_bp_r'],  ['l1_bp_r', 'l1_c_r'], ['l1_c_r', 'l1_ra_r'], ['l1_ra_r', 'l1_t_r'],
+                // Subframe Crossmembers
+                ['l0_n_l', 'l0_n_r'], ['l0_fa_l', 'l0_fa_r'], ['l0_bp_l', 'l0_bp_r'], ['l0_ra_l', 'l0_ra_r'], ['l0_t_l', 'l0_t_r'],
+                ['l1_n_l', 'l1_n_r'], ['l1_d_l', 'l1_d_r'],   ['l1_bp_l', 'l1_bp_r'], ['l1_c_l', 'l1_c_r'],   ['l1_t_l', 'l1_t_r'],
+                // Subframe Uprights
+                ['l0_n_l', 'l1_n_l'], ['l0_fa_l', 'l1_fa_l'], ['l0_bp_l', 'l1_bp_l'], ['l0_ra_l', 'l1_ra_l'], ['l0_t_l', 'l1_t_l'],
+                ['l0_n_r', 'l1_n_r'], ['l0_fa_r', 'l1_fa_r'], ['l0_bp_r', 'l1_bp_r'], ['l0_ra_r', 'l1_ra_r'], ['l0_t_r', 'l1_t_r'],
+            ];
+            sub.forEach(pair => createTube(n[pair[0]], n[pair[1]], subframeMat, thick));
+
+            // Subframe Triangulation (Thin)
+            const subTri = [
+                ['l0_fa_l', 'l1_d_l'], ['l0_bp_l', 'l1_c_l'], ['l0_ra_l', 'l1_t_l'],
+                ['l0_fa_r', 'l1_d_r'], ['l0_bp_r', 'l1_c_r'], ['l0_ra_r', 'l1_t_r'],
+            ];
+            subTri.forEach(pair => createTube(n[pair[0]], n[pair[1]], subframeMat, thin));
+
+            // 2. Upper Body Cage (Orange, thick tubes forming the silhouette)
+            const bodyMain = [
+                // Beltline ring
+                ['l2_n_l', 'l2_d_l'], ['l2_d_l', 'l2_bp_l'], ['l2_bp_l', 'l2_c_l'], ['l2_c_l', 'l2_t_l'],
+                ['l2_n_r', 'l2_d_r'], ['l2_d_r', 'l2_bp_r'], ['l2_bp_r', 'l2_c_r'], ['l2_c_r', 'l2_t_r'],
+                // Beltline crossmembers
+                ['l2_n_l', 'l2_n_r'], ['l2_d_l', 'l2_d_r'], ['l2_bp_l', 'l2_bp_r'], ['l2_c_l', 'l2_c_r'], ['l2_t_l', 'l2_t_r'],
+                // Roof ring
+                ['l3_f_l', 'l3_r_l'], ['l3_f_r', 'l3_r_r'], ['l3_f_l', 'l3_f_r'], ['l3_r_l', 'l3_r_r'],
+                // Uprights (Floor to Beltline)
+                ['l1_n_l', 'l2_n_l'], ['l1_d_l', 'l2_d_l'], ['l1_bp_l', 'l2_bp_l'], ['l1_c_l', 'l2_c_l'], ['l1_t_l', 'l2_t_l'],
+                ['l1_n_r', 'l2_n_r'], ['l1_d_r', 'l2_d_r'], ['l1_bp_r', 'l2_bp_r'], ['l1_c_r', 'l2_c_r'], ['l1_t_r', 'l2_t_r'],
+                // Pillars (Beltline to Roof)
+                ['l2_d_l', 'l3_f_l'], ['l2_d_r', 'l3_f_r'], // A-Pillars
+                ['l2_bp_l', 'l3_r_l'], ['l2_bp_r', 'l3_r_r'] // B-Pillars
+            ];
+            bodyMain.forEach(pair => createTube(n[pair[0]], n[pair[1]], primaryTubeMat, thick));
+
+            // 3. Body Triangulation (Orange, thin tubes - gives it the Exocet look)
+            const bodyTri = [
+                // Front Nose V-Brace
+                ['l2_n_l', 'l1_n_r'], ['l2_n_r', 'l1_n_l'],
+                // Door X-Braces
+                ['l1_d_l', 'l2_bp_l'], ['l2_d_l', 'l1_bp_l'],
+                ['l1_d_r', 'l2_bp_r'], ['l2_d_r', 'l1_bp_r'],
+                // Rear Cradle X-Braces
+                ['l1_c_l', 'l2_t_l'], ['l2_c_l', 'l1_t_l'],
+                ['l1_c_r', 'l2_t_r'], ['l2_c_r', 'l1_t_r'],
+                // Windshield V-Brace
+                ['l3_f_l', new THREE.Vector3(0, y2, zD)], ['l3_f_r', new THREE.Vector3(0, y2, zD)],
+                // Roof X-Brace
+                ['l3_f_l', 'l3_r_r'], ['l3_f_r', 'l3_r_l'],
+                // Behind seat diagonal
+                ['l2_bp_l', 'l1_bp_r']
+            ];
+            bodyTri.forEach(pair => {
+                const p1 = typeof pair[0] === 'string' ? n[pair[0]] : pair[0];
+                const p2 = typeof pair[1] === 'string' ? n[pair[1]] : pair[1];
+                createTube(p1, p2, secondaryTubeMat, thin);
+            });
+
+
+            // --- WHEELS & SUSPENSION (A-ARMS) ---
+            function createSuspensionWheel(x, z, isFront) {
+                const group = new THREE.Group();
+                const wY = 0.3; // Wheel center height
+                group.position.set(x, wY, z);
+
+                // Tire
+                const tireGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.28, 32);
+                const tireMesh = new THREE.Mesh(tireGeo, blackMaterial);
+                tireMesh.rotation.z = Math.PI / 2;
+                tireMesh.castShadow = true;
+                group.add(tireMesh);
+
+                // Rim/Hub
+                const hubGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.3, 16);
+                const hubMesh = new THREE.Mesh(hubGeo, steelMaterial);
+                hubMesh.rotation.z = Math.PI / 2;
+                group.add(hubMesh);
+                chassisGroup.add(group);
+
+                // A-Arms and Shocks Setup (Corrected Geometry)
+                const sign = x > 0 ? 1 : -1;
+                const subX = wS * sign;
+                
+                // Wheel mount points (Geometric correction)
+                const wLower = new THREE.Vector3(x - (0.1*sign), wY - 0.1, z); // Lower ball joint
+                const wUpper = new THREE.Vector3(x - (0.1*sign), wY + 0.1, z); // Upper ball joint
+
+                // Lower A-Arm (to L0 subframe)
+                createTube(wLower, new THREE.Vector3(subX, y0, z + 0.15), steelMaterial, 0.015);
+                createTube(wLower, new THREE.Vector3(subX, y0, z - 0.15), steelMaterial, 0.015);
+
+                // Upper A-Arm (to L1 subframe)
+                createTube(wUpper, new THREE.Vector3(subX, y1, z + 0.12), steelMaterial, 0.015);
+                createTube(wUpper, new THREE.Vector3(subX, y1, z - 0.12), steelMaterial, 0.015);
+
+                // Coilover Shock (from lower arm up to beltline rail directly above wheel)
+                const shockTopX = sign * (isFront ? wB : wS + 0.05); // Adjust for body taper
+                createTube(
+                    new THREE.Vector3(x - (0.15*sign), wY - 0.05, z), // Lower shock mount
+                    new THREE.Vector3(shockTopX, y2, z - (isFront ? 0 : 0.1)), // Top shock mount 
+                    shockMat, 
+                    0.03
+                );
+            }
+
+            // Push wheels out wide past the subframe
+            createSuspensionWheel(-0.85, zFA, true);  // Front Left
+            createSuspensionWheel(0.85, zFA, true);   // Front Right
+            createSuspensionWheel(-0.85, zRA, false); // Rear Left
+            createSuspensionWheel(0.85, zRA, false);  // Rear Right
+
+
+            // --- ACCESSORIES & ENGINE ---
+            // Radiator in the nose
+            const radGeo = new THREE.BoxGeometry(0.5, 0.3, 0.05);
+            const radMat = new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8});
+            const radiator = new THREE.Mesh(radGeo, radMat);
+            radiator.position.set(0, y1 + 0.15, zN - 0.05);
+            radiator.rotation.x = -0.1;
+            chassisGroup.add(radiator);
+
+            // Seats (Buckets)
+            function createSeat(x) {
+                const seatGroup = new THREE.Group();
+                // Moved seat backwards heavily for a realistic driving position
+                seatGroup.position.set(x, y1 + 0.05, zD - 0.65); 
+                
+                const bottomGeo = new THREE.BoxGeometry(0.45, 0.1, 0.45);
+                const bottomMat = new THREE.MeshStandardMaterial({color: 0x1a1a1a, roughness: 0.9});
+                const bottom = new THREE.Mesh(bottomGeo, bottomMat);
+                bottom.position.y = 0.05;
+                seatGroup.add(bottom);
+
+                const backGeo = new THREE.BoxGeometry(0.45, 0.65, 0.1);
+                const back = new THREE.Mesh(backGeo, bottomMat);
+                back.position.set(0, 0.4, -0.15);
+                back.rotation.x = -0.15;
+                seatGroup.add(back);
+
+                chassisGroup.add(seatGroup);
+            }
+            createSeat(-0.38); // Driver (LHD)
+            createSeat(0.38);  // Passenger
+
+            // Steering Wheel & Column (Rebuilt Geometry)
+            const steeringGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 24);
+            const steeringMesh = new THREE.Mesh(steeringGeo, blackMaterial);
+            const swZ = zD - 0.45; // Pulled back towards the driver seat
+            const swY = y2 + 0.1;  // Height
+            steeringMesh.position.set(-0.38, swY, swZ);
+            steeringMesh.rotation.x = -Math.PI / 5; // Better tilt angle
+            chassisGroup.add(steeringMesh);
+
+            // Connect column explicitly from chassis dash up to the steering wheel hub
+            createTube(
+                new THREE.Vector3(-0.38, y1 + 0.1, zD - 0.1), // Base mounted near lower dash
+                new THREE.Vector3(-0.38, swY - 0.02, swZ + 0.05), // Ends directly at the steering wheel
+                steelMaterial,
+                0.018
+            );
+
+            // --- V-TWIN ENGINE (Repositioned into Subframe Cradle) ---
+            const engineGroup = new THREE.Group();
+            engineGroup.position.set(0, y1 + 0.1, -0.85); // Tucked into the new rear subframe
+
+            const crankcaseGeo = new THREE.BoxGeometry(0.4, 0.25, 0.35);
+            const crankcaseMat = new THREE.MeshStandardMaterial({color: 0x333333, roughness: 0.8, metalness: 0.5});
+            const crankcase = new THREE.Mesh(crankcaseGeo, crankcaseMat);
+            crankcase.castShadow = true;
+            engineGroup.add(crankcase);
+
+            const transGeo = new THREE.BoxGeometry(0.3, 0.2, 0.3);
+            const trans = new THREE.Mesh(transGeo, crankcaseMat);
+            trans.position.set(0, -0.02, -0.3);
+            engineGroup.add(trans);
+
+            const cylGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.25, 16);
+            const headGeo = new THREE.BoxGeometry(0.26, 0.12, 0.26);
+            const finMat = new THREE.MeshStandardMaterial({color: 0xaaaaaa, roughness: 0.6, metalness: 0.7});
+
+            const cyl1 = new THREE.Group();
+            const c1Body = new THREE.Mesh(cylGeo, finMat);
+            c1Body.position.y = 0.125;
+            const c1Head = new THREE.Mesh(headGeo, crankcaseMat);
+            c1Head.position.y = 0.31;
+            cyl1.add(c1Body, c1Head);
+            cyl1.rotation.x = Math.PI / 7;
+            cyl1.position.set(0, 0.1, 0.05);
+            engineGroup.add(cyl1);
+
+            const cyl2 = new THREE.Group();
+            const c2Body = new THREE.Mesh(cylGeo, finMat);
+            c2Body.position.y = 0.125;
+            const c2Head = new THREE.Mesh(headGeo, crankcaseMat);
+            c2Head.position.y = 0.31;
+            cyl2.add(c2Body, c2Head);
+            cyl2.rotation.x = -Math.PI / 7;
+            cyl2.position.set(0, 0.1, -0.05);
+            engineGroup.add(cyl2);
+
+            const intakeGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16);
+            const intake = new THREE.Mesh(intakeGeo, new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9}));
+            intake.rotation.z = Math.PI / 2;
+            intake.position.set(0.25, 0.2, 0);
+            engineGroup.add(intake);
+
+            const twinExhaustGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.6, 16);
+            const ex1 = new THREE.Mesh(twinExhaustGeo, steelMaterial);
+            ex1.position.set(0.15, 0.1, -0.3);
+            ex1.rotation.x = Math.PI / 2;
+            engineGroup.add(ex1);
+
+            const ex2 = new THREE.Mesh(twinExhaustGeo, steelMaterial);
+            ex2.position.set(-0.15, 0.1, -0.3);
+            ex2.rotation.x = Math.PI / 2;
+            engineGroup.add(ex2);
+
+            chassisGroup.add(engineGroup);
+
+            // --- CAMERA CONTROLS ---
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            let lon = 135; // Start angled viewing front-left
+            let lat = 15; // Lower angle to show off suspension
+            let radius = 5.5;
+            let autoRotate = true;
+
+            const updateCamera = () => {
+                lat = Math.max(-89, Math.min(89, lat));
+                const phi = THREE.MathUtils.degToRad(90 - lat);
+                const theta = THREE.MathUtils.degToRad(lon);
+
+                camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
+                camera.position.y = radius * Math.cos(phi);
+                camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
+                camera.lookAt(0, 0.6, 0); // Look slightly higher
+            };
+
+            window.addEventListener('mousedown', (e) => {
+                if(e.target.tagName !== 'BUTTON') {
+                    isDragging = true;
+                    autoRotate = false;
+                    document.getElementById('btn-autorotate').innerText = "Resume Rotation";
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaMove = { x: e.offsetX - previousMousePosition.x, y: e.offsetY - previousMousePosition.y };
+                    lon -= deltaMove.x * 0.5;
+                    lat += deltaMove.y * 0.5;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mouseleave', () => { isDragging = false; });
+            window.addEventListener('wheel', (e) => {
+                radius += e.deltaY * 0.005;
+                radius = Math.max(2.5, Math.min(12, radius));
+            });
+
+            document.getElementById('btn-autorotate').addEventListener('click', (e) => {
+                autoRotate = !autoRotate;
+                e.target.innerText = autoRotate ? "Pause Rotation" : "Resume Rotation";
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            updateCamera();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                if (autoRotate && !isDragging) lon += 0.2;
+                updateCamera();
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

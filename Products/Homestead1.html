@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Shell Production Cost</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #ui-layer {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .mode-btn {
+            color: #e2e8f0;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .mode-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .mode-btn.active {
+            background: #ef4444; /* Industrial red */
+            color: white;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            border-color: #f87171;
+        }
+        #info-panel {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid #ef4444;
+            color: white;
+            max-width: 320px;
+        }
+        
+        #feature-panel {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 200px;
+        }
+        .feature-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            user-select: none;
+        }
+        .feature-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .feature-toggle.active {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #475569;
+            transition: background 0.2s;
+        }
+        .feature-toggle.active .indicator {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+        }
+        
+        @media (max-width: 768px) {
+            #info-panel { display: none; }
+            #feature-panel { top: auto; bottom: 6rem; right: 50%; transform: translateX(50%); width: 90%; max-width: 350px; flex-direction: row; flex-wrap: wrap; justify-content: center;}
+            .feature-toggle { flex: 1 1 40%; }
+        }
+
+        /* Manufacturer Dashboard Styles */
+        #cost-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 100;
+            background: #1e293b; /* Dark industrial UI */
+            color: #f8fafc;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+            width: 95%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 100vw rgba(0,0,0,0.8);
+            font-family: 'Inter', sans-serif;
+        }
+        #cost-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        
+        #cost-modal::-webkit-scrollbar { width: 8px; }
+        #cost-modal::-webkit-scrollbar-track { background: #0f172a; }
+        #cost-modal::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        #cost-modal::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="info-panel">
+        <div class="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">Internal Use Only</div>
+        <h1 class="text-xl font-bold mb-2 text-white">Barebones 20x20 Shell</h1>
+        <p class="text-sm text-slate-300 mb-4">Raw structural manufacturing envelope. No interior fixtures, bare minimum components.</p>
+        
+        <button onclick="toggleCostModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded transition-colors flex justify-center items-center gap-2 border border-slate-600">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            View Production BOM
+        </button>
+    </div>
+
+    <!-- Feature Panel -->
+    <div id="feature-panel">
+        <div class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 px-2">Diagnostics</div>
+        <div class="feature-toggle active" id="tgl-rotate" onclick="toggleFeature('rotate')">
+            <span>Auto-Rotate</span><div class="indicator"></div>
+        </div>
+        <div class="feature-toggle" id="tgl-explode" onclick="toggleFeature('explode')">
+            <span>Explode Seam</span><div class="indicator"></div>
+        </div>
+        <div class="feature-toggle" id="tgl-roof" onclick="toggleFeature('roof')">
+            <span>Lift Roof</span><div class="indicator"></div>
+        </div>
+        <div class="feature-toggle" id="tgl-night" onclick="toggleFeature('night')">
+            <span>Lighting Test</span><div class="indicator"></div>
+        </div>
+    </div>
+
+    <div id="ui-layer" style="align-items: center;">
+        <button id="btn-solid" class="mode-btn active" onclick="setMode('solid')">Solid Render</button>
+        <button id="btn-wireframe" class="mode-btn" onclick="setMode('wireframe')">Wireframe</button>
+        <button id="btn-blueprint" class="mode-btn" onclick="setMode('blueprint')">CAD Blueprint</button>
+        
+        <div class="w-px h-6 bg-slate-500/50 hidden sm:block mx-1"></div>
+        
+        <!-- Always-Visible BOM Button -->
+        <button onclick="toggleCostModal()" class="mode-btn flex items-center gap-2" style="background-color: #ef4444; color: #fff; font-weight: bold; border-color: #f87171;">
+            Production BOM
+        </button>
+    </div>
+
+    <!-- Factory BOM Modal -->
+    <div id="cost-modal">
+        <button onclick="toggleCostModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <div class="flex flex-col gap-6">
+            <div>
+                <div class="mb-1 text-sm text-red-500 font-bold uppercase tracking-wider">Manufacturer Dashboard</div>
+                <h1 class="text-3xl font-bold text-white mb-2">RAW PRODUCTION COST: 20x20 Shell</h1>
+                <p class="text-slate-400 max-w-3xl">This bill of materials outlines the pure production cost for the raw structure, excluding all interior fixtures, luxury finishes, shipping, and retail markup. Designed for extreme budget manufacturing using raw steel and recycled composites.</p>
+            </div>
+
+            <!-- Factory Cost Breakdown -->
+            <div class="border border-slate-700 rounded bg-slate-800/50 p-6">
+                <div class="flex justify-between items-end mb-4 border-b border-slate-700 pb-4">
+                    <div>
+                        <h3 class="font-bold text-xl text-white">Factory Bill of Materials</h3>
+                        <div class="text-sm text-slate-400">Unit: EXP-2020-RAW</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-slate-400">Target Raw Cost</div>
+                        <div class="text-3xl font-bold text-red-400">$6,850.00</div>
+                    </div>
+                </div>
+
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-700">
+                            <th class="py-2 px-2 font-medium">Material / Component</th>
+                            <th class="py-2 px-2 font-medium hidden sm:table-cell">Specs / Qty</th>
+                            <th class="py-2 px-2 font-medium text-right">Wholesale Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-200">
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            <td class="py-3 px-2 font-medium">Raw Tubular Steel (Skids & Frame)</td>
+                            <td class="py-3 px-2 text-slate-400 hidden sm:table-cell">1.2 Tons @ $1.37/lb</td>
+                            <td class="py-3 px-2 text-right text-white">$1,650.00</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            <td class="py-3 px-2 font-medium">Recycled HDPE Composite Panels</td>
+                            <td class="py-3 px-2 text-slate-400 hidden sm:table-cell">1,400 Sq Ft Raw Sheets</td>
+                            <td class="py-3 px-2 text-right text-white">$1,400.00</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            <td class="py-3 px-2 font-medium">Bulk PVC Windows & Steel Door</td>
+                            <td class="py-3 px-2 text-slate-400 hidden sm:table-cell">Factory direct pallet pricing (5 units)</td>
+                            <td class="py-3 px-2 text-right text-white">$800.00</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            <td class="py-3 px-2 font-medium">Subfloor Plywood & Fasteners</td>
+                            <td class="py-3 px-2 text-slate-400 hidden sm:table-cell">3/4" CDX bulk + Hardware</td>
+                            <td class="py-3 px-2 text-right text-white">$600.00</td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                            <td class="py-3 px-2 font-medium text-blue-300">Factory Labor & Welding</td>
+                            <td class="py-3 px-2 text-slate-400 hidden sm:table-cell">40 Hours @ $60/hr blended rate</td>
+                            <td class="py-3 px-2 text-right text-blue-300">$2,400.00</td>
+                        </tr>
+                        <tr class="bg-slate-900/50">
+                            <td colspan="2" class="py-4 px-2 text-right font-bold text-lg hidden sm:table-cell text-slate-300">TOTAL RAW PRODUCTION COST:</td>
+                            <td class="py-4 px-2 font-bold text-lg block sm:hidden text-slate-300">TOTAL:</td>
+                            <td class="py-4 px-2 text-right font-bold text-xl text-red-400">$6,850.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-right text-xs text-slate-500 mt-2">Cost per Sq. Ft. (Raw Envelope): <b>$17.12 / sq ft.</b></p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button class="bg-slate-700 hover:bg-slate-600 text-white py-2 px-6 rounded font-medium transition-colors border border-slate-500">
+                    Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Configuration & State ---
+        let currentMode = 'solid';
+        const state = {
+            rotate: true,
+            explode: false,
+            roof: false,
+            night: false
+        };
+        
+        const colors = {
+            solid: {
+                bg: 0xe2e8f0,
+                bgNight: 0x0a0a0a,
+                grid: 0x94a3b8,
+                gridNight: 0x1f2937
+            },
+            wireframe: { bg: 0x0a0a0a, mesh: 0xef4444, grid: 0x1f2937 }, // Red wireframe for raw look
+            blueprint: { bg: 0x0c3161, mesh: 0x0c3161, lines: 0xffffff, grid: 0x24558e }
+        };
+
+        const meshes = [];
+        const edges = [];
+        
+        // --- Setup Scene ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(colors.solid.bg);
+        scene.fog = new THREE.Fog(colors.solid.bg, 30, 100);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 20, 35);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
+
+        const leftModuleGroup = new THREE.Group();
+        const rightModuleGroup = new THREE.Group();
+        const roofGroup = new THREE.Group();
+        
+        scene.add(leftModuleGroup);
+        scene.add(rightModuleGroup);
+        scene.add(roofGroup);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true; 
+        controls.autoRotateSpeed = 0.5;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; 
+        controls.minDistance = 10;
+        controls.maxDistance = 100;
+        controls.target.set(10, 0, 10); 
+
+        // --- Lights ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(30, 60, 20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+        
+        // Simple internal construction lights (bare bulbs)
+        const interiorLightL = new THREE.PointLight(0xffedd5, 0, 20); 
+        interiorLightL.position.set(5, 3.5, 10);
+        leftModuleGroup.add(interiorLightL);
+        
+        const interiorLightR = new THREE.PointLight(0xffedd5, 0, 20);
+        interiorLightR.position.set(15, 3.5, 10);
+        rightModuleGroup.add(interiorLightR);
+
+        // --- Floor Grid ---
+        const gridUniforms = {
+            gridColor: { value: new THREE.Color(colors.solid.grid) },
+            fadeDistance: { value: 60.0 },
+            thickness: { value: 0.02 },
+            size: { value: 1.0 }
+        };
+        
+        const customGridMat = new THREE.ShaderMaterial({
+            uniforms: gridUniforms,
+            vertexShader: `
+                varying vec3 vWorldPosition;
+                void main() {
+                    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                    vWorldPosition = worldPosition.xyz;
+                    gl_Position = projectionMatrix * viewMatrix * worldPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vWorldPosition;
+                uniform vec3 gridColor;
+                uniform float fadeDistance;
+                uniform float thickness;
+                uniform float size;
+
+                void main() {
+                    vec2 coord = (vWorldPosition.xz - vec2(10.0, 10.0)) / size;
+                    vec2 grid = abs(fract(coord - 0.5) - 0.5);
+                    vec2 lines = smoothstep(thickness, 0.0, grid);
+                    float lineAlpha = max(lines.x, lines.y);
+                    
+                    float dist = length(vWorldPosition.xz - vec2(10.0, 10.0));
+                    float fade = max(0.0, 1.0 - (dist / fadeDistance));
+                    
+                    vec2 coord5 = (vWorldPosition.xz - vec2(10.0, 10.0)) / 5.0;
+                    vec2 grid5 = abs(fract(coord5 - 0.5) - 0.5);
+                    vec2 lines5 = smoothstep(thickness * 0.3, 0.0, grid5);
+                    float lineAlpha5 = max(lines5.x, lines5.y);
+                    
+                    float finalAlpha = max(lineAlpha * 0.4, lineAlpha5 * 0.9) * fade;
+                    if (finalAlpha < 0.01) discard;
+                    gl_FragColor = vec4(gridColor, finalAlpha);
+                }
+            `,
+            transparent: true,
+            depthWrite: false
+        });
+        
+        const customGrid = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), customGridMat);
+        customGrid.rotation.x = -Math.PI / 2;
+        customGrid.position.y = 0.01;
+        scene.add(customGrid);
+
+        // --- Materials ---
+        const wireframeMaterial = new THREE.MeshBasicMaterial({ color: colors.wireframe.mesh, wireframe: true, transparent: true, opacity: 0.8 });
+        const blueprintOcclusionMaterial = new THREE.MeshBasicMaterial({ color: colors.blueprint.mesh });
+        const lineMaterial = new THREE.LineBasicMaterial({ color: colors.blueprint.lines, linewidth: 1, transparent: true, opacity: 0.9 });
+
+        // Raw/Cheap Materials
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.9, metalness: 0.1 }); // Grey bare HDPE panels
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.8, metalness: 0.2 }); // Galvanized roof 
+        const skidMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.6, metalness: 0.8 }); // Black steel skids
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, roughness: 0.1, metalness: 0.5, transparent: true, opacity: 0.5 }); // Cheap glass
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0.1 }); // White PVC window frames
+        const floorMatIn = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, roughness: 0.9 }); // Raw plywood subfloor
+
+        // Helper to build structural pieces
+        function createPart(w, h, d, x, y, z, material, parent = scene) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData.solidMaterial = material;
+            parent.add(mesh);
+            meshes.push(mesh);
+
+            const edgesGeo = new THREE.EdgesGeometry(geo);
+            const line = new THREE.LineSegments(edgesGeo, lineMaterial);
+            line.position.copy(mesh.position);
+            line.visible = false;
+            parent.add(line);
+            edges.push(line);
+        }
+
+        // --- BAREBONES SHELL GENERATION ---
+        
+        // Steel Skids (Foundation)
+        createPart(19.8, 0.4, 0.4, 5, 0.2, 5, skidMat);
+        createPart(19.8, 0.4, 0.4, 5, 0.2, 15, skidMat);
+        createPart(19.8, 0.4, 0.4, 15, 0.2, 5, skidMat);
+        createPart(19.8, 0.4, 0.4, 15, 0.2, 15, skidMat);
+        createPart(0.4, 0.4, 19.8, 0.2, 0.2, 10, skidMat);
+        createPart(0.4, 0.4, 19.8, 9.8, 0.2, 10, skidMat);
+        createPart(0.4, 0.4, 19.8, 19.8, 0.2, 10, skidMat);
+        
+        // Subfloors
+        createPart(9.6, 0.1, 19.6, 5, 0.45, 10, floorMatIn, leftModuleGroup);
+        createPart(9.6, 0.1, 19.6, 15, 0.45, 10, floorMatIn, rightModuleGroup);
+
+        // Exterior Shell Walls
+        createPart(9.8, 4.5, 19.8, 5, 2.65, 10, wallMat, leftModuleGroup); 
+        createPart(9.8, 4.5, 19.8, 15, 2.65, 10, wallMat, rightModuleGroup); 
+        
+        // Minimal Interior Partition (just for structural support/bathroom division)
+        createPart(0.4, 4.3, 4.0, 5, 2.55, 12.0, wallMat, leftModuleGroup); 
+        createPart(4.0, 4.3, 0.4, 15, 2.55, 8, wallMat, rightModuleGroup); 
+
+        // Basic Flat Roof
+        createPart(20.4, 0.2, 20.4, 10, 4.95, 10, roofMat, roofGroup); 
+
+        // Doors & Windows 
+        createPart(3.2, 3.4, 0.4, 9.8, 2.1, 19.9, frameMat, leftModuleGroup); // Door Frame
+        createPart(2.8, 3.2, 0.5, 9.8, 2.0, 19.95, skidMat, leftModuleGroup); // Basic Steel Door
+
+        createPart(5.2, 3.2, 0.4, 4.5, 2.5, 19.9, frameMat, leftModuleGroup); // Window Frame L
+        createPart(4.8, 2.8, 0.5, 4.5, 2.5, 19.95, glassMat, leftModuleGroup); // Glass L
+
+        createPart(3.2, 3.2, 0.4, 15.5, 2.5, 19.9, frameMat, rightModuleGroup); // Window Frame R
+        createPart(2.8, 2.8, 0.5, 15.5, 2.5, 19.95, glassMat, rightModuleGroup); // Glass R
+
+        createPart(0.4, 1.5, 6.2, 19.9, 3.4, 10, frameMat, rightModuleGroup); // Side Window Frame
+        createPart(0.5, 1.3, 5.8, 19.95, 3.4, 10, glassMat, rightModuleGroup); // Side Window Glass
+
+        createPart(0.4, 3.5, 2.2, 0.1, 2.4, 10, frameMat, leftModuleGroup); // Side Window Frame 2
+        createPart(0.5, 3.3, 1.8, 0.05, 2.4, 10, glassMat, leftModuleGroup); // Side Window Glass 2
+
+        // --- Architectural Dimensions (Blueprint Mode) ---
+        const dimensionsGroup = new THREE.Group();
+        dimensionsGroup.visible = false; 
+        scene.add(dimensionsGroup);
+
+        function makeTextSprite(message) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 128;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.font = "600 36px 'Inter', sans-serif";
+            context.fillStyle = "rgba(255, 255, 255, 0.95)";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+            context.fillText(message, canvas.width / 2, canvas.height / 2);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(10, 2.5, 1);
+            return sprite;
+        }
+
+        function createDimension(p1, p2, label, extDir, extLen) {
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthTest: false });
+            
+            const d1Start = p1.clone().add(extDir.clone().multiplyScalar(0.5));
+            const d1End = p1.clone().add(extDir.clone().multiplyScalar(extLen + 1.0));
+            const d2Start = p2.clone().add(extDir.clone().multiplyScalar(0.5));
+            const d2End = p2.clone().add(extDir.clone().multiplyScalar(extLen + 1.0));
+            const dimP1 = p1.clone().add(extDir.clone().multiplyScalar(extLen));
+            const dimP2 = p2.clone().add(extDir.clone().multiplyScalar(extLen));
+            
+            const isVertical = Math.abs(p1.y - p2.y) > 0.1;
+            const tDir = isVertical ? new THREE.Vector3(0.4, 0.4, 0) : new THREE.Vector3(0.4, 0, -0.4);
+            
+            const slash1Start = dimP1.clone().sub(tDir);
+            const slash1End = dimP1.clone().add(tDir);
+            const slash2Start = dimP2.clone().sub(tDir);
+            const slash2End = dimP2.clone().add(tDir);
+            
+            const extGeo = new THREE.BufferGeometry().setFromPoints([
+                d1Start, d1End, d2Start, d2End, dimP1, dimP2,
+                slash1Start, slash1End, slash2Start, slash2End
+            ]);
+            const lines = new THREE.LineSegments(extGeo, lineMat);
+            lines.renderOrder = 999;
+            dimensionsGroup.add(lines);
+            
+            const sprite = makeTextSprite(label);
+            const midPoint = new THREE.Vector3().addVectors(dimP1, dimP2).multiplyScalar(0.5);
+            if (isVertical) {
+                sprite.position.copy(midPoint).add(new THREE.Vector3(0, 0, 1.5));
+            } else {
+                sprite.position.copy(midPoint).add(new THREE.Vector3(0, 1.0, 0));
+            }
+            sprite.renderOrder = 1000;
+            dimensionsGroup.add(sprite);
+        }
+
+        createDimension(new THREE.Vector3(0, 0.5, 20), new THREE.Vector3(20, 0.5, 20), "20'-0\" OVERALL WIDTH", new THREE.Vector3(0, 0, 1), 7);
+        createDimension(new THREE.Vector3(0, 0.5, 20), new THREE.Vector3(10, 0.5, 20), "10'-0\" MODULE A", new THREE.Vector3(0, 0, 1), 4);
+        createDimension(new THREE.Vector3(10, 0.5, 20), new THREE.Vector3(20, 0.5, 20), "10'-0\" MODULE B", new THREE.Vector3(0, 0, 1), 4);
+        createDimension(new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(0, 0.5, 20), "20'-0\" OVERALL DEPTH", new THREE.Vector3(-1, 0, 0), 6);
+        createDimension(new THREE.Vector3(0, 0.0, 10), new THREE.Vector3(0, 5.0, 10), "10'-0\" TOTAL HEIGHT", new THREE.Vector3(-1, 0, 0), 3);
+
+        // --- Interaction Logic ---
+        window.toggleCostModal = function() {
+            document.getElementById('cost-modal').classList.toggle('active');
+        };
+
+        window.toggleFeature = function(feature) {
+            state[feature] = !state[feature];
+            const btn = document.getElementById(`tgl-${feature}`);
+            if(state[feature]) btn.classList.add('active');
+            else btn.classList.remove('active');
+            
+            if(feature === 'rotate') controls.autoRotate = state.rotate;
+            if(feature === 'night') updateLightingForMode();
+        };
+        
+        function updateLightingForMode() {
+            if (currentMode === 'solid') {
+                if (state.night) {
+                    scene.background.setHex(colors.solid.bgNight);
+                    scene.fog.color.setHex(colors.solid.bgNight);
+                    ambientLight.intensity = 0.1;
+                    dirLight.intensity = 0.05;
+                    customGridMat.uniforms.gridColor.value.setHex(colors.solid.gridNight);
+                } else {
+                    scene.background.setHex(colors.solid.bg);
+                    scene.fog.color.setHex(colors.solid.bg);
+                    ambientLight.intensity = 0.6;
+                    dirLight.intensity = 1.2;
+                    customGridMat.uniforms.gridColor.value.setHex(colors.solid.grid);
+                }
+            }
+        }
+
+        // --- Mode Switching Logic ---
+        window.setMode = function(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+
+            if (mode === 'solid') {
+                updateLightingForMode(); 
+                meshes.forEach(m => { m.material = m.userData.solidMaterial; m.visible = true; });
+                edges.forEach(e => e.visible = false);
+                dimensionsGroup.visible = false;
+
+            } else if (mode === 'wireframe') {
+                scene.background.setHex(colors.wireframe.bg);
+                scene.fog.color.setHex(colors.wireframe.bg);
+                ambientLight.intensity = 0;
+                dirLight.intensity = 0;
+                customGridMat.uniforms.gridColor.value.setHex(colors.wireframe.grid);
+                meshes.forEach(m => { m.material = wireframeMaterial; m.visible = true; });
+                edges.forEach(e => e.visible = false);
+                dimensionsGroup.visible = false;
+
+            } else if (mode === 'blueprint') {
+                scene.background.setHex(colors.blueprint.bg);
+                scene.fog.color.setHex(colors.blueprint.bg);
+                ambientLight.intensity = 0;
+                dirLight.intensity = 0;
+                customGridMat.uniforms.gridColor.value.setHex(colors.blueprint.grid);
+                meshes.forEach(m => { m.material = blueprintOcclusionMaterial; m.visible = true; });
+                edges.forEach(e => e.visible = true);
+                dimensionsGroup.visible = true; 
+            }
+        };
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            const dt = Math.min(clock.getDelta(), 0.1); 
+            
+            const targetLeftX = state.explode ? -3 : 0;
+            const targetRightX = state.explode ? 3 : 0;
+            leftModuleGroup.position.x += (targetLeftX - leftModuleGroup.position.x) * 5 * dt;
+            rightModuleGroup.position.x += (targetRightX - rightModuleGroup.position.x) * 5 * dt;
+            
+            const targetRoofY = state.roof ? 10 : 0;
+            roofGroup.position.y += (targetRoofY - roofGroup.position.y) * 5 * dt;
+            
+            const targetIntensity = (state.night && currentMode === 'solid') ? 5 : 0;
+            interiorLightL.intensity += (targetIntensity - interiorLightL.intensity) * 3 * dt;
+            interiorLightR.intensity += (targetIntensity - interiorLightR.intensity) * 3 * dt;
+
+            if (currentMode === 'blueprint') {
+                dimensionsGroup.visible = (!state.explode && !state.roof);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
