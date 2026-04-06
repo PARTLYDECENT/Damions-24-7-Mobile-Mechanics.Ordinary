@@ -604,7 +604,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Base products that should always exist (fallback)
         const baseProducts = [
-            { name: 'Homestead 1', path: 'Products/Homestead1.html' }
+            { name: 'Homestead 1', path: 'Products/Homestead1.html' },
+            { name: 'Hantu Raya', path: 'Products/hantu-raya.html' }
         ];
 
         // Format names (e.g., homestead1.html -> Homestead 1)
