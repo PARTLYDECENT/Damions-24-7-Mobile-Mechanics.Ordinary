@@ -39,6 +39,18 @@
             0% { transform: translateX(100vw); }
             100% { transform: translateX(-100%); }
         }
+        
+        @media (max-width: 768px) {
+            #ui-layer { padding: 10px; justify-content: flex-start; }
+            .interactive { padding: 12px !important; }
+            .interactive h1 { font-size: 1.2rem !important; margin-bottom: 4px !important; }
+            .interactive p.text-sm { display: none !important; }
+            .interactive .space-y-2 { font-size: 0.65rem !important; display: flex; gap: 10px; margin-bottom: 0 !important;}
+            .interactive .space-y-2 p { margin: 0; }
+            .interactive .mt-6 { margin-top: 10px !important; }
+            #btn-autorotate { padding: 6px 12px !important; font-size: 0.75rem !important; width: 100%;}
+            .marquee-container { font-size: 0.85rem; padding: 6px 0; letter-spacing: 0.2em; }
+        }
     </style>
 </head>
 <body>

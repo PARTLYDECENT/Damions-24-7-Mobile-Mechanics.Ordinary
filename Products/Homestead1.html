@@ -121,8 +121,34 @@
         
         @media (max-width: 768px) {
             #info-panel { display: none; }
-            #feature-panel { top: auto; bottom: 6rem; right: 50%; transform: translateX(50%); width: 90%; max-width: 350px; flex-direction: row; flex-wrap: wrap; justify-content: center;}
-            .feature-toggle { flex: 1 1 40%; }
+            #feature-panel { 
+                top: 1rem; 
+                right: 50%; 
+                transform: translateX(50%); 
+                width: 95%; 
+                max-width: 350px; 
+                flex-direction: row; 
+                flex-wrap: wrap; 
+                justify-content: center;
+                padding: 0.5rem;
+                gap: 0.25rem;
+            }
+            #feature-panel .text-xs { display: none; }
+            .feature-toggle { flex: 1 1 45%; padding: 0.25rem; font-size: 0.7rem; }
+            
+            #ui-layer {
+                width: 95%;
+                padding: 0.5rem;
+                bottom: 1rem;
+                gap: 0.35rem;
+            }
+            .mode-btn {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.7rem;
+                flex: 1 1 auto;
+                text-align: center;
+            }
+            .w-px.h-6 { display: none; }
         }
 
         /* Manufacturer Dashboard Styles */
