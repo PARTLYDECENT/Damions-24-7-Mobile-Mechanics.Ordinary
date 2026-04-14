@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Intro system: Playing intro.mp4 video.");
 
     const enterOverlay = document.getElementById('enter-overlay');
-    const bgMusic = document.getElementById('background-music');
+
 
     // 1. Hide the old overlay entirely
     if (enterOverlay) {
@@ -72,17 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     video.addEventListener('error', finishIntro); // fallback if video fails to load
     skipBtn.addEventListener('click', finishIntro);
 
-    // 4. Handle Background Music (wait for first interaction to comply with autoplay policies)
-    let musicStarted = false;
-    const startMusic = () => {
-        if (bgMusic && !musicStarted) {
-            musicStarted = true;
-            bgMusic.play().catch(e => console.log("Music autoplay prevented, waiting for interaction..."));
-            document.removeEventListener('click', startMusic);
-            document.removeEventListener('keydown', startMusic);
-        }
-    };
-
-    document.addEventListener('click', startMusic);
-    document.addEventListener('keydown', startMusic);
+    // 4. Background music handled by main.js to avoid duplicate instances
 });
+

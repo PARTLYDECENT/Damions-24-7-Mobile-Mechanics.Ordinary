@@ -127,26 +127,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial state from localStorage
     setMuteState(isMuted);
 
-    /* HANDLED BY INTRO.JS
-    enterBtn.addEventListener('click', () => {
-        enterOverlay.style.opacity = '0';
-        enterOverlay.style.visibility = 'hidden'; // Ensure it's hidden after fade
-        // enterBg.classList.add('zooming'); // Removed
-        setTimeout(() => {
-            enterOverlay.style.display = 'none';
-        }, 1000);
-
-        // Play background music
-        const playPromise = backgroundMusic.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log("Autoplay was prevented. User interaction is needed to play audio.");
-                // If autoplay fails, ensure the icon reflects the muted state until the user clicks it.
-                setMuteState(true);
-            });
+    // Handle initial music playback on first interaction
+    let musicStarted = false;
+    const startMusic = () => {
+        if (backgroundMusic && !musicStarted) {
+            musicStarted = true;
+            // Only play if not muted
+            if (!isMuted) {
+                backgroundMusic.play().catch(e => console.log("Music autoplay prevented, waiting for interaction..."));
+            }
+            document.removeEventListener('click', startMusic);
+            document.removeEventListener('keydown', startMusic);
         }
-    });
-    */
+    };
+
+    document.addEventListener('click', startMusic);
+    document.addEventListener('keydown', startMusic);
 
     muteBtn.addEventListener('click', () => {
         setMuteState(!isMuted);
