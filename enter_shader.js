@@ -32,37 +32,39 @@ if (!enterGl) {
             float zoom = 1.0 - (uWarp * 0.18); 
             uv *= zoom;
             
-            // Spin the core based on time and warp
-            vec2 p = uv * rot(uTime * 0.5 + uWarp * 2.0);
+            // Spin the core with "mechanical snapping"
+            float snap = floor(uTime * 2.0) + pow(fract(uTime * 2.0), 4.0);
+            vec2 p = uv * rot(snap * 0.2 + uWarp * 2.0);
             
             float r = length(p);
             float a = atan(p.y, p.x);
             
-            // Central glowing core
-            float core = 0.05 / (r + 0.01);
+            // Central glowing core with "electronic noise"
+            float noise = sin(uTime * 50.0) * 0.01;
+            float core = (0.05 + noise) / (r + 0.01);
             
-            // Mechanical petals / aperture blades
-            float blades = sin(a * 8.0 + uTime) * 0.1;
-            float aperture = smoothstep(0.3 + blades, 0.31 + blades, r);
+            // Sharper mechanical petals / aperture blades
+            float blades = sin(a * 8.0 + snap) * 0.12;
+            float aperture = smoothstep(0.3 + blades, 0.305 + blades, r);
             
-            // Outer gear ring
-            float gearTeeth = cos(a * 24.0) * 0.02;
-            float gearRing = smoothstep(0.48 + gearTeeth, 0.5 + gearTeeth, r);
-            gearRing -= smoothstep(0.55 + gearTeeth, 0.57 + gearTeeth, r);
+            // Aggressive outer gear ring
+            float gearTeeth = cos(a * 32.0) * 0.025;
+            float gearRing = smoothstep(0.47 + gearTeeth, 0.49 + gearTeeth, r);
+            gearRing -= smoothstep(0.56 + gearTeeth, 0.58 + gearTeeth, r);
             
             // Colors (Mechanic / Cyber theme)
-            vec3 coreCol = vec3(0.0, 0.8, 1.0) * core; // Cyan core
-            vec3 metalCol = vec3(0.2, 0.3, 0.4); // Dark metal
+            vec3 coreCol = vec3(0.0, 0.9, 1.0) * core; // Brighter cyan core
+            vec3 metalCol = vec3(0.15, 0.25, 0.35); // Industrial metal
             
             vec3 col = coreCol;
-            col = mix(col, vec3(0.05), aperture); // Dark inside aperture
-            col = mix(col, metalCol * (0.8 + 0.2 * sin(r * 50.0)), gearRing > 0.0 ? 1.0 : 0.0); // Metallic ring
+            col = mix(col, vec3(0.02), aperture); // Blacker inside aperture
+            col = mix(col, metalCol * (0.7 + 0.3 * sin(r * 80.0)), gearRing > 0.0 ? 1.0 : 0.0); // Detailed Metallic ring
             
-            // High-Tech Cartesian grid
-            vec2 gridUV = uv * 6.0;
-            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / 0.05;
+            // High-Tech Cartesian grid (Enhanced)
+            vec2 gridUV = uv * 8.0;
+            vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / 0.03;
             float gridLines = 1.0 - min(grid.x, grid.y);
-            col += vec3(0.0, 0.6, 1.0) * smoothstep(0.9, 1.0, gridLines) * 0.25 * (1.0 - r);
+            col += vec3(0.0, 0.7, 1.0) * smoothstep(0.95, 1.0, gridLines) * 0.3 * (1.0 - r);
             
             // White out on max warp
             col = mix(col, vec3(1.0), smoothstep(4.0, 5.0, uWarp));

@@ -17,6 +17,7 @@
     <link id="favicon" rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="intro_hud.css">
     <style>
         /* --- Refined Animations --- */
 
@@ -285,6 +286,45 @@
 
     <div id="enter-overlay">
         <canvas id="enter-shader-canvas"></canvas>
+        
+        <!-- New Mechanical Shutter Wrapper -->
+        <div id="shutter-wrapper">
+            <div class="shutter-blade shutter-top"></div>
+            <div class="shutter-blade shutter-bottom"></div>
+        </div>
+
+        <!-- New HUD Telemetry Overlay -->
+        <div id="hud-overlay">
+            <div class="hud-scanline"></div>
+            <div class="hud-corner top-left glitch">
+                <span class="hud-label">System Status</span>
+                <span class="hud-value" id="hud-status">DIAGNOSING...</span>
+            </div>
+            <div class="hud-corner top-right">
+                <span class="hud-label">Engine Specs</span>
+                <span class="hud-value" id="hud-specs">V8 TWIN-TURBO</span>
+            </div>
+            <div class="hud-corner bottom-left glitch">
+                <span class="hud-label">Vitals / TEMP</span>
+                <span class="hud-value" id="hud-vitals">92°C | 65 PSI</span>
+            </div>
+            <div class="hud-corner bottom-right">
+                <span class="hud-label">VIN Decoder</span>
+                <span class="hud-value" id="hud-vin">1GCEC19... [DECODING]</span>
+            </div>
+            <div class="hud-status-bar">
+                <div class="hud-progress" id="hud-progress-bar"></div>
+            </div>
+
+            <!-- New Spaceship Diagnostics Alert Panel -->
+            <div id="hud-alerts-panel">
+                <div class="alert-header">DIAGNOSTIC FEED // ERROR LOG</div>
+                <div id="alert-feed"></div>
+            </div>
+
+            <div class="hud-reticle"></div>
+        </div>
+
         <div class="enter-content">
             <h1 class="enter-title">DAMION'S <span class="highlight">24/7</span></h1>
             <p class="enter-subtitle">MOBILE AUTOMOTIVE SOLUTIONS</p>
