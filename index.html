@@ -18,6 +18,7 @@
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="intro_hud.css">
+    <link rel="stylesheet" href="voice_narrator.css">
     <style>
         /* --- Refined Animations --- */
 
@@ -286,7 +287,7 @@
 
     <div id="enter-overlay">
         <canvas id="enter-shader-canvas"></canvas>
-        
+
         <!-- New Mechanical Shutter Wrapper -->
         <div id="shutter-wrapper">
             <div class="shutter-blade shutter-top"></div>
@@ -422,7 +423,8 @@
             <!-- <canvas id="hero-shader-canvas"></canvas> --> <!-- Replaced by slideshow -->
             <div class="hero-content animate-on-scroll">
                 <h1>Damion: Your 24/7 Mobile Mechanic Solution</h1>
-                <p>I provide expert auto repair and maintenance, wherever you are. Professional, reliable service that comes
+                <p>I provide expert auto repair and maintenance, wherever you are. Professional, reliable service that
+                    comes
                     directly to you, day or night.</p>
                 <a href="#services" class="cta-button">View My Services</a>
             </div>
@@ -769,7 +771,7 @@
             <div class="footer-controls">
                 <button id="mute-btn" class="cta-button secondary" title="Toggle Music">🔊</button>
             </div>
-            <img src="banner.png" alt="Banner" class="footer-banner">
+            <img src="assets/images/banner.jpeg" alt="Banner" class="footer-banner">
             <p class="copyright">&copy; 2025 Damions 24/7 Mobile Mechanics. All Rights Reserved.</p>
             <p style="font-size: 0.7rem; opacity: 0.5; margin-top: 5px;">Developed using experimental AI tools from
                 Google's advanced beta testing program.</p>
@@ -811,6 +813,7 @@
     <script src="hero_slideshow.js"></script>
     <script src="enter_shader.js"></script>
     <script src="tentacle_overlay.js"></script>
+    <script src="voice_narrator.js"></script>
     <script src="intro.js"></script>
     <script src="console.js"></script>
     <script src="hero_shader.js"></script>

@@ -523,27 +523,191 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New WebGL Hero Shader ---
     // This code has been moved to shader.js
 
-    // --- Animated Favicon Logic (Smooth Spinning Gear) ---
-    const favicon = document.getElementById('favicon');
-    const faviconFrames = [];
+    // --- Morphing Canvas Favicon Engine (Procedural Metagear/Wheel) ---
+    class MorphFaviconEngine {
+        constructor() {
+            this.favicon = document.getElementById('favicon');
+            if (!this.favicon) return;
 
-    // Generate 12 frames for a smooth 360-degree rotation
-    for (let i = 0; i < 12; i++) {
-        let angle = i * 30; // 30 degrees per frame
-        // Using a clear cyan hex gear unicode character, rotating around center (50, 50)
-        let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="rotate(${angle} 50 50)"><text x="50" y="80" font-size="90" text-anchor="middle" fill="#00f2ea">⚙</text></g></svg>`;
-        // URL encode the SVG
-        let encodedSvg = svg.replace(/</g, "%3C").replace(/>/g, "%3E").replace(/"/g, "%22").replace(/#/g, "%23");
-        faviconFrames.push(`data:image/svg+xml,${encodedSvg}`);
+            // Create offscreen canvas (64x64 for crisp retina tabs)
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = 64;
+            this.canvas.height = 64;
+            this.ctx = this.canvas.getContext('2d');
+
+            // Physics & States
+            this.angle = 0;
+            this.speed = 0.05;
+            this.targetSpeed = 0.05;
+            this.idleSpeed = 0.05;
+            this.morph = 0; // 0 = Gear, 1 = Wheel
+            this.targetMorph = 0;
+            
+            // Throttle favicon href updates for peak performance (15 FPS target)
+            this.lastUpdate = 0;
+            this.updateInterval = 75; // ms
+
+            this.initListeners();
+            this.startLoop();
+            
+            // Cycle morph target every 6 seconds
+            setInterval(() => {
+                this.targetMorph = this.targetMorph === 0 ? 1 : 0;
+            }, 6000);
+        }
+
+        initListeners() {
+            // Map scroll velocity to rotation speed
+            let lastScrollTop = window.scrollY;
+            window.addEventListener('scroll', () => {
+                const currentScroll = window.scrollY;
+                const delta = Math.abs(currentScroll - lastScrollTop);
+                lastScrollTop = currentScroll;
+
+                // Inject kinetic speed boost proportional to scroll amount
+                this.targetSpeed = Math.min(0.45, this.targetSpeed + delta * 0.015);
+            }, { passive: true });
+        }
+
+        startLoop() {
+            const animate = (timestamp) => {
+                // Update physics
+                this.speed += (this.targetSpeed - this.speed) * 0.1;
+                this.targetSpeed += (this.idleSpeed - this.targetSpeed) * 0.06; // Friction decay
+                this.angle += this.speed;
+                
+                // Smoothly morph between shapes
+                this.morph += (this.targetMorph - this.morph) * 0.04;
+
+                this.render();
+
+                // Throttled write to DOM to avoid excessive browser paint cycles
+                if (timestamp - this.lastUpdate >= this.updateInterval) {
+                    this.favicon.href = this.canvas.toDataURL('image/png');
+                    this.lastUpdate = timestamp;
+                }
+
+                requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+        }
+
+        render() {
+            const ctx = this.ctx;
+            const m = this.morph;
+            const a = this.angle;
+            
+            ctx.clearRect(0, 0, 64, 64);
+            ctx.save();
+            ctx.translate(32, 32);
+            ctx.rotate(a);
+
+            // Dynamic Specular Highlight sweep
+            const specGrad = ctx.createLinearGradient(-32, -32, 32, 32);
+            const specPosition = Math.sin(a * 0.5) * 0.2 + 0.5;
+            specGrad.addColorStop(0, '#030812');
+            specGrad.addColorStop(Math.max(0, specPosition - 0.25), '#00f2ea'); // Cyber Cyan
+            specGrad.addColorStop(specPosition, '#ffffff'); // Specular light shine
+            specGrad.addColorStop(Math.min(1, specPosition + 0.25), '#00b0ab');
+            specGrad.addColorStop(1, '#010408');
+
+            // --- 1. Draw Mechanical Gear (morph = 0) ---
+            if (m < 0.99) {
+                ctx.save();
+                ctx.globalAlpha = 1 - m;
+                
+                // Outer Gear Teeth (12 teeth)
+                ctx.fillStyle = specGrad;
+                for (let i = 0; i < 12; i++) {
+                    ctx.rotate(Math.PI / 6);
+                    ctx.beginPath();
+                    // Draw tapered tooth wedge
+                    ctx.moveTo(-6, -18);
+                    ctx.lineTo(-4, -28);
+                    ctx.lineTo(4, -28);
+                    ctx.lineTo(6, -18);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Gear Rim body
+                ctx.beginPath();
+                ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Gear Inner holes (cutouts for lightweight look)
+                ctx.globalCompositeOperation = 'destination-out';
+                for (let i = 0; i < 6; i++) {
+                    ctx.rotate(Math.PI / 3);
+                    ctx.beginPath();
+                    ctx.arc(10, 0, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // --- 2. Draw Custom Alloy Wheel & Tire (morph = 1) ---
+            if (m > 0.01) {
+                ctx.save();
+                ctx.globalAlpha = m;
+
+                // Dark rubber tire outer ring
+                ctx.strokeStyle = '#121721';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Tire Tread details
+                ctx.strokeStyle = 'rgba(0, 242, 234, 0.25)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(0, 0, 27.5, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Inner Wheel Rim lip (Cyan glowing line)
+                ctx.strokeStyle = '#00f2ea';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // 5-Spoke Alloy design
+                ctx.fillStyle = specGrad;
+                for (let i = 0; i < 5; i++) {
+                    ctx.rotate((Math.PI * 2) / 5);
+                    ctx.beginPath();
+                    // Draw tapered sleek spoke
+                    ctx.moveTo(-3, -5);
+                    ctx.lineTo(-2, -21);
+                    ctx.lineTo(2, -21);
+                    ctx.lineTo(3, -5);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // Center wheel hub cap
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#00f2ea';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
     }
 
-    let currentFrame = 0;
-    setInterval(() => {
-        if (favicon) {
-            currentFrame = (currentFrame + 1) % faviconFrames.length;
-            favicon.href = faviconFrames[currentFrame];
-        }
-    }, 120); // Smooth spin (120ms per frame)
+    // Initialize the Morphing Favicon Engine
+    window.addEventListener('DOMContentLoaded', () => {
+        new MorphFaviconEngine();
+    });
 
     // --- Dramatic Hero Slideshow ---
     const slideshowContainer = document.getElementById('hero-slideshow-container');

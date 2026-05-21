@@ -3,20 +3,28 @@ class InfoConsole {
         this.container = null;
         this.logContainer = null;
         this.messages = [
-            "Scanning local frequencies...",
-            "Hydraulic systems check: Nominal.",
-            "Weather satellite link: Stable.",
-            "Diagnostics tablet syncing...",
-            "Inventory alert: 10mm socket missing.",
-            "Incoming request: 'Stranded on Rte 19...'",
-            "Job 204: Complete. Payment verified.",
-            "Server load: 12%",
-            "Analyzing OBD-II data stream...",
-            "Network latency: 15ms",
-            "Fleet Status: 3 DOWN, 1 GOOD",
-            "Updating personal logs...",
-            "Coffee level: Critical.",
-            "Toolbox lock engaged."
+            "CRITICAL: Ford F-150 spark plug ejected into low Earth orbit.",
+            "ALARM: Toyota Hilux survived a direct mortar strike. Running fine.",
+            "WARNING: Ford EcoBoost engine has converted itself to structural dust.",
+            "ALERT: 10mm socket has escaped through a tear in spacetime.",
+            "INFO: Toyota Corolla continuing to run spitefully with no engine oil.",
+            "ALARM: Customer states: 'The engine knock sounds like a drum solo.'",
+            "CRITICAL: Ford PowerStroke 6.0 head gasket has entered the stratosphere.",
+            "WARNING: Owner attempting to secure the transmission with a single zip tie.",
+            "WARN: Blinker fluid level critical. Refill immediately.",
+            "FAILURE: Bluetooth driveshaft has disconnected from the front axle.",
+            "ALARM: Ford transmission shifted into 'R' for 'Racing' at 70mph.",
+            "INFO: Toyota Tacoma frame successfully rusted into a beautiful lace pattern.",
+            "CRITICAL: Check Engine light has burned out from pure exhaustion.",
+            "WARN: Engine oil has been replaced with crunchy peanut butter.",
+            "INFO: Toyota 22R running on thoughts, prayers, and pure spite.",
+            "ALARM: Exhaust pipe is playing a sad trombone sound at 3000 RPM.",
+            "CRITICAL: Ford Triton V10 is holding a rods-out block party.",
+            "WARN: Muffler bearings running dangerously dry.",
+            "ALERT: Customer states: 'I heard a slight pop and then the engine left.'",
+            "CRITICAL: Socket wrench has declared a union strike.",
+            "INFO: Toyota Land Cruiser 1993 refuses to die despite active sabotage.",
+            "WARN: Cylinder 3 has left the chat."
         ];
     }
 

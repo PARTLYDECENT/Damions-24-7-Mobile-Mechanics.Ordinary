@@ -1,0 +1,177 @@
+/* --- Cyberpunk Holographic Voice Narrator HUD --- */
+
+.narrator-hud-panel {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 340px;
+    background: rgba(5, 8, 15, 0.88);
+    border: 1px solid rgba(0, 242, 234, 0.3);
+    border-right: 3px solid var(--hud-cyan, #00f2ea);
+    border-radius: 6px 0 0 6px;
+    box-shadow: 0 0 25px rgba(0, 242, 234, 0.15), inset 0 0 15px rgba(0, 242, 234, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 10000;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    color: var(--hud-cyan, #00f2ea);
+    padding: 14px 16px;
+    transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.5s ease;
+    transform: translateX(380px);
+    opacity: 0;
+    pointer-events: auto;
+}
+
+.narrator-hud-panel.visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Header with tech elements */
+.narrator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 242, 234, 0.2);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+
+.narrator-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: var(--hud-orange, #ff5e00);
+    text-shadow: 0 0 6px rgba(255, 94, 0, 0.4);
+}
+
+.narrator-tag::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--hud-orange, #ff5e00);
+    box-shadow: 0 0 8px var(--hud-orange, #ff5e00);
+    border-radius: 50%;
+    animation: narrator-pulse-dot 1.5s infinite;
+}
+
+.narrator-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.narrator-btn {
+    background: rgba(0, 242, 234, 0.08);
+    border: 1px solid rgba(0, 242, 234, 0.3);
+    color: var(--hud-cyan, #00f2ea);
+    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.narrator-btn:hover {
+    background: rgba(0, 242, 234, 0.2);
+    border-color: var(--hud-cyan, #00f2ea);
+    box-shadow: 0 0 8px rgba(0, 242, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+.narrator-btn:active {
+    transform: translateY(0);
+}
+
+.narrator-btn.dismiss-btn {
+    border-color: rgba(255, 94, 0, 0.3);
+    color: var(--hud-orange, #ff5e00);
+}
+
+.narrator-btn.dismiss-btn:hover {
+    background: rgba(255, 94, 0, 0.2);
+    border-color: var(--hud-orange, #ff5e00);
+    box-shadow: 0 0 8px rgba(255, 94, 0, 0.3);
+}
+
+/* Waveform Canvas */
+.narrator-waveform-container {
+    width: 100%;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 242, 234, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.narrator-waveform-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Subtitles captioning */
+.narrator-subtitle-box {
+    font-size: 11px;
+    line-height: 1.5;
+    min-height: 36px;
+    max-height: 60px;
+    overflow-y: auto;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-left: 2px solid rgba(0, 242, 234, 0.3);
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.narrator-subtitle-box span.active-word {
+    color: var(--hud-cyan, #00f2ea);
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(0, 242, 234, 0.6);
+    text-decoration: underline;
+}
+
+.narrator-subtitle-box span.spoken-word {
+    color: rgba(0, 242, 234, 0.7);
+}
+
+/* Status text bottom */
+.narrator-status {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    color: rgba(0, 242, 234, 0.5);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Animations */
+@keyframes narrator-pulse-dot {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; filter: brightness(1.2); }
+}
+
+/* Responsive adjustment */
+@media (max-width: 480px) {
+    .narrator-hud-panel {
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+    }
+}

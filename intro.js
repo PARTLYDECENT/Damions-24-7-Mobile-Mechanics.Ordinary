@@ -41,15 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Diagnostics & Warning Engine ---
         const alertFeed = document.getElementById('alert-feed');
         const failureModes = [
-            { text: "CRITICAL: Piston Ring Clearance < 0.002mm", type: 'critical' },
-            { text: "ALARM: Crankshaft Bearing Temp Exceeded", type: 'critical' },
-            { text: "WARNING: Cyl-7 Compression Loss (85 PSI)", type: 'warning' },
-            { text: "FAILURE: Hydraulic Valve Lash Seizure", type: 'critical' },
-            { text: "ERROR: Oil Pump Cavitation Detected", type: 'warning' },
-            { text: "WARN: Low Fuel Rail Pressure detected", type: 'warning' },
-            { text: "ALARM: Main Core Harmonic Imbalance", type: 'critical' },
-            { text: "DECODING VIN: 1GCEC19... [FAILED]", type: 'warning' },
-            { text: "DETECTION: Micro-fracture in Block Casting", type: 'critical' }
+            { text: "CRITICAL: Ford EcoBoost Cylinder 3 has left the chat", type: 'critical' },
+            { text: "ALARM: Toyota Hilux survived a tank round. Frame intact", type: 'critical' },
+            { text: "WARNING: Ford PowerStroke 6.0 head gasket has vaporized", type: 'warning' },
+            { text: "FAILURE: 10mm socket has clipped into the backrooms", type: 'critical' },
+            { text: "ERROR: Toyota Corolla is running on 100% pure spite and zero oil", type: 'warning' },
+            { text: "WARN: Customer fixed control arm with three zip ties and gum", type: 'warning' },
+            { text: "ALARM: Ford Triton V10 is throwing a rods-out block party", type: 'critical' },
+            { text: "DECODING VIN: 1FTFW1E... [PARTS ORDERED]", type: 'warning' },
+            { text: "DETECTION: Engine oil has been replaced with peanut butter", type: 'critical' }
         ];
 
         const triggerAlert = () => {
@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (window.startHeroTyping) window.startHeroTyping();
+                if (window.triggerNarratorWelcome) window.triggerNarratorWelcome();
             }, 1200);
         }, 100);
     };
