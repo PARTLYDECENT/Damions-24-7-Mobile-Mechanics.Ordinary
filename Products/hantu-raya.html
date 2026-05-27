@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,10 +14,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #020205;
@@ -40,7 +41,7 @@
 
         .cyber-grid {
             background-image: linear-gradient(rgba(249, 115, 22, 0.04) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+                linear-gradient(90deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
             background-size: 30px 30px;
             background-position: center;
         }
@@ -68,13 +69,16 @@
         ::-webkit-scrollbar {
             width: 4px;
         }
+
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.01);
         }
+
         ::-webkit-scrollbar-thumb {
             background: rgba(249, 115, 22, 0.3);
             border-radius: 99px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(249, 115, 22, 0.5);
         }
@@ -99,8 +103,13 @@
         }
 
         @keyframes marquee {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
+            0% {
+                transform: translate3d(0, 0, 0);
+            }
+
+            100% {
+                transform: translate3d(-50%, 0, 0);
+            }
         }
 
         .hud-hidden {
@@ -119,12 +128,19 @@
             background-color: #ea580c;
             animation: bounce-bar 0.5s ease infinite alternate;
         }
+
         @keyframes bounce-bar {
-            0% { height: 4px; }
-            100% { height: 16px; }
+            0% {
+                height: 4px;
+            }
+
+            100% {
+                height: 16px;
+            }
         }
     </style>
 </head>
+
 <body class="select-none overflow-hidden">
 
     <!-- WebGL Target -->
@@ -132,52 +148,64 @@
     <div class="absolute inset-0 pointer-events-none cyber-grid z-[2]"></div>
 
     <!-- INITIAL AUDIO BOOT TRIGGER (Needed to satisfy browser user-interaction policies) -->
-    <div id="audio-auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl transition-opacity duration-700">
+    <div id="audio-auth-modal"
+        class="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl transition-opacity duration-700">
         <div class="max-w-md w-full p-8 rounded-2xl border border-orange-500/20 glass-panel text-center space-y-6 mx-4">
-            <div class="w-20 h-20 mx-auto rounded-full bg-orange-600/10 border border-orange-500/30 flex items-center justify-center text-orange-500 text-3xl animate-pulse">
+            <div
+                class="w-20 h-20 mx-auto rounded-full bg-orange-600/10 border border-orange-500/30 flex items-center justify-center text-orange-500 text-3xl animate-pulse">
                 <i class="fa-solid fa-headphones-simple"></i>
             </div>
             <div class="space-y-2">
                 <h2 class="text-2xl font-extrabold tracking-tight uppercase text-white">Synthesizer Interface</h2>
-                <p class="text-xs text-gray-400">Initialize procedural V-Twin audio harmonics, pneumatic suspension sounds, and telemetry feedback alerts.</p>
+                <p class="text-xs text-gray-400">Initialize procedural V-Twin audio harmonics, pneumatic suspension
+                    sounds, and telemetry feedback alerts.</p>
             </div>
-            <button id="btn-initialize-systems" class="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 text-black font-extrabold tracking-widest text-xs uppercase rounded-xl hover:shadow-[0_0_30px_rgba(234,88,12,0.4)] transition-all transform active:scale-95">
+            <button id="btn-initialize-systems"
+                class="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 text-black font-extrabold tracking-widest text-xs uppercase rounded-xl hover:shadow-[0_0_30px_rgba(234,88,12,0.4)] transition-all transform active:scale-95">
                 Boot Simulator Systems
             </button>
         </div>
     </div>
 
     <!-- MAIN INTERACTIVE HUD -->
-    <div id="hud-container" class="absolute inset-0 z-10 flex flex-col justify-between p-6 pointer-events-none transition-all-custom duration-500">
-        
+    <div id="hud-container"
+        class="absolute inset-0 z-10 flex flex-col justify-between p-6 pointer-events-none transition-all-custom duration-500">
+
         <!-- HEADER PANEL -->
         <header class="w-full flex justify-between items-start pointer-events-auto">
             <div class="glass-panel glass-panel-neon-orange p-4 rounded-xl flex items-center space-x-4 max-w-lg">
                 <div class="bg-orange-600/20 text-orange-500 p-3 rounded-lg border border-orange-500/30 relative">
                     <i id="header-pulse-icon" class="fa-solid fa-atom text-2xl animate-spin-slow"></i>
-                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black animate-ping"></span>
+                    <span
+                        class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black animate-ping"></span>
                 </div>
                 <div>
                     <div class="flex items-center space-x-2">
-                        <span class="text-[9px] font-bold tracking-widest text-orange-500 uppercase font-mono-custom bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/20">HR-EVOLVE-V3</span>
+                        <span
+                            class="text-[9px] font-bold tracking-widest text-orange-500 uppercase font-mono-custom bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/20">HR-EVOLVE-V3</span>
                         <div class="flex items-center space-x-1" id="live-audio-waves" style="display: none;">
                             <div class="audio-bar" style="animation-delay: 0.1s"></div>
                             <div class="audio-bar" style="animation-delay: 0.3s"></div>
                             <div class="audio-bar" style="animation-delay: 0.5s"></div>
                         </div>
                     </div>
-                    <h1 class="text-xl font-extrabold tracking-tight text-white uppercase mt-0.5">Hantu-Raya Workstation</h1>
-                    <p class="text-xs text-gray-400 font-medium">Procedural Audio • Multi-Axis Stress Rigs • Chassis Colorists Studio</p>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white uppercase mt-0.5">Hantu-Raya Workstation
+                    </h1>
+                    <p class="text-xs text-gray-400 font-medium">Procedural Audio • Multi-Axis Stress Rigs • Chassis
+                        Colorists Studio</p>
                 </div>
             </div>
 
             <!-- View Action Bar -->
             <div class="flex space-x-2">
-                <button id="btn-hud-toggle" class="glass-panel hover:bg-white/10 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-white/10" title="Toggle HUD visibility">
+                <button id="btn-hud-toggle"
+                    class="glass-panel hover:bg-white/10 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-white/10"
+                    title="Toggle HUD visibility">
                     <i id="hud-toggle-icon" class="fa-solid fa-eye-slash"></i>
                     <span class="text-xs font-semibold hidden sm:inline">Minimal Mode</span>
                 </button>
-                <button id="btn-autorotate" class="glass-panel hover:bg-orange-600/20 hover:border-orange-500/30 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-orange-500/20">
+                <button id="btn-autorotate"
+                    class="glass-panel hover:bg-orange-600/20 hover:border-orange-500/30 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-orange-500/20">
                     <i id="rotate-icon" class="fa-solid fa-arrows-spin text-orange-500 animate-spin-slow"></i>
                     <span id="rotate-text" class="text-xs font-semibold">Active Rotation</span>
                 </button>
@@ -186,37 +214,47 @@
 
         <!-- CENTER AREA FOR CONFIGURATOR & DYNAMIC WORK Rig -->
         <div class="flex justify-between items-center w-full my-4 flex-grow pointer-events-none">
-            
+
             <!-- LEFT SIDEBAR: CONTROLS & DYNOMETRY -->
-            <aside id="left-sidebar" class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between overflow-y-auto border border-white/10 transition-all-custom">
+            <aside id="left-sidebar"
+                class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between overflow-y-auto border border-white/10 transition-all-custom">
                 <div class="space-y-5">
                     <!-- Session Title -->
                     <div>
-                        <div class="text-[10px] font-bold text-orange-500 tracking-wider uppercase font-mono-custom">Lab Controller</div>
+                        <div class="text-[10px] font-bold text-orange-500 tracking-wider uppercase font-mono-custom">Lab
+                            Controller</div>
                         <h2 class="text-lg font-bold text-white mt-0.5">Mechanical Rig</h2>
                     </div>
 
                     <!-- Engine Dyno Simulator -->
                     <div class="space-y-3 bg-white/3 p-3.5 rounded-xl border border-white/5">
                         <div class="flex justify-between items-center">
-                            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <label
+                                class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                                 <i class="fa-solid fa-gauge text-orange-500"></i>
                                 <span>Dyno Ignition & RPM</span>
                             </label>
-                            <span id="rpm-label" class="text-xs font-mono-custom text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0 RPM</span>
+                            <span id="rpm-label"
+                                class="text-xs font-mono-custom text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0
+                                RPM</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="btn-engine-toggle" class="py-2 px-3 bg-red-600/20 hover:bg-red-600/35 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-all flex items-center justify-center space-x-2">
+                            <button id="btn-engine-toggle"
+                                class="py-2 px-3 bg-red-600/20 hover:bg-red-600/35 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-all flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-power-off text-[10px]"></i>
                                 <span id="engine-btn-text">IGNITE MOTOR</span>
                             </button>
-                            <button id="btn-drive-toggle" class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
+                            <button id="btn-drive-toggle"
+                                class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                                disabled>
                                 <i class="fa-solid fa-gears text-[10px]"></i>
                                 <span id="drive-btn-text">ENGAGE DRIVE</span>
                             </button>
                         </div>
                         <div class="space-y-1">
-                            <input type="range" id="rpm-slider" min="800" max="9000" value="800" class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none disabled:opacity-30" disabled>
+                            <input type="range" id="rpm-slider" min="800" max="9000" value="800"
+                                class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none disabled:opacity-30"
+                                disabled>
                             <div class="flex justify-between text-[8px] text-gray-500 font-mono-custom">
                                 <span>IDLE: 800</span>
                                 <span>REDLINE: 9,000 RPM</span>
@@ -226,29 +264,40 @@
 
                     <!-- Material Colors Color Picker -->
                     <div class="space-y-3">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-palette text-orange-500"></i>
                             <span>Bespoke Paint Finish</span>
                         </label>
                         <div class="grid grid-cols-5 gap-2" id="color-selectors">
                             <!-- Apex Orange -->
-                            <button data-color="0xff4400" class="h-10 rounded-lg border-2 border-orange-500 bg-gradient-to-br from-orange-600 to-red-800 shadow-md relative group transition-transform hover:scale-105" title="Apex Metallic Orange">
+                            <button data-color="0xff4400"
+                                class="h-10 rounded-lg border-2 border-orange-500 bg-gradient-to-br from-orange-600 to-red-800 shadow-md relative group transition-transform hover:scale-105"
+                                title="Apex Metallic Orange">
                                 <span class="absolute inset-0 rounded-lg border border-white/10"></span>
                             </button>
                             <!-- Cyber Lime -->
-                            <button data-color="0x26f54c" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-green-500 to-emerald-800 relative group transition-transform hover:scale-105" title="Acid Green Anodized">
+                            <button data-color="0x26f54c"
+                                class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-green-500 to-emerald-800 relative group transition-transform hover:scale-105"
+                                title="Acid Green Anodized">
                                 <span class="absolute inset-0 rounded-lg border border-white/10"></span>
                             </button>
                             <!-- Stealth Obsidian -->
-                            <button data-color="0x111216" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-neutral-800 to-black relative group transition-transform hover:scale-105" title="Carbon Matte Black">
+                            <button data-color="0x111216"
+                                class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-neutral-800 to-black relative group transition-transform hover:scale-105"
+                                title="Carbon Matte Black">
                                 <span class="absolute inset-0 rounded-lg border border-white/10"></span>
                             </button>
                             <!-- Plutonium Blue -->
-                            <button data-color="0x00d2ff" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-cyan-400 to-blue-700 relative group transition-transform hover:scale-105" title="Hydron Blue Pearl">
+                            <button data-color="0x00d2ff"
+                                class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-cyan-400 to-blue-700 relative group transition-transform hover:scale-105"
+                                title="Hydron Blue Pearl">
                                 <span class="absolute inset-0 rounded-lg border border-white/10"></span>
                             </button>
                             <!-- Hyper Crimson -->
-                            <button data-color="0xe60026" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-red-500 to-rose-950 relative group transition-transform hover:scale-105" title="Chroma Metallic Crimson">
+                            <button data-color="0xe60026"
+                                class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-red-500 to-rose-950 relative group transition-transform hover:scale-105"
+                                title="Chroma Metallic Crimson">
                                 <span class="absolute inset-0 rounded-lg border border-white/10"></span>
                             </button>
                         </div>
@@ -256,16 +305,19 @@
 
                     <!-- Suspension Stress Rigs -->
                     <div class="space-y-2.5 pt-1 border-t border-white/5">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-circle-nodes text-orange-500"></i>
                             <span>Suspension Compression Rig</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="btn-stress-test" class="py-2 px-3 bg-white/5 hover:bg-orange-600/10 hover:text-orange-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-orange-500/20 transition-all flex items-center justify-center space-x-2">
+                            <button id="btn-stress-test"
+                                class="py-2 px-3 bg-white/5 hover:bg-orange-600/10 hover:text-orange-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-orange-500/20 transition-all flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-compress text-[11px]"></i>
                                 <span>BOUNCE TEST</span>
                             </button>
-                            <button id="btn-scan-laser" class="py-2 px-3 bg-white/5 hover:bg-cyan-600/10 hover:text-cyan-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-cyan-500/20 transition-all flex items-center justify-center space-x-2">
+                            <button id="btn-scan-laser"
+                                class="py-2 px-3 bg-white/5 hover:bg-cyan-600/10 hover:text-cyan-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-cyan-500/20 transition-all flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-radar text-[11px]"></i>
                                 <span>LASER SCAN</span>
                             </button>
@@ -275,32 +327,40 @@
                     <!-- Exploded View Disassembly -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <label
+                                class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                                 <i class="fa-solid fa-arrows-up-down-left-right text-orange-500"></i>
                                 <span>Volumetric Assembly</span>
                             </label>
-                            <span id="exploded-value" class="text-xs font-mono-custom text-orange-400 bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0%</span>
+                            <span id="exploded-value"
+                                class="text-xs font-mono-custom text-orange-400 bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0%</span>
                         </div>
-                        <input type="range" id="exploded-slider" min="0" max="100" value="0" class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none">
+                        <input type="range" id="exploded-slider" min="0" max="100" value="0"
+                            class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none">
                     </div>
 
                     <!-- Dynamic Focus Hotspots -->
                     <div class="space-y-2 pt-2 border-t border-white/5">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-crosshairs text-orange-500"></i>
                             <span>Component Target Jumps</span>
                         </label>
                         <div class="grid grid-cols-2 gap-1.5">
-                            <button data-target="all" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-orange-600/10 border border-orange-500/20 text-orange-400 font-medium rounded-lg transition-all">
+                            <button data-target="all"
+                                class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-orange-600/10 border border-orange-500/20 text-orange-400 font-medium rounded-lg transition-all">
                                 <i class="fa-solid fa-car mr-1.5"></i>Full Rig
                             </button>
-                            <button data-target="engine" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                            <button data-target="engine"
+                                class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
                                 <i class="fa-solid fa-gear mr-1.5"></i>V-Twin Engine
                             </button>
-                            <button data-target="suspension" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                            <button data-target="suspension"
+                                class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
                                 <i class="fa-solid fa-link mr-1.5"></i>Wishbone Axle
                             </button>
-                            <button data-target="cockpit" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                            <button data-target="cockpit"
+                                class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
                                 <i class="fa-solid fa-chair mr-1.5"></i>Cockpit Cabin
                             </button>
                         </div>
@@ -308,17 +368,20 @@
                 </div>
 
                 <!-- Footer coordinates -->
-                <div class="text-[9px] text-gray-500 border-t border-white/5 pt-2.5 mt-4 flex justify-between font-mono-custom">
+                <div
+                    class="text-[9px] text-gray-500 border-t border-white/5 pt-2.5 mt-4 flex justify-between font-mono-custom">
                     <span>SYS STATE: ACTIVE</span>
                     <span>T-OSC: SYNTHETIC</span>
                 </div>
             </aside>
 
             <!-- RIGHT SIDEBAR: REALTIME OSCILLOSCOPE & ENVIRONMENTS -->
-            <aside id="right-sidebar" class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between border border-white/10 transition-all-custom">
+            <aside id="right-sidebar"
+                class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between border border-white/10 transition-all-custom">
                 <div class="space-y-5">
                     <div>
-                        <div class="text-[10px] font-bold text-cyan-400 tracking-wider uppercase font-mono-custom">Diagnostics Module</div>
+                        <div class="text-[10px] font-bold text-cyan-400 tracking-wider uppercase font-mono-custom">
+                            Diagnostics Module</div>
                         <h2 class="text-lg font-bold text-white mt-0.5 font-mono-custom">OSCILLOSCOPE FEED</h2>
                     </div>
 
@@ -326,7 +389,8 @@
                     <div class="space-y-2">
                         <div class="flex justify-between items-center text-xs">
                             <span class="font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block mr-1"></span>
+                                <span
+                                    class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block mr-1"></span>
                                 <span id="telemetry-label">Dynamic Chassis Wave</span>
                             </span>
                             <span id="load-value" class="font-mono-custom text-cyan-400 font-bold">14.8 kN/m</span>
@@ -338,20 +402,24 @@
 
                     <!-- Interactive Environment swapping -->
                     <div class="space-y-3 pt-1 border-t border-white/5">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-mountain-sun text-cyan-400"></i>
                             <span>Environmental Rig Presets</span>
                         </label>
                         <div class="grid grid-cols-1 gap-2">
-                            <button id="env-tokyo" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 rounded-lg text-left transition-all flex justify-between items-center">
+                            <button id="env-tokyo"
+                                class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 rounded-lg text-left transition-all flex justify-between items-center">
                                 <span><i class="fa-solid fa-city mr-2"></i>Neo-Tokyo R&D Lab</span>
                                 <i class="fa-solid fa-check text-[10px]"></i>
                             </button>
-                            <button id="env-desert" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
+                            <button id="env-desert"
+                                class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
                                 <span><i class="fa-solid fa-wind mr-2"></i>Nevada Desert Dyno</span>
                                 <i class="fa-solid fa-check text-[10px] opacity-0"></i>
                             </button>
-                            <button id="env-space" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
+                            <button id="env-space"
+                                class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
                                 <span><i class="fa-solid fa-shuttle-space mr-2"></i>Orbiting Docking Bay</span>
                                 <i class="fa-solid fa-check text-[10px] opacity-0"></i>
                             </button>
@@ -360,16 +428,19 @@
 
                     <!-- Visualization Modes -->
                     <div class="space-y-3 pt-1 border-t border-white/5">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-binoculars text-cyan-400"></i>
                             <span>Render Frame Mesh</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button id="mode-normal" class="py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg transition-all flex items-center justify-center space-x-2">
+                            <button id="mode-normal"
+                                class="py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg transition-all flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-cubes"></i>
                                 <span>CAD Solid</span>
                             </button>
-                            <button id="mode-wireframe" class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10 flex items-center justify-center space-x-2">
+                            <button id="mode-wireframe"
+                                class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10 flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-border-all"></i>
                                 <span>X-Ray cage</span>
                             </button>
@@ -378,20 +449,23 @@
 
                     <!-- Simulation Effects -->
                     <div class="space-y-3 pt-1 border-t border-white/5">
-                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                        <label
+                            class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
                             <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i>
                             <span>Simulation Effects</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2">
                             <div class="flex flex-col space-y-1">
                                 <span class="text-[9px] text-gray-400 uppercase font-bold">Particles</span>
-                                <button id="btn-particles" class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
+                                <button id="btn-particles"
+                                    class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
                                     ON
                                 </button>
                             </div>
                             <div class="flex flex-col space-y-1">
                                 <span class="text-[9px] text-gray-400 uppercase font-bold">Exhaust Glow</span>
-                                <button id="btn-exhaust-glow" class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
+                                <button id="btn-exhaust-glow"
+                                    class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
                                     PULSING
                                 </button>
                             </div>
@@ -402,7 +476,9 @@
                 <!-- Footer Telemetry indicator -->
                 <div class="bg-cyan-950/20 border border-cyan-500/20 p-2.5 rounded-lg flex items-center space-x-2">
                     <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
-                    <span class="text-[9px] font-bold font-mono-custom text-cyan-400 uppercase tracking-widest">Procedural sound live synth</span>
+                    <span
+                        class="text-[9px] font-bold font-mono-custom text-cyan-400 uppercase tracking-widest">Procedural
+                        sound live synth</span>
                 </div>
             </aside>
         </div>
@@ -410,25 +486,30 @@
         <!-- FOOTER: DESCRIPTIVE DETAILS AND ROTATING CONTROLS INFO -->
         <footer class="w-full flex flex-col md:flex-row justify-between items-center gap-4 pointer-events-auto">
             <!-- Navigation controls helper -->
-            <div class="glass-panel px-4 py-2.5 rounded-xl flex space-x-4 text-xs text-gray-400 border border-white/5 items-center">
+            <div
+                class="glass-panel px-4 py-2.5 rounded-xl flex space-x-4 text-xs text-gray-400 border border-white/5 items-center">
                 <div class="flex items-center space-x-1.5">
-                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">L-CLICK</kbd>
+                    <kbd
+                        class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">L-CLICK</kbd>
                     <span>Orbit</span>
                 </div>
                 <div class="h-4 w-px bg-white/10"></div>
                 <div class="flex items-center space-x-1.5">
-                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">R-CLICK</kbd>
+                    <kbd
+                        class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">R-CLICK</kbd>
                     <span>Pan</span>
                 </div>
                 <div class="h-4 w-px bg-white/10"></div>
                 <div class="flex items-center space-x-1.5">
-                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">SCROLL</kbd>
+                    <kbd
+                        class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">SCROLL</kbd>
                     <span>Zoom</span>
                 </div>
             </div>
 
             <!-- Dyno/Drivetrain quick indicator -->
-            <div class="glass-panel px-4 py-2.5 rounded-xl flex space-x-2 text-xs text-gray-400 border border-white/5 items-center font-mono-custom">
+            <div
+                class="glass-panel px-4 py-2.5 rounded-xl flex space-x-2 text-xs text-gray-400 border border-white/5 items-center font-mono-custom">
                 <span class="text-[10px]">DRIVETRAIN ENGAGED:</span>
                 <span id="indicator-drivetrain" class="font-bold text-red-500">DISCONNECTED</span>
             </div>
@@ -439,8 +520,12 @@
     <div class="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
         <div class="marquee-container">
             <div class="marquee-text font-mono-custom uppercase">
-                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN /// COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
-                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN /// COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
+                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL
+                /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN ///
+                COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
+                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL
+                /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN ///
+                COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
             </div>
         </div>
     </div>
@@ -449,7 +534,7 @@
     <script>
         // --- REAL-TIME AUDIO SYNTH GENERATION (Tone.js) ---
         let audioSystemsInitialized = false;
-        let mainSynthVolume, engineSynth, subSynth, driveNoise, filter, driveFilter;
+        let mainSynthVolume, engineSynth, subSynth, driveNoise, filter;
         let chassisSpringSynth;
 
         function initializeToneAudio() {
@@ -460,33 +545,33 @@
 
             // Core master volume setup with safety limiter
             mainSynthVolume = new Tone.Volume(-12).toDestination();
-            
+
             // 1. ENGINE SYNTH (Synthesizes realistic low guttural roar)
             // Fixed: Changed 'fatsawtooth' to standard 'sawtooth' oscillator to fix Tone.js type reference error
             engineSynth = new Tone.Oscillator({
                 type: 'sawtooth',
-                frequency: 36,
+                frequency: 45,
                 detune: 5
             });
 
-            // Guttural sub hum to fill out engine weight (Triangle is much mellower than square)
+            // Guttural sub hum to fill out engine weight
             subSynth = new Tone.Oscillator({
-                type: 'triangle',
-                frequency: 18,
-                volume: -3
+                type: 'square',
+                frequency: 22.5,
+                volume: -6
             });
 
             filter = new Tone.Filter({
                 type: 'lowpass',
-                Q: 0.8, // Mellow resonance to completely eliminate high-pitched whistle
-                frequency: 150
+                Q: 3,
+                frequency: 180
             });
 
-            // LFO to generate rotational compression flutter with small, warm modulation bounds
+            // LFO to generate rotational compression flutter
             const engineFlutter = new Tone.LFO({
                 frequency: 8,
-                min: -25,
-                max: 25
+                min: 120,
+                max: 300
             });
 
             engineSynth.connect(filter);
@@ -495,18 +580,11 @@
             engineFlutter.connect(filter.frequency).start();
 
             // 2. DRIVETRAIN HIGH-FREQUENCY NOISE (Whine of gears and wheels turning)
-            // Routed through a dedicated lowpass filter to prevent open high-pitched hissing/whistling
             driveNoise = new Tone.NoiseSynth({
                 noise: { type: 'pink' },
                 envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 0.5 },
-                volume: -28
-            });
-            driveFilter = new Tone.Filter({
-                type: 'lowpass',
-                Q: 1,
-                frequency: 250
+                volume: -24
             }).connect(mainSynthVolume);
-            driveNoise.connect(driveFilter);
 
             // 3. PNEUMATIC SUSPENSION COMPRESSION SYNTH (Spring sound when bouncing)
             chassisSpringSynth = new Tone.NoiseSynth({
@@ -519,7 +597,7 @@
 
             audioSystemsInitialized = true;
             document.getElementById('live-audio-waves').style.display = 'flex';
-            
+
             // Mechanical power-up hum
             const powerUpSynth = new Tone.Synth().connect(mainSynthVolume);
             powerUpSynth.triggerAttackRelease("A3", "1.5n");
@@ -585,7 +663,7 @@
         // Custom lighting objects for dynamic environment shifts
         let ambientLight, keyLight, rimLight, floorBounceLight;
 
-        window.onload = function() {
+        window.onload = function () {
             init3DScene();
             initTelemetryPlot();
         };
@@ -593,7 +671,7 @@
         // Custom interactive Diagnostic Oscilloscope
         function initTelemetryPlot() {
             const canvas = document.getElementById('telemetry-chart');
-            if(!canvas) return;
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             let dataPoints = Array(50).fill(30);
             let timeline = 0;
@@ -607,7 +685,7 @@
 
             function updateChart() {
                 timeline += 0.2;
-                
+
                 let baseWaveVal = 40;
                 let telemetryLabelText = "Chassis Torsional Wave";
                 let telemetryColor = '#22d3ee'; // Cyan
@@ -641,7 +719,7 @@
                 // Grid lines background
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
                 ctx.lineWidth = 1;
-                for(let i = 0; i < canvas.height; i += 18) {
+                for (let i = 0; i < canvas.height; i += 18) {
                     ctx.beginPath();
                     ctx.moveTo(0, i);
                     ctx.lineTo(canvas.width, i);
@@ -852,39 +930,39 @@
             const zT = -1.4;  // Tail section End
 
             const nodes = {
-                l0_n_l: new THREE.Vector3(-wS, y0, zN),   l0_n_r: new THREE.Vector3(wS, y0, zN),
+                l0_n_l: new THREE.Vector3(-wS, y0, zN), l0_n_r: new THREE.Vector3(wS, y0, zN),
                 l0_fa_l: new THREE.Vector3(-wS, y0, zFA), l0_fa_r: new THREE.Vector3(wS, y0, zFA),
                 l0_bp_l: new THREE.Vector3(-wS, y0, zBP), l0_bp_r: new THREE.Vector3(wS, y0, zBP),
                 l0_ra_l: new THREE.Vector3(-wS, y0, zRA), l0_ra_r: new THREE.Vector3(wS, y0, zRA),
-                l0_t_l: new THREE.Vector3(-wS, y0, zT),   l0_t_r: new THREE.Vector3(wS, y0, zT),
+                l0_t_l: new THREE.Vector3(-wS, y0, zT), l0_t_r: new THREE.Vector3(wS, y0, zT),
 
-                l1_n_l: new THREE.Vector3(-wS, y1, zN),   l1_n_r: new THREE.Vector3(wS, y1, zN),
+                l1_n_l: new THREE.Vector3(-wS, y1, zN), l1_n_r: new THREE.Vector3(wS, y1, zN),
                 l1_fa_l: new THREE.Vector3(-wS, y1, zFA), l1_fa_r: new THREE.Vector3(wS, y1, zFA),
-                l1_d_l: new THREE.Vector3(-wS, y1, zD),   l1_d_r: new THREE.Vector3(wS, y1, zD),
+                l1_d_l: new THREE.Vector3(-wS, y1, zD), l1_d_r: new THREE.Vector3(wS, y1, zD),
                 l1_bp_l: new THREE.Vector3(-wS, y1, zBP), l1_bp_r: new THREE.Vector3(wS, y1, zBP),
-                l1_c_l: new THREE.Vector3(-wS, y1, zC),   l1_c_r: new THREE.Vector3(wS, y1, zC),
+                l1_c_l: new THREE.Vector3(-wS, y1, zC), l1_c_r: new THREE.Vector3(wS, y1, zC),
                 l1_ra_l: new THREE.Vector3(-wS, y1, zRA), l1_ra_r: new THREE.Vector3(wS, y1, zRA),
-                l1_t_l: new THREE.Vector3(-wS, y1, zT),   l1_t_l: new THREE.Vector3(-wS, y1, zT),
+                l1_t_l: new THREE.Vector3(-wS, y1, zT), l1_t_l: new THREE.Vector3(-wS, y1, zT),
                 l1_t_r: new THREE.Vector3(wS, y1, zT),
 
-                l2_n_l: new THREE.Vector3(-wS+0.1, y2, zN-0.1), l2_n_r: new THREE.Vector3(wS-0.1, y2, zN-0.1),
-                l2_d_l: new THREE.Vector3(-wB, y2, zD),         l2_d_r: new THREE.Vector3(wB, y2, zD),
-                l2_bp_l: new THREE.Vector3(-wB, y2, zBP),       l2_bp_r: new THREE.Vector3(wB, y2, zBP),
-                l2_c_l: new THREE.Vector3(-wS-0.1, y2, zC),     l2_c_r: new THREE.Vector3(wS+0.1, y2, zC),
-                l2_t_l: new THREE.Vector3(-wS, y2, zT),         l2_t_r: new THREE.Vector3(wS, y2, zT),
+                l2_n_l: new THREE.Vector3(-wS + 0.1, y2, zN - 0.1), l2_n_r: new THREE.Vector3(wS - 0.1, y2, zN - 0.1),
+                l2_d_l: new THREE.Vector3(-wB, y2, zD), l2_d_r: new THREE.Vector3(wB, y2, zD),
+                l2_bp_l: new THREE.Vector3(-wB, y2, zBP), l2_bp_r: new THREE.Vector3(wB, y2, zBP),
+                l2_c_l: new THREE.Vector3(-wS - 0.1, y2, zC), l2_c_r: new THREE.Vector3(wS + 0.1, y2, zC),
+                l2_t_l: new THREE.Vector3(-wS, y2, zT), l2_t_r: new THREE.Vector3(wS, y2, zT),
 
-                l3_f_l: new THREE.Vector3(-wR, y3, zD),   l3_f_r: new THREE.Vector3(wR, y3, zD),
-                l3_r_l: new THREE.Vector3(-wR, y3, zBP),  l3_r_r: new THREE.Vector3(wR, y3, zBP),
+                l3_f_l: new THREE.Vector3(-wR, y3, zD), l3_f_r: new THREE.Vector3(wR, y3, zD),
+                l3_r_l: new THREE.Vector3(-wR, y3, zBP), l3_r_r: new THREE.Vector3(wR, y3, zBP),
             };
 
             // 1. Build Base Subframe Structs (Dark gunmetal grey)
             const baseFramework = [
                 ['l0_n_l', 'l0_fa_l'], ['l0_fa_l', 'l0_bp_l'], ['l0_bp_l', 'l0_ra_l'], ['l0_ra_l', 'l0_t_l'],
                 ['l0_n_r', 'l0_fa_r'], ['l0_fa_r', 'l0_bp_r'], ['l0_bp_r', 'l0_ra_r'], ['l0_ra_r', 'l0_t_r'],
-                ['l1_n_l', 'l1_fa_l'], ['l1_fa_l', 'l1_d_l'],  ['l1_d_l', 'l1_bp_l'],  ['l1_bp_l', 'l1_c_l'], ['l1_c_l', 'l1_ra_l'], ['l1_ra_l', 'l1_t_l'],
-                ['l1_n_r', 'l1_fa_r'], ['l1_fa_r', 'l1_d_r'],  ['l1_d_r', 'l1_bp_r'],  ['l1_bp_r', 'l1_c_r'], ['l1_c_r', 'l1_ra_r'], ['l1_ra_r', 'l1_t_r'],
+                ['l1_n_l', 'l1_fa_l'], ['l1_fa_l', 'l1_d_l'], ['l1_d_l', 'l1_bp_l'], ['l1_bp_l', 'l1_c_l'], ['l1_c_l', 'l1_ra_l'], ['l1_ra_l', 'l1_t_l'],
+                ['l1_n_r', 'l1_fa_r'], ['l1_fa_r', 'l1_d_r'], ['l1_d_r', 'l1_bp_r'], ['l1_bp_r', 'l1_c_r'], ['l1_c_r', 'l1_ra_r'], ['l1_ra_r', 'l1_t_r'],
                 ['l0_n_l', 'l0_n_r'], ['l0_fa_l', 'l0_fa_r'], ['l0_bp_l', 'l0_bp_r'], ['l0_ra_l', 'l0_ra_r'], ['l0_t_l', 'l0_t_r'],
-                ['l1_n_l', 'l1_n_r'], ['l1_d_l', 'l1_d_r'],   ['l1_bp_l', 'l1_bp_r'], ['l1_c_l', 'l1_c_r'],   ['l1_t_l', 'l1_t_r'],
+                ['l1_n_l', 'l1_n_r'], ['l1_d_l', 'l1_d_r'], ['l1_bp_l', 'l1_bp_r'], ['l1_c_l', 'l1_c_r'], ['l1_t_l', 'l1_t_r'],
                 ['l0_n_l', 'l1_n_l'], ['l0_fa_l', 'l1_fa_l'], ['l0_bp_l', 'l1_bp_l'], ['l0_ra_l', 'l1_ra_l'], ['l0_t_l', 'l1_t_l'],
                 ['l0_n_r', 'l1_n_r'], ['l0_fa_r', 'l1_fa_r'], ['l0_bp_r', 'l1_bp_r'], ['l0_ra_r', 'l1_ra_r'], ['l0_t_r', 'l1_t_r']
             ];
@@ -964,7 +1042,7 @@
                 // Wishbones linkage
                 const sign = x > 0 ? 1 : -1;
                 const chassisMountX = wS * sign;
-                
+
                 const lowControlArmCenter = new THREE.Vector3(x - (0.12 * sign), wheelCenterY - 0.08, z);
                 const upControlArmCenter = new THREE.Vector3(x - (0.12 * sign), wheelCenterY + 0.08, z);
 
@@ -1112,11 +1190,11 @@
             const positions = new Float32Array(ambientDustCount * 3);
             for (let i = 0; i < ambientDustCount * 3; i += 3) {
                 positions[i] = (Math.random() - 0.5) * 10;
-                positions[i+1] = Math.random() * 5;
-                positions[i+2] = (Math.random() - 0.5) * 10;
+                positions[i + 1] = Math.random() * 5;
+                positions[i + 2] = (Math.random() - 0.5) * 10;
             }
             particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            
+
             const particleMat = new THREE.PointsMaterial({
                 color: 0xff8800,
                 size: 0.02,
@@ -1138,14 +1216,14 @@
             };
 
             // Remove the 'let' re-declaration so viewLerpTarget assigns to global viewLerpTarget
-            viewLerpTarget = null; 
+            viewLerpTarget = null;
 
             document.querySelectorAll('.focus-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     playInterfaceClick();
                     const targetId = btn.getAttribute('data-target');
                     viewLerpTarget = targetViews[targetId];
-                    
+
                     if (autoRotate) {
                         autoRotate = false;
                         updateRotationUI();
@@ -1263,7 +1341,7 @@
                 playInterfaceClick();
                 showHUD = !showHUD;
                 const toggleIcon = document.getElementById('hud-toggle-icon');
-                
+
                 if (showHUD) {
                     document.getElementById('left-sidebar').classList.remove('hud-hidden');
                     document.getElementById('right-sidebar').classList.remove('hud-hidden');
@@ -1291,7 +1369,7 @@
                 const btn = document.getElementById('env-tokyo');
                 btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 rounded-lg text-left transition-all flex justify-between items-center";
                 btn.querySelector('.fa-check').classList.remove('opacity-0');
-                
+
                 // Color adjustment
                 scene.background.setHex(0x020205);
                 scene.fog.color.setHex(0x020205);
@@ -1310,7 +1388,7 @@
                 const btn = document.getElementById('env-desert');
                 btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-amber-600/15 border border-amber-500/30 text-amber-500 rounded-lg text-left transition-all flex justify-between items-center";
                 btn.querySelector('.fa-check').classList.remove('opacity-0');
-                
+
                 // Color adjustment (Warm sand colors)
                 scene.background.setHex(0x0d0805);
                 scene.fog.color.setHex(0x0d0805);
@@ -1329,7 +1407,7 @@
                 const btn = document.getElementById('env-space');
                 btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-purple-600/15 border border-purple-500/30 text-purple-400 rounded-lg text-left transition-all flex justify-between items-center";
                 btn.querySelector('.fa-check').classList.remove('opacity-0');
-                
+
                 // Color adjustment (Vibrant violet deep space colors)
                 scene.background.setHex(0x03010a);
                 scene.fog.color.setHex(0x03010a);
@@ -1344,7 +1422,7 @@
             const engineBtn = document.getElementById('btn-engine-toggle');
             const driveBtn = document.getElementById('btn-drive-toggle');
             engineBtn.addEventListener('click', () => {
-                if(!audioSystemsInitialized) initializeToneAudio();
+                if (!audioSystemsInitialized) initializeToneAudio();
 
                 engineOn = !engineOn;
                 playInterfaceClick();
@@ -1354,7 +1432,7 @@
                     engineBtn.className = "py-2 px-3 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg border border-red-500/50 transition-all flex items-center justify-center space-x-2";
                     driveBtn.disabled = false;
                     rpmSlider.disabled = false;
-                    
+
                     // Engine ignition starting crank sound
                     if (audioSystemsInitialized) {
                         const starterSynth = new Tone.NoiseSynth({
@@ -1363,7 +1441,7 @@
                             volume: -10
                         }).connect(mainSynthVolume);
                         starterSynth.triggerAttackRelease("4n");
-                        
+
                         setTimeout(() => {
                             if (engineOn) {
                                 engineSynth.start();
@@ -1371,13 +1449,13 @@
                             }
                         }, 250);
                     }
-                    
+
                     document.getElementById('header-pulse-icon').classList.remove('animate-spin-slow');
                     document.getElementById('header-pulse-icon').classList.add('animate-spin');
                 } else {
                     engineBtn.innerText = "IGNITE MOTOR";
                     engineBtn.className = "py-2 px-3 bg-red-600/20 hover:bg-red-600/35 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-all flex items-center justify-center space-x-2";
-                    
+
                     // Kill drivetrain state as well
                     driveEngaged = false;
                     driveBtn.disabled = true;
@@ -1411,7 +1489,7 @@
                     driveBtn.className = "py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-extrabold rounded-lg border border-emerald-500/50 transition-all flex items-center justify-center space-x-2";
                     document.getElementById('indicator-drivetrain').innerText = "DYNO LINK ENGAGED";
                     document.getElementById('indicator-drivetrain').className = "font-bold text-emerald-400 animate-pulse";
-                    
+
                     if (audioSystemsInitialized) {
                         driveNoise.triggerAttack();
                     }
@@ -1419,7 +1497,7 @@
                     driveBtn.className = "py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2";
                     document.getElementById('indicator-drivetrain').innerText = "DISCONNECTED";
                     document.getElementById('indicator-drivetrain').className = "font-bold text-red-500";
-                    
+
                     if (audioSystemsInitialized) {
                         driveNoise.triggerRelease();
                     }
@@ -1474,7 +1552,7 @@
 
         function tick() {
             requestAnimationFrame(tick);
-            
+
             const elapsed = appClock.getElapsedTime();
             const delta = appClock.getDelta();
 
@@ -1482,17 +1560,16 @@
             if (engineOn) {
                 currentRPM += (targetRPM - currentRPM) * 0.12;
                 document.getElementById('rpm-label').innerText = `${Math.round(currentRPM)} RPM`;
-                
+
                 if (audioSystemsInitialized) {
                     // Normalize RPM scale into synth audio frequencies
-                    const targetFreq = 30 + (currentRPM / 9000) * 70; // deep V-twin guttural range
+                    const targetFreq = 20 + (currentRPM / 9000) * 120;
                     engineSynth.frequency.value = targetFreq;
                     subSynth.frequency.value = targetFreq / 2;
-                    filter.frequency.value = 120 + (currentRPM / 9000) * 280; // mellow, warm cutoff range
+                    filter.frequency.value = 100 + (currentRPM / 9000) * 800;
 
                     if (driveEngaged) {
-                        driveNoise.volume.value = -32 + (currentRPM / 9000) * 12;
-                        driveFilter.frequency.value = 250 + (currentRPM / 9000) * 550; // Sweeps dynamically from 250Hz to 800Hz
+                        driveNoise.volume.value = -30 + (currentRPM / 9000) * 15;
                     }
                 }
 
@@ -1524,7 +1601,7 @@
                 suspensionBounceTime += 0.08;
                 // standard decaying spring oscillation math
                 const reboundDisplacement = -suspensionBounceAmplitude * Math.exp(-suspensionBounceTime * 1.5) * Math.cos(suspensionBounceTime * 10);
-                
+
                 chassisGroup.position.y = reboundDisplacement;
                 interiorGroup.position.y = explodedFactor * 0.45 + reboundDisplacement;
                 engineGroup.position.y = 0.48 - (explodedFactor * 0) + reboundDisplacement;
@@ -1580,4 +1657,5 @@
         }
     </script>
 </body>
+
 </html>
