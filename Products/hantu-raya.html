@@ -449,7 +449,7 @@
     <script>
         // --- REAL-TIME AUDIO SYNTH GENERATION (Tone.js) ---
         let audioSystemsInitialized = false;
-        let mainSynthVolume, engineSynth, subSynth, driveNoise, filter;
+        let mainSynthVolume, engineSynth, subSynth, driveNoise, filter, driveFilter;
         let chassisSpringSynth;
 
         function initializeToneAudio() {
@@ -465,28 +465,28 @@
             // Fixed: Changed 'fatsawtooth' to standard 'sawtooth' oscillator to fix Tone.js type reference error
             engineSynth = new Tone.Oscillator({
                 type: 'sawtooth',
-                frequency: 45,
+                frequency: 36,
                 detune: 5
             });
 
-            // Guttural sub hum to fill out engine weight
+            // Guttural sub hum to fill out engine weight (Triangle is much mellower than square)
             subSynth = new Tone.Oscillator({
-                type: 'square',
-                frequency: 22.5,
-                volume: -6
+                type: 'triangle',
+                frequency: 18,
+                volume: -3
             });
 
             filter = new Tone.Filter({
                 type: 'lowpass',
-                Q: 3,
-                frequency: 180
+                Q: 0.8, // Mellow resonance to completely eliminate high-pitched whistle
+                frequency: 150
             });
 
-            // LFO to generate rotational compression flutter
+            // LFO to generate rotational compression flutter with small, warm modulation bounds
             const engineFlutter = new Tone.LFO({
                 frequency: 8,
-                min: 120,
-                max: 300
+                min: -25,
+                max: 25
             });
 
             engineSynth.connect(filter);
@@ -495,11 +495,18 @@
             engineFlutter.connect(filter.frequency).start();
 
             // 2. DRIVETRAIN HIGH-FREQUENCY NOISE (Whine of gears and wheels turning)
+            // Routed through a dedicated lowpass filter to prevent open high-pitched hissing/whistling
             driveNoise = new Tone.NoiseSynth({
                 noise: { type: 'pink' },
                 envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 0.5 },
-                volume: -24
+                volume: -28
+            });
+            driveFilter = new Tone.Filter({
+                type: 'lowpass',
+                Q: 1,
+                frequency: 250
             }).connect(mainSynthVolume);
+            driveNoise.connect(driveFilter);
 
             // 3. PNEUMATIC SUSPENSION COMPRESSION SYNTH (Spring sound when bouncing)
             chassisSpringSynth = new Tone.NoiseSynth({
@@ -1478,13 +1485,14 @@
                 
                 if (audioSystemsInitialized) {
                     // Normalize RPM scale into synth audio frequencies
-                    const targetFreq = 20 + (currentRPM / 9000) * 120;
+                    const targetFreq = 30 + (currentRPM / 9000) * 70; // deep V-twin guttural range
                     engineSynth.frequency.value = targetFreq;
                     subSynth.frequency.value = targetFreq / 2;
-                    filter.frequency.value = 100 + (currentRPM / 9000) * 800;
+                    filter.frequency.value = 120 + (currentRPM / 9000) * 280; // mellow, warm cutoff range
 
                     if (driveEngaged) {
-                        driveNoise.volume.value = -30 + (currentRPM / 9000) * 15;
+                        driveNoise.volume.value = -32 + (currentRPM / 9000) * 12;
+                        driveFilter.frequency.value = 250 + (currentRPM / 9000) * 550; // Sweeps dynamically from 250Hz to 800Hz
                     }
                 }
 
