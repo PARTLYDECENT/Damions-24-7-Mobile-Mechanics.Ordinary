@@ -3,493 +3,1451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hantu-Raya Exoskeletal 3D Viewer</title>
+    <title>Hantu-Raya Exoskeletal Concept | Next-Gen Industrial Simulator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js & OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Tone.js for Real-Time Sound Synthesis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { margin: 0; overflow: hidden; background-color: #111; color: white; font-family: sans-serif; }
-        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; }
-        .interactive { pointer-events: auto; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        /* Marquee Styles */
-        .marquee-container {
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020205;
+            color: #f3f4f6;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .font-mono-custom {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
+            z-index: 1;
+        }
+
+        .cyber-grid {
+            background-image: linear-gradient(rgba(249, 115, 22, 0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(249, 115, 22, 0.04) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: center;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(8, 10, 20, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-panel-neon-orange {
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.1), inset 0 0 15px rgba(249, 115, 22, 0.03);
+        }
+
+        .glass-panel-neon-cyan {
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.1), inset 0 0 15px rgba(34, 211, 238, 0.03);
+        }
+
+        /* Webkit scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(249, 115, 22, 0.3);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(249, 115, 22, 0.5);
+        }
+
+        /* Marquee styles */
+        .marquee-container {
             width: 100%;
             overflow: hidden;
-            background: rgba(255, 68, 0, 0.85); /* Match the chassis orange */
-            border-top: 2px solid #ff8800;
-            color: #111;
-            padding: 8px 0;
-            z-index: 20;
-            font-weight: 900;
-            font-size: 1.25rem;
+            background: linear-gradient(90deg, #ea580c 0%, #00d2ff 50%, #ea580c 100%);
+            color: #020205;
+            padding: 5px 0;
+            font-weight: 800;
+            font-size: 11px;
             letter-spacing: 0.3em;
-            pointer-events: none;
-            box-shadow: 0 -4px 15px rgba(255, 68, 0, 0.4);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
         }
+
         .marquee-text {
             display: inline-block;
             white-space: nowrap;
-            animation: marquee 12s linear infinite;
+            animation: marquee 30s linear infinite;
         }
+
         @keyframes marquee {
-            0% { transform: translateX(100vw); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
         }
-        
-        @media (max-width: 768px) {
-            #ui-layer { padding: 10px; justify-content: flex-start; }
-            .interactive { padding: 12px !important; }
-            .interactive h1 { font-size: 1.2rem !important; margin-bottom: 4px !important; }
-            .interactive p.text-sm { display: none !important; }
-            .interactive .space-y-2 { font-size: 0.65rem !important; display: flex; gap: 10px; margin-bottom: 0 !important;}
-            .interactive .space-y-2 p { margin: 0; }
-            .interactive .mt-6 { margin-top: 10px !important; }
-            #btn-autorotate { padding: 6px 12px !important; font-size: 0.75rem !important; width: 100%;}
-            .marquee-container { font-size: 0.85rem; padding: 6px 0; letter-spacing: 0.2em; }
+
+        .hud-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.97) translateY(10px);
+        }
+
+        .transition-all-custom {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Audio Indicator Bar */
+        .audio-bar {
+            width: 3px;
+            background-color: #ea580c;
+            animation: bounce-bar 0.5s ease infinite alternate;
+        }
+        @keyframes bounce-bar {
+            0% { height: 4px; }
+            100% { height: 16px; }
         }
     </style>
 </head>
-<body>
+<body class="select-none overflow-hidden">
 
-    <div class="marquee-container">
-        <div class="marquee-text">
-            /// HANTU-RAYA EXOSKELETAL CONCEPT /// EXPERIMENTAL TUBE CHASSIS /// PROJECT HANTU-RAYA /// V-TWIN POWERED ///
+    <!-- WebGL Target -->
+    <div id="canvas-container"></div>
+    <div class="absolute inset-0 pointer-events-none cyber-grid z-[2]"></div>
+
+    <!-- INITIAL AUDIO BOOT TRIGGER (Needed to satisfy browser user-interaction policies) -->
+    <div id="audio-auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-2xl transition-opacity duration-700">
+        <div class="max-w-md w-full p-8 rounded-2xl border border-orange-500/20 glass-panel text-center space-y-6 mx-4">
+            <div class="w-20 h-20 mx-auto rounded-full bg-orange-600/10 border border-orange-500/30 flex items-center justify-center text-orange-500 text-3xl animate-pulse">
+                <i class="fa-solid fa-headphones-simple"></i>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-2xl font-extrabold tracking-tight uppercase text-white">Synthesizer Interface</h2>
+                <p class="text-xs text-gray-400">Initialize procedural V-Twin audio harmonics, pneumatic suspension sounds, and telemetry feedback alerts.</p>
+            </div>
+            <button id="btn-initialize-systems" class="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 text-black font-extrabold tracking-widest text-xs uppercase rounded-xl hover:shadow-[0_0_30px_rgba(234,88,12,0.4)] transition-all transform active:scale-95">
+                Boot Simulator Systems
+            </button>
         </div>
     </div>
 
-    <div id="ui-layer">
-        <div class="interactive max-w-md bg-black/60 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl">
-            <h1 class="text-2xl font-bold text-orange-500 mb-2">Hantu-Raya Exoskeletal Concept</h1>
-            <p class="text-sm text-gray-300 mb-4">Featuring a true structural subframe, A-arm suspension, and heavily triangulated body-tubes.</p>
-            
-            <div class="space-y-2 text-xs text-gray-400">
-                <p><strong class="text-white">Left Click + Drag:</strong> Rotate Camera</p>
-                <p><strong class="text-white">Scroll Wheel:</strong> Zoom In/Out</p>
+    <!-- MAIN INTERACTIVE HUD -->
+    <div id="hud-container" class="absolute inset-0 z-10 flex flex-col justify-between p-6 pointer-events-none transition-all-custom duration-500">
+        
+        <!-- HEADER PANEL -->
+        <header class="w-full flex justify-between items-start pointer-events-auto">
+            <div class="glass-panel glass-panel-neon-orange p-4 rounded-xl flex items-center space-x-4 max-w-lg">
+                <div class="bg-orange-600/20 text-orange-500 p-3 rounded-lg border border-orange-500/30 relative">
+                    <i id="header-pulse-icon" class="fa-solid fa-atom text-2xl animate-spin-slow"></i>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black animate-ping"></span>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[9px] font-bold tracking-widest text-orange-500 uppercase font-mono-custom bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/20">HR-EVOLVE-V3</span>
+                        <div class="flex items-center space-x-1" id="live-audio-waves" style="display: none;">
+                            <div class="audio-bar" style="animation-delay: 0.1s"></div>
+                            <div class="audio-bar" style="animation-delay: 0.3s"></div>
+                            <div class="audio-bar" style="animation-delay: 0.5s"></div>
+                        </div>
+                    </div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white uppercase mt-0.5">Hantu-Raya Workstation</h1>
+                    <p class="text-xs text-gray-400 font-medium">Procedural Audio • Multi-Axis Stress Rigs • Chassis Colorists Studio</p>
+                </div>
             </div>
 
-            <div class="mt-6 flex space-x-3">
-                <button id="btn-autorotate" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold rounded-lg transition-colors shadow-lg">
-                    Pause Rotation
+            <!-- View Action Bar -->
+            <div class="flex space-x-2">
+                <button id="btn-hud-toggle" class="glass-panel hover:bg-white/10 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-white/10" title="Toggle HUD visibility">
+                    <i id="hud-toggle-icon" class="fa-solid fa-eye-slash"></i>
+                    <span class="text-xs font-semibold hidden sm:inline">Minimal Mode</span>
+                </button>
+                <button id="btn-autorotate" class="glass-panel hover:bg-orange-600/20 hover:border-orange-500/30 text-white p-3 rounded-xl transition-all pointer-events-auto flex items-center space-x-2 border border-orange-500/20">
+                    <i id="rotate-icon" class="fa-solid fa-arrows-spin text-orange-500 animate-spin-slow"></i>
+                    <span id="rotate-text" class="text-xs font-semibold">Active Rotation</span>
                 </button>
             </div>
+        </header>
+
+        <!-- CENTER AREA FOR CONFIGURATOR & DYNAMIC WORK Rig -->
+        <div class="flex justify-between items-center w-full my-4 flex-grow pointer-events-none">
+            
+            <!-- LEFT SIDEBAR: CONTROLS & DYNOMETRY -->
+            <aside id="left-sidebar" class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between overflow-y-auto border border-white/10 transition-all-custom">
+                <div class="space-y-5">
+                    <!-- Session Title -->
+                    <div>
+                        <div class="text-[10px] font-bold text-orange-500 tracking-wider uppercase font-mono-custom">Lab Controller</div>
+                        <h2 class="text-lg font-bold text-white mt-0.5">Mechanical Rig</h2>
+                    </div>
+
+                    <!-- Engine Dyno Simulator -->
+                    <div class="space-y-3 bg-white/3 p-3.5 rounded-xl border border-white/5">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                                <i class="fa-solid fa-gauge text-orange-500"></i>
+                                <span>Dyno Ignition & RPM</span>
+                            </label>
+                            <span id="rpm-label" class="text-xs font-mono-custom text-orange-400 font-bold bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0 RPM</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-engine-toggle" class="py-2 px-3 bg-red-600/20 hover:bg-red-600/35 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-power-off text-[10px]"></i>
+                                <span id="engine-btn-text">IGNITE MOTOR</span>
+                            </button>
+                            <button id="btn-drive-toggle" class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2 disabled:opacity-50" disabled>
+                                <i class="fa-solid fa-gears text-[10px]"></i>
+                                <span id="drive-btn-text">ENGAGE DRIVE</span>
+                            </button>
+                        </div>
+                        <div class="space-y-1">
+                            <input type="range" id="rpm-slider" min="800" max="9000" value="800" class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none disabled:opacity-30" disabled>
+                            <div class="flex justify-between text-[8px] text-gray-500 font-mono-custom">
+                                <span>IDLE: 800</span>
+                                <span>REDLINE: 9,000 RPM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Material Colors Color Picker -->
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-palette text-orange-500"></i>
+                            <span>Bespoke Paint Finish</span>
+                        </label>
+                        <div class="grid grid-cols-5 gap-2" id="color-selectors">
+                            <!-- Apex Orange -->
+                            <button data-color="0xff4400" class="h-10 rounded-lg border-2 border-orange-500 bg-gradient-to-br from-orange-600 to-red-800 shadow-md relative group transition-transform hover:scale-105" title="Apex Metallic Orange">
+                                <span class="absolute inset-0 rounded-lg border border-white/10"></span>
+                            </button>
+                            <!-- Cyber Lime -->
+                            <button data-color="0x26f54c" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-green-500 to-emerald-800 relative group transition-transform hover:scale-105" title="Acid Green Anodized">
+                                <span class="absolute inset-0 rounded-lg border border-white/10"></span>
+                            </button>
+                            <!-- Stealth Obsidian -->
+                            <button data-color="0x111216" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-neutral-800 to-black relative group transition-transform hover:scale-105" title="Carbon Matte Black">
+                                <span class="absolute inset-0 rounded-lg border border-white/10"></span>
+                            </button>
+                            <!-- Plutonium Blue -->
+                            <button data-color="0x00d2ff" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-cyan-400 to-blue-700 relative group transition-transform hover:scale-105" title="Hydron Blue Pearl">
+                                <span class="absolute inset-0 rounded-lg border border-white/10"></span>
+                            </button>
+                            <!-- Hyper Crimson -->
+                            <button data-color="0xe60026" class="h-10 rounded-lg border border-white/10 bg-gradient-to-br from-red-500 to-rose-950 relative group transition-transform hover:scale-105" title="Chroma Metallic Crimson">
+                                <span class="absolute inset-0 rounded-lg border border-white/10"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Suspension Stress Rigs -->
+                    <div class="space-y-2.5 pt-1 border-t border-white/5">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-nodes text-orange-500"></i>
+                            <span>Suspension Compression Rig</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-stress-test" class="py-2 px-3 bg-white/5 hover:bg-orange-600/10 hover:text-orange-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-orange-500/20 transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-compress text-[11px]"></i>
+                                <span>BOUNCE TEST</span>
+                            </button>
+                            <button id="btn-scan-laser" class="py-2 px-3 bg-white/5 hover:bg-cyan-600/10 hover:text-cyan-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-cyan-500/20 transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-radar text-[11px]"></i>
+                                <span>LASER SCAN</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exploded View Disassembly -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                                <i class="fa-solid fa-arrows-up-down-left-right text-orange-500"></i>
+                                <span>Volumetric Assembly</span>
+                            </label>
+                            <span id="exploded-value" class="text-xs font-mono-custom text-orange-400 bg-orange-950/40 px-2 py-0.5 rounded border border-orange-500/10">0%</span>
+                        </div>
+                        <input type="range" id="exploded-slider" min="0" max="100" value="0" class="w-full accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none">
+                    </div>
+
+                    <!-- Dynamic Focus Hotspots -->
+                    <div class="space-y-2 pt-2 border-t border-white/5">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-crosshairs text-orange-500"></i>
+                            <span>Component Target Jumps</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button data-target="all" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-orange-600/10 border border-orange-500/20 text-orange-400 font-medium rounded-lg transition-all">
+                                <i class="fa-solid fa-car mr-1.5"></i>Full Rig
+                            </button>
+                            <button data-target="engine" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                                <i class="fa-solid fa-gear mr-1.5"></i>V-Twin Engine
+                            </button>
+                            <button data-target="suspension" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                                <i class="fa-solid fa-link mr-1.5"></i>Wishbone Axle
+                            </button>
+                            <button data-target="cockpit" class="focus-btn text-[10px] text-left py-1.5 px-2.5 bg-white/5 border border-white/5 text-gray-300 font-medium rounded-lg transition-all">
+                                <i class="fa-solid fa-chair mr-1.5"></i>Cockpit Cabin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer coordinates -->
+                <div class="text-[9px] text-gray-500 border-t border-white/5 pt-2.5 mt-4 flex justify-between font-mono-custom">
+                    <span>SYS STATE: ACTIVE</span>
+                    <span>T-OSC: SYNTHETIC</span>
+                </div>
+            </aside>
+
+            <!-- RIGHT SIDEBAR: REALTIME OSCILLOSCOPE & ENVIRONMENTS -->
+            <aside id="right-sidebar" class="w-80 h-[72vh] glass-panel rounded-2xl p-5 pointer-events-auto flex flex-col justify-between border border-white/10 transition-all-custom">
+                <div class="space-y-5">
+                    <div>
+                        <div class="text-[10px] font-bold text-cyan-400 tracking-wider uppercase font-mono-custom">Diagnostics Module</div>
+                        <h2 class="text-lg font-bold text-white mt-0.5 font-mono-custom">OSCILLOSCOPE FEED</h2>
+                    </div>
+
+                    <!-- Custom Canvas Rolling Graph (Procedural telemetry) -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping inline-block mr-1"></span>
+                                <span id="telemetry-label">Dynamic Chassis Wave</span>
+                            </span>
+                            <span id="load-value" class="font-mono-custom text-cyan-400 font-bold">14.8 kN/m</span>
+                        </div>
+                        <div class="h-24 w-full bg-black/50 rounded-lg overflow-hidden border border-white/10 relative">
+                            <canvas id="telemetry-chart" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Environment swapping -->
+                    <div class="space-y-3 pt-1 border-t border-white/5">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-mountain-sun text-cyan-400"></i>
+                            <span>Environmental Rig Presets</span>
+                        </label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button id="env-tokyo" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 rounded-lg text-left transition-all flex justify-between items-center">
+                                <span><i class="fa-solid fa-city mr-2"></i>Neo-Tokyo R&D Lab</span>
+                                <i class="fa-solid fa-check text-[10px]"></i>
+                            </button>
+                            <button id="env-desert" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
+                                <span><i class="fa-solid fa-wind mr-2"></i>Nevada Desert Dyno</span>
+                                <i class="fa-solid fa-check text-[10px] opacity-0"></i>
+                            </button>
+                            <button id="env-space" class="env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10">
+                                <span><i class="fa-solid fa-shuttle-space mr-2"></i>Orbiting Docking Bay</span>
+                                <i class="fa-solid fa-check text-[10px] opacity-0"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Modes -->
+                    <div class="space-y-3 pt-1 border-t border-white/5">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-binoculars text-cyan-400"></i>
+                            <span>Render Frame Mesh</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="mode-normal" class="py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-cubes"></i>
+                                <span>CAD Solid</span>
+                            </button>
+                            <button id="mode-wireframe" class="py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10 flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-border-all"></i>
+                                <span>X-Ray cage</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Simulation Effects -->
+                    <div class="space-y-3 pt-1 border-t border-white/5">
+                        <label class="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-cyan-400"></i>
+                            <span>Simulation Effects</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex flex-col space-y-1">
+                                <span class="text-[9px] text-gray-400 uppercase font-bold">Particles</span>
+                                <button id="btn-particles" class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
+                                    ON
+                                </button>
+                            </div>
+                            <div class="flex flex-col space-y-1">
+                                <span class="text-[9px] text-gray-400 uppercase font-bold">Exhaust Glow</span>
+                                <button id="btn-exhaust-glow" class="py-1.5 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20">
+                                    PULSING
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Telemetry indicator -->
+                <div class="bg-cyan-950/20 border border-cyan-500/20 p-2.5 rounded-lg flex items-center space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                    <span class="text-[9px] font-bold font-mono-custom text-cyan-400 uppercase tracking-widest">Procedural sound live synth</span>
+                </div>
+            </aside>
         </div>
-        
-        <div class="text-right text-xs text-gray-500 pb-10 pr-2">
-            Engineered with Three.js
+
+        <!-- FOOTER: DESCRIPTIVE DETAILS AND ROTATING CONTROLS INFO -->
+        <footer class="w-full flex flex-col md:flex-row justify-between items-center gap-4 pointer-events-auto">
+            <!-- Navigation controls helper -->
+            <div class="glass-panel px-4 py-2.5 rounded-xl flex space-x-4 text-xs text-gray-400 border border-white/5 items-center">
+                <div class="flex items-center space-x-1.5">
+                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">L-CLICK</kbd>
+                    <span>Orbit</span>
+                </div>
+                <div class="h-4 w-px bg-white/10"></div>
+                <div class="flex items-center space-x-1.5">
+                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">R-CLICK</kbd>
+                    <span>Pan</span>
+                </div>
+                <div class="h-4 w-px bg-white/10"></div>
+                <div class="flex items-center space-x-1.5">
+                    <kbd class="bg-white/10 px-2 py-1 rounded text-white font-bold text-[10px] border border-white/10 font-mono-custom">SCROLL</kbd>
+                    <span>Zoom</span>
+                </div>
+            </div>
+
+            <!-- Dyno/Drivetrain quick indicator -->
+            <div class="glass-panel px-4 py-2.5 rounded-xl flex space-x-2 text-xs text-gray-400 border border-white/5 items-center font-mono-custom">
+                <span class="text-[10px]">DRIVETRAIN ENGAGED:</span>
+                <span id="indicator-drivetrain" class="font-bold text-red-500">DISCONNECTED</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- LOWER DECORATIVE MARQUEE OVERLAY -->
+    <div class="absolute bottom-0 left-0 w-full z-20 pointer-events-none">
+        <div class="marquee-container">
+            <div class="marquee-text font-mono-custom uppercase">
+                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN /// COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
+                /// HANTU-RAYA CONCEPT SIMULATOR /// DESIGN VALIDATION SYSTEM ACTIVE /// TORSIONAL STRESS FEED: NOMINAL /// TONE.JS AUDIO SYNTHESIS PIPELINE /// ROTATION LOCK ENGAGED /// COMPRESSION ENGINE V-TWIN /// COIL-OVER SUSPENSION SYSTEM /// MULTI-AXIS SUSPENSION BOUNCE RIG /// LASER SCANNER ACTIVE ///
+            </div>
         </div>
     </div>
 
-    <div id="canvas-container"></div>
-
+    <!-- MAIN APP SCRIPT -->
     <script>
+        // --- REAL-TIME AUDIO SYNTH GENERATION (Tone.js) ---
+        let audioSystemsInitialized = false;
+        let mainSynthVolume, engineSynth, subSynth, driveNoise, filter;
+        let chassisSpringSynth;
+
+        function initializeToneAudio() {
+            if (audioSystemsInitialized) return;
+
+            // Start Audio Context
+            Tone.start();
+
+            // Core master volume setup with safety limiter
+            mainSynthVolume = new Tone.Volume(-12).toDestination();
+            
+            // 1. ENGINE SYNTH (Synthesizes realistic low guttural roar)
+            // Fixed: Changed 'fatsawtooth' to standard 'sawtooth' oscillator to fix Tone.js type reference error
+            engineSynth = new Tone.Oscillator({
+                type: 'sawtooth',
+                frequency: 45,
+                detune: 5
+            });
+
+            // Guttural sub hum to fill out engine weight
+            subSynth = new Tone.Oscillator({
+                type: 'square',
+                frequency: 22.5,
+                volume: -6
+            });
+
+            filter = new Tone.Filter({
+                type: 'lowpass',
+                Q: 3,
+                frequency: 180
+            });
+
+            // LFO to generate rotational compression flutter
+            const engineFlutter = new Tone.LFO({
+                frequency: 8,
+                min: 120,
+                max: 300
+            });
+
+            engineSynth.connect(filter);
+            subSynth.connect(filter);
+            filter.connect(mainSynthVolume);
+            engineFlutter.connect(filter.frequency).start();
+
+            // 2. DRIVETRAIN HIGH-FREQUENCY NOISE (Whine of gears and wheels turning)
+            driveNoise = new Tone.NoiseSynth({
+                noise: { type: 'pink' },
+                envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 0.5 },
+                volume: -24
+            }).connect(mainSynthVolume);
+
+            // 3. PNEUMATIC SUSPENSION COMPRESSION SYNTH (Spring sound when bouncing)
+            chassisSpringSynth = new Tone.NoiseSynth({
+                noise: { type: 'white' },
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 },
+                volume: -8
+            });
+            const springFilter = new Tone.Filter(350, "bandpass").connect(mainSynthVolume);
+            chassisSpringSynth.connect(springFilter);
+
+            audioSystemsInitialized = true;
+            document.getElementById('live-audio-waves').style.display = 'flex';
+            
+            // Mechanical power-up hum
+            const powerUpSynth = new Tone.Synth().connect(mainSynthVolume);
+            powerUpSynth.triggerAttackRelease("A3", "1.5n");
+        }
+
+        // Quick feedback click synth
+        function playInterfaceClick() {
+            if (!audioSystemsInitialized) return;
+            const clickSynth = new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
+                volume: -10
+            }).connect(mainSynthVolume);
+            clickSynth.triggerAttackRelease("D5", "32n");
+        }
+
+        // Spring pneumatic release sound
+        function playSuspensionSqueak() {
+            if (!audioSystemsInitialized) return;
+            chassisSpringSynth.triggerAttack();
+        }
+
+        // Core UI interaction setup
+        document.getElementById('btn-initialize-systems').addEventListener('click', () => {
+            initializeToneAudio();
+            document.getElementById('audio-auth-modal').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('audio-auth-modal').style.display = 'none';
+            }, 750);
+        });
+
+        // Global simulation variables
+        let scene, camera, renderer, controls, vehicleRoot;
+        let chassisGroup, engineGroup, interiorGroup, wheelsGroup;
+        let chassisPaintMat;
+        let environmentPreset = 'tokyo'; // tokyo, desert, space
+        let frameMeshes = [];
+        let suspensionCorners = [];
+        let particlesSystem;
+        let ambientDustCount = 350;
+
+        // Interactive states
+        let engineOn = false;
+        let driveEngaged = false;
+        let currentRPM = 800;
+        let targetRPM = 800;
+        let suspensionBounceTime = 0;
+        let suspensionBounceAmplitude = 0;
+        let laserActive = false;
+        let laserSweepPosition = 0;
+        let laserGrid;
+
+        // Fixed Global Active States (Resolved reference errors)
+        let chassisColor = 0xff4400; // Apex Metallic Orange
+        let autoRotate = true;
+        let renderParticles = true;
+        let renderExhaustPulse = true;
+        let showHUD = true;
+        let wireframeMode = false;
+        let explodedFactor = 0.0;
+        let viewLerpTarget = null; // View lerp target declared globally to fix ReferenceError
+
+        // Custom lighting objects for dynamic environment shifts
+        let ambientLight, keyLight, rimLight, floorBounceLight;
+
         window.onload = function() {
             init3DScene();
+            initTelemetryPlot();
         };
 
+        // Custom interactive Diagnostic Oscilloscope
+        function initTelemetryPlot() {
+            const canvas = document.getElementById('telemetry-chart');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let dataPoints = Array(50).fill(30);
+            let timeline = 0;
+
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            function updateChart() {
+                timeline += 0.2;
+                
+                let baseWaveVal = 40;
+                let telemetryLabelText = "Chassis Torsional Wave";
+                let telemetryColor = '#22d3ee'; // Cyan
+
+                if (laserActive) {
+                    // Linear high frequency laser sweep indicator
+                    baseWaveVal = 45 + Math.sin(timeline * 2) * 5 + (Math.random() - 0.5) * 15;
+                    telemetryLabelText = "LASER SPECTROMETRY SCAN";
+                    telemetryColor = '#22d3ee';
+                } else if (engineOn) {
+                    // Vibrational frequency shifts based on actual engine RPM
+                    const rpmFactor = currentRPM / 1000;
+                    baseWaveVal = 30 + Math.sin(timeline * (rpmFactor * 1.5)) * (rpmFactor * 4) + (Math.random() - 0.5) * 2;
+                    telemetryLabelText = `V-Twin Harmonic frequency`;
+                    telemetryColor = '#f97316'; // Orange
+                } else if (suspensionBounceAmplitude > 0.01) {
+                    // Decaying exponential sine wave representing standard spring-mass dampening
+                    baseWaveVal = 40 + Math.cos(suspensionBounceTime * 12) * (suspensionBounceAmplitude * 180);
+                    telemetryLabelText = "COILOVER FLEX RESPONSE";
+                    telemetryColor = '#a855f7'; // Purple
+                } else {
+                    // Quiet idle room noise
+                    baseWaveVal = 30 + Math.sin(timeline) * 2 + Math.cos(timeline * 0.3) * 1;
+                }
+
+                dataPoints.push(Math.max(5, Math.min(canvas.height - 5, baseWaveVal)));
+                dataPoints.shift();
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Grid lines background
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                ctx.lineWidth = 1;
+                for(let i = 0; i < canvas.height; i += 18) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(canvas.width, i);
+                    ctx.stroke();
+                }
+
+                // Wave rendering
+                ctx.beginPath();
+                ctx.strokeStyle = telemetryColor;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                const xStep = canvas.width / (dataPoints.length - 1);
+                for (let i = 0; i < dataPoints.length; i++) {
+                    const x = i * xStep;
+                    const y = canvas.height - dataPoints[i];
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // Fills under path
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                const fillGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                fillGrad.addColorStop(0, `${telemetryColor}22`);
+                fillGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = fillGrad;
+                ctx.fill();
+
+                // Compute output dynamic numbers
+                let calculatedLoadValue = '';
+                if (laserActive) {
+                    calculatedLoadValue = `${(78 + Math.random() * 2).toFixed(1)} GHz`;
+                } else if (engineOn) {
+                    calculatedLoadValue = `${(currentRPM * 1.12).toFixed(0)} Hz`;
+                } else {
+                    const decaySpringK = (10 + (baseWaveVal / canvas.height) * 8).toFixed(1);
+                    calculatedLoadValue = `${decaySpringK} kN/m`;
+                }
+
+                document.getElementById('load-value').innerText = calculatedLoadValue;
+                document.getElementById('telemetry-label').innerText = telemetryLabelText;
+                document.getElementById('telemetry-label').style.color = telemetryColor;
+
+                requestAnimationFrame(updateChart);
+            }
+            updateChart();
+        }
+
+        // Main Three.js setup
         function init3DScene() {
             const container = document.getElementById('canvas-container');
 
-            // Scene Setup
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a1a1a);
-            scene.fog = new THREE.Fog(0x1a1a1a, 4, 20);
+            // 1. Core Scene and Falloff fog
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020205);
+            scene.fog = new THREE.FogExp2(0x020205, 0.08);
 
-            // Camera Setup
-            const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-            
-            // Renderer Setup
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            // 2. Camera Setup
+            camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(4.5, 2.0, 4.5);
+
+            // 3. Renderer configuration
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 0.95;
             container.appendChild(renderer.domElement);
 
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            // 4. OrbitControls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.03;
+            controls.minDistance = 2.0;
+            controls.maxDistance = 12.0;
+            controls.target.set(0, 0.5, 0);
+
+            // 5. Lighting RIG
+            ambientLight = new THREE.AmbientLight(0x0b111e, 1.5);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(5, 10, 7);
-            dirLight.castShadow = true;
-            dirLight.shadow.camera.top = 5;
-            dirLight.shadow.camera.bottom = -5;
-            dirLight.shadow.camera.left = -5;
-            dirLight.shadow.camera.right = 5;
-            dirLight.shadow.mapSize.width = 2048;
-            dirLight.shadow.mapSize.height = 2048;
-            scene.add(dirLight);
+            keyLight = new THREE.DirectionalLight(0xfff5ec, 1.8);
+            keyLight.position.set(5, 8, 5);
+            keyLight.castShadow = true;
+            keyLight.shadow.camera.top = 4;
+            keyLight.shadow.camera.bottom = -4;
+            keyLight.shadow.camera.left = -4;
+            keyLight.shadow.camera.right = 4;
+            keyLight.shadow.mapSize.width = 1024;
+            keyLight.shadow.mapSize.height = 1024;
+            keyLight.shadow.bias = -0.0003;
+            scene.add(keyLight);
 
-            const fillLight = new THREE.PointLight(0xff8800, 0.6, 10);
-            fillLight.position.set(-5, 2, -5);
-            scene.add(fillLight);
+            rimLight = new THREE.DirectionalLight(0x22d3ee, 1.2); // Cyan highlights in studio environment
+            rimLight.position.set(-6, 3, -6);
+            scene.add(rimLight);
 
-            // Environment
-            const gridHelper = new THREE.GridHelper(20, 40, 0x333333, 0x1a1a1a);
-            gridHelper.position.y = -0.01;
-            scene.add(gridHelper);
+            floorBounceLight = new THREE.PointLight(0xff4400, 1.5, 5);
+            floorBounceLight.position.set(0, 0.1, 0);
+            scene.add(floorBounceLight);
 
-            const planeGeo = new THREE.PlaneGeometry(30, 30);
-            const planeMat = new THREE.MeshStandardMaterial({ color: 0x0f0f0f, roughness: 0.9, metalness: 0.1 });
-            const plane = new THREE.Mesh(planeGeo, planeMat);
-            plane.rotation.x = -Math.PI / 2;
-            plane.receiveShadow = true;
-            scene.add(plane);
+            // Reflective ground stage
+            const stageGeo = new THREE.PlaneGeometry(35, 35);
+            const stageMat = new THREE.MeshStandardMaterial({
+                color: 0x03050a,
+                roughness: 0.25,
+                metalness: 0.9
+            });
+            const stageMesh = new THREE.Mesh(stageGeo, stageMat);
+            stageMesh.rotation.x = -Math.PI / 2;
+            stageMesh.receiveShadow = true;
+            scene.add(stageMesh);
 
-            // --- CHASSIS GENERATION ---
-            const chassisGroup = new THREE.Group();
-            scene.add(chassisGroup);
+            const workspaceGrid = new THREE.GridHelper(30, 60, 0xea580c, 0x111622);
+            workspaceGrid.position.y = 0.002;
+            scene.add(workspaceGrid);
 
-            // Materials
-            const primaryTubeMat = new THREE.MeshStandardMaterial({ color: 0xff4400, roughness: 0.3, metalness: 0.5 });
-            const secondaryTubeMat = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.4, metalness: 0.4 });
-            const subframeMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.7, metalness: 0.6 });
-            const steelMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.8 });
-            const blackMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1 });
-            const shockMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, roughness: 0.2, metalness: 0.8 }); // Coilover blue
+            // Dynamic Scanning Plane laser (starts hidden / non-active)
+            const laserBoxGeo = new THREE.BoxGeometry(2.4, 0.02, 3.2);
+            const laserBoxMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.0
+            });
+            laserGrid = new THREE.Mesh(laserBoxGeo, laserBoxMat);
+            laserGrid.position.set(0, 0.5, 0);
+            scene.add(laserGrid);
 
-            const thick = 0.035; // Main roll hoops and subframe rails
-            const thin = 0.02;   // Triangulation
+            // ==========================================
+            // --- VEHICLE STRUCTURAL ASSEMBLY ---
+            // ==========================================
+            vehicleRoot = new THREE.Group();
+            scene.add(vehicleRoot);
 
-            // Tube generation helper
-            function createTube(p1, p2, material, radius) {
+            chassisGroup = new THREE.Group();
+            engineGroup = new THREE.Group();
+            interiorGroup = new THREE.Group();
+            wheelsGroup = new THREE.Group();
+
+            vehicleRoot.add(chassisGroup);
+            vehicleRoot.add(engineGroup);
+            vehicleRoot.add(interiorGroup);
+            vehicleRoot.add(wheelsGroup);
+
+            // Materials Config
+            chassisPaintMat = new THREE.MeshStandardMaterial({
+                color: chassisColor,
+                roughness: 0.12,
+                metalness: 0.95,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+
+            const steelCageMat = new THREE.MeshStandardMaterial({ color: 0x272c36, roughness: 0.4, metalness: 0.8 });
+            const carbonBucketMat = new THREE.MeshStandardMaterial({ color: 0x0e0f12, roughness: 0.55, metalness: 0.25 });
+            const dynamicExhaustMat = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                roughness: 0.5,
+                metalness: 0.7,
+                emissive: 0xff3a00,
+                emissiveIntensity: 0.1
+            });
+            const deepRubberMat = new THREE.MeshStandardMaterial({ color: 0x0b0c0d, roughness: 0.85, metalness: 0.05 });
+            const chromeAlloyMat = new THREE.MeshStandardMaterial({ color: 0xa0a8b5, roughness: 0.1, metalness: 0.95 });
+            const coiloverSpringMat = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.15, metalness: 0.85 });
+
+            const thick = 0.035;
+            const thin = 0.02;
+
+            function addTubeSegment(p1, p2, material, radius, targetGroup) {
                 const distance = p1.distanceTo(p2);
-                const geometry = new THREE.CylinderGeometry(radius, radius, distance, 10);
+                const geometry = new THREE.CylinderGeometry(radius, radius, distance, 8);
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.position.copy(p1).lerp(p2, 0.5);
                 mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
-                chassisGroup.add(mesh);
+                targetGroup.add(mesh);
+                frameMeshes.push(mesh);
                 return mesh;
             }
 
-            // --- NODE COORDINATES ---
-            // Widths
-            const wS = 0.35; // Subframe half-width (narrow)
-            const wB = 0.75; // Beltline half-width (wide for passengers)
-            const wR = 0.50; // Roof half-width (tapered)
+            // --- SPACIAL GEOMETRIC CHASSIS COORDINATES ---
+            const wS = 0.35; // Subframe width
+            const wB = 0.75; // Cockpit tub beltline width
+            const wR = 0.50; // Tapered roof
 
-            // Heights
-            const y0 = 0.15; // Belly pan
-            const y1 = 0.40; // Subframe top / Floor
-            const y2 = 0.95; // Beltline / Shoulders
-            const y3 = 1.55; // Roof
+            const y0 = 0.15; // Bottom chassis pan
+            const y1 = 0.40; // Floor grid line
+            const y2 = 0.95; // Body midriff beltline
+            const y3 = 1.55; // Roof peak
 
-            // Lengths (Z-axis, positive is front)
-            const zN = 1.5;   // Nose
-            const zFA = 1.1;  // Front Axle
-            const zD = 1.25;  // Dash/Cowl
-            const zBP = 0.1;  // B-Pillar (Behind seats)
-            const zC = -0.4;  // Cradle start
-            const zRA = -1.0; // Rear Axle
-            const zT = -1.4;  // Tail
+            const zN = 1.5;   // Front Nose
+            const zFA = 1.1;  // Front A-Arm Axle
+            const zD = 1.25;  // Driver Dash Cowl
+            const zBP = 0.1;  // B-Pillar Cabin back
+            const zC = -0.4;  // Power Cradle Start
+            const zRA = -1.0; // Rear Axle Line
+            const zT = -1.4;  // Tail section End
 
-            const n = {
-                // L0: BELLY PAN (Subframe Bottom)
+            const nodes = {
                 l0_n_l: new THREE.Vector3(-wS, y0, zN),   l0_n_r: new THREE.Vector3(wS, y0, zN),
                 l0_fa_l: new THREE.Vector3(-wS, y0, zFA), l0_fa_r: new THREE.Vector3(wS, y0, zFA),
                 l0_bp_l: new THREE.Vector3(-wS, y0, zBP), l0_bp_r: new THREE.Vector3(wS, y0, zBP),
                 l0_ra_l: new THREE.Vector3(-wS, y0, zRA), l0_ra_r: new THREE.Vector3(wS, y0, zRA),
                 l0_t_l: new THREE.Vector3(-wS, y0, zT),   l0_t_r: new THREE.Vector3(wS, y0, zT),
 
-                // L1: FLOOR (Subframe Top)
                 l1_n_l: new THREE.Vector3(-wS, y1, zN),   l1_n_r: new THREE.Vector3(wS, y1, zN),
                 l1_fa_l: new THREE.Vector3(-wS, y1, zFA), l1_fa_r: new THREE.Vector3(wS, y1, zFA),
                 l1_d_l: new THREE.Vector3(-wS, y1, zD),   l1_d_r: new THREE.Vector3(wS, y1, zD),
                 l1_bp_l: new THREE.Vector3(-wS, y1, zBP), l1_bp_r: new THREE.Vector3(wS, y1, zBP),
                 l1_c_l: new THREE.Vector3(-wS, y1, zC),   l1_c_r: new THREE.Vector3(wS, y1, zC),
                 l1_ra_l: new THREE.Vector3(-wS, y1, zRA), l1_ra_r: new THREE.Vector3(wS, y1, zRA),
-                l1_t_l: new THREE.Vector3(-wS, y1, zT),   l1_t_r: new THREE.Vector3(wS, y1, zT),
+                l1_t_l: new THREE.Vector3(-wS, y1, zT),   l1_t_l: new THREE.Vector3(-wS, y1, zT),
+                l1_t_r: new THREE.Vector3(wS, y1, zT),
 
-                // L2: BELTLINE (The "Body" wide section)
-                l2_n_l: new THREE.Vector3(-wS+0.1, y2, zN-0.1), l2_n_r: new THREE.Vector3(wS-0.1, y2, zN-0.1), // Nose taper
-                l2_d_l: new THREE.Vector3(-wB, y2, zD),         l2_d_r: new THREE.Vector3(wB, y2, zD),         // Wide dash
-                l2_bp_l: new THREE.Vector3(-wB, y2, zBP),       l2_bp_r: new THREE.Vector3(wB, y2, zBP),       // Wide B-pillar
-                l2_c_l: new THREE.Vector3(-wS-0.1, y2, zC),     l2_c_r: new THREE.Vector3(wS+0.1, y2, zC),     // Taper back to engine
-                l2_t_l: new THREE.Vector3(-wS, y2, zT),         l2_t_r: new THREE.Vector3(wS, y2, zT),         // Tail top
+                l2_n_l: new THREE.Vector3(-wS+0.1, y2, zN-0.1), l2_n_r: new THREE.Vector3(wS-0.1, y2, zN-0.1),
+                l2_d_l: new THREE.Vector3(-wB, y2, zD),         l2_d_r: new THREE.Vector3(wB, y2, zD),
+                l2_bp_l: new THREE.Vector3(-wB, y2, zBP),       l2_bp_r: new THREE.Vector3(wB, y2, zBP),
+                l2_c_l: new THREE.Vector3(-wS-0.1, y2, zC),     l2_c_r: new THREE.Vector3(wS+0.1, y2, zC),
+                l2_t_l: new THREE.Vector3(-wS, y2, zT),         l2_t_r: new THREE.Vector3(wS, y2, zT),
 
-                // L3: ROOF
                 l3_f_l: new THREE.Vector3(-wR, y3, zD),   l3_f_r: new THREE.Vector3(wR, y3, zD),
                 l3_r_l: new THREE.Vector3(-wR, y3, zBP),  l3_r_r: new THREE.Vector3(wR, y3, zBP),
             };
 
-            // --- BUILD THE CHASSIS ---
-
-            // 1. Subframe Box (Darker grey, thick tubes)
-            const sub = [
+            // 1. Build Base Subframe Structs (Dark gunmetal grey)
+            const baseFramework = [
                 ['l0_n_l', 'l0_fa_l'], ['l0_fa_l', 'l0_bp_l'], ['l0_bp_l', 'l0_ra_l'], ['l0_ra_l', 'l0_t_l'],
                 ['l0_n_r', 'l0_fa_r'], ['l0_fa_r', 'l0_bp_r'], ['l0_bp_r', 'l0_ra_r'], ['l0_ra_r', 'l0_t_r'],
                 ['l1_n_l', 'l1_fa_l'], ['l1_fa_l', 'l1_d_l'],  ['l1_d_l', 'l1_bp_l'],  ['l1_bp_l', 'l1_c_l'], ['l1_c_l', 'l1_ra_l'], ['l1_ra_l', 'l1_t_l'],
                 ['l1_n_r', 'l1_fa_r'], ['l1_fa_r', 'l1_d_r'],  ['l1_d_r', 'l1_bp_r'],  ['l1_bp_r', 'l1_c_r'], ['l1_c_r', 'l1_ra_r'], ['l1_ra_r', 'l1_t_r'],
-                // Subframe Crossmembers
                 ['l0_n_l', 'l0_n_r'], ['l0_fa_l', 'l0_fa_r'], ['l0_bp_l', 'l0_bp_r'], ['l0_ra_l', 'l0_ra_r'], ['l0_t_l', 'l0_t_r'],
                 ['l1_n_l', 'l1_n_r'], ['l1_d_l', 'l1_d_r'],   ['l1_bp_l', 'l1_bp_r'], ['l1_c_l', 'l1_c_r'],   ['l1_t_l', 'l1_t_r'],
-                // Subframe Uprights
                 ['l0_n_l', 'l1_n_l'], ['l0_fa_l', 'l1_fa_l'], ['l0_bp_l', 'l1_bp_l'], ['l0_ra_l', 'l1_ra_l'], ['l0_t_l', 'l1_t_l'],
-                ['l0_n_r', 'l1_n_r'], ['l0_fa_r', 'l1_fa_r'], ['l0_bp_r', 'l1_bp_r'], ['l0_ra_r', 'l1_ra_r'], ['l0_t_r', 'l1_t_r'],
+                ['l0_n_r', 'l1_n_r'], ['l0_fa_r', 'l1_fa_r'], ['l0_bp_r', 'l1_bp_r'], ['l0_ra_r', 'l1_ra_r'], ['l0_t_r', 'l1_t_r']
             ];
-            sub.forEach(pair => createTube(n[pair[0]], n[pair[1]], subframeMat, thick));
+            baseFramework.forEach(pair => addTubeSegment(nodes[pair[0]], nodes[pair[1]], steelCageMat, thick, chassisGroup));
 
-            // Subframe Triangulation (Thin)
-            const subTri = [
+            // Truss Reinforcements
+            const coreTriangulations = [
                 ['l0_fa_l', 'l1_d_l'], ['l0_bp_l', 'l1_c_l'], ['l0_ra_l', 'l1_t_l'],
-                ['l0_fa_r', 'l1_d_r'], ['l0_bp_r', 'l1_c_r'], ['l0_ra_r', 'l1_t_r'],
+                ['l0_fa_r', 'l1_d_r'], ['l0_bp_r', 'l1_c_r'], ['l0_ra_r', 'l1_t_r']
             ];
-            subTri.forEach(pair => createTube(n[pair[0]], n[pair[1]], subframeMat, thin));
+            coreTriangulations.forEach(pair => addTubeSegment(nodes[pair[0]], nodes[pair[1]], steelCageMat, thin, chassisGroup));
 
-            // 2. Upper Body Cage (Orange, thick tubes forming the silhouette)
-            const bodyMain = [
-                // Beltline ring
+            // 2. Build Upper Exo-Cage (Customizable paint)
+            const mainSafetyCage = [
                 ['l2_n_l', 'l2_d_l'], ['l2_d_l', 'l2_bp_l'], ['l2_bp_l', 'l2_c_l'], ['l2_c_l', 'l2_t_l'],
                 ['l2_n_r', 'l2_d_r'], ['l2_d_r', 'l2_bp_r'], ['l2_bp_r', 'l2_c_r'], ['l2_c_r', 'l2_t_r'],
-                // Beltline crossmembers
                 ['l2_n_l', 'l2_n_r'], ['l2_d_l', 'l2_d_r'], ['l2_bp_l', 'l2_bp_r'], ['l2_c_l', 'l2_c_r'], ['l2_t_l', 'l2_t_r'],
-                // Roof ring
                 ['l3_f_l', 'l3_r_l'], ['l3_f_r', 'l3_r_r'], ['l3_f_l', 'l3_f_r'], ['l3_r_l', 'l3_r_r'],
-                // Uprights (Floor to Beltline)
                 ['l1_n_l', 'l2_n_l'], ['l1_d_l', 'l2_d_l'], ['l1_bp_l', 'l2_bp_l'], ['l1_c_l', 'l2_c_l'], ['l1_t_l', 'l2_t_l'],
                 ['l1_n_r', 'l2_n_r'], ['l1_d_r', 'l2_d_r'], ['l1_bp_r', 'l2_bp_r'], ['l1_c_r', 'l2_c_r'], ['l1_t_r', 'l2_t_r'],
-                // Pillars (Beltline to Roof)
-                ['l2_d_l', 'l3_f_l'], ['l2_d_r', 'l3_f_r'], // A-Pillars
-                ['l2_bp_l', 'l3_r_l'], ['l2_bp_r', 'l3_r_r'] // B-Pillars
+                ['l2_d_l', 'l3_f_l'], ['l2_d_r', 'l3_f_r'],
+                ['l2_bp_l', 'l3_r_l'], ['l2_bp_r', 'l3_r_r']
             ];
-            bodyMain.forEach(pair => createTube(n[pair[0]], n[pair[1]], primaryTubeMat, thick));
+            mainSafetyCage.forEach(pair => addTubeSegment(nodes[pair[0]], nodes[pair[1]], chassisPaintMat, thick, chassisGroup));
 
-            // 3. Body Triangulation (Orange, thin tubes - gives it the Exocet look)
-            const bodyTri = [
-                // Front Nose V-Brace
+            // Bracings
+            const chassisTrusses = [
                 ['l2_n_l', 'l1_n_r'], ['l2_n_r', 'l1_n_l'],
-                // Door X-Braces
                 ['l1_d_l', 'l2_bp_l'], ['l2_d_l', 'l1_bp_l'],
                 ['l1_d_r', 'l2_bp_r'], ['l2_d_r', 'l1_bp_r'],
-                // Rear Cradle X-Braces
                 ['l1_c_l', 'l2_t_l'], ['l2_c_l', 'l1_t_l'],
                 ['l1_c_r', 'l2_t_r'], ['l2_c_r', 'l1_t_r'],
-                // Windshield V-Brace
                 ['l3_f_l', new THREE.Vector3(0, y2, zD)], ['l3_f_r', new THREE.Vector3(0, y2, zD)],
-                // Roof X-Brace
                 ['l3_f_l', 'l3_r_r'], ['l3_f_r', 'l3_r_l'],
-                // Behind seat diagonal
                 ['l2_bp_l', 'l1_bp_r']
             ];
-            bodyTri.forEach(pair => {
-                const p1 = typeof pair[0] === 'string' ? n[pair[0]] : pair[0];
-                const p2 = typeof pair[1] === 'string' ? n[pair[1]] : pair[1];
-                createTube(p1, p2, secondaryTubeMat, thin);
+            chassisTrusses.forEach(pair => {
+                const p1 = typeof pair[0] === 'string' ? nodes[pair[0]] : pair[0];
+                const p2 = typeof pair[1] === 'string' ? nodes[pair[1]] : pair[1];
+                addTubeSegment(p1, p2, chassisPaintMat, thin, chassisGroup);
             });
 
+            // --- WHEELS & MULTI-PIECE CHROME AXLES ---
+            function assembleSuspensionArm(x, z, isFront, sideName) {
+                const subWheelGroup = new THREE.Group();
+                const wheelCenterY = 0.3;
+                subWheelGroup.position.set(x, wheelCenterY, z);
 
-            // --- WHEELS & SUSPENSION (A-ARMS) ---
-            function createSuspensionWheel(x, z, isFront) {
-                const group = new THREE.Group();
-                const wY = 0.3; // Wheel center height
-                group.position.set(x, wY, z);
-
-                // Tire
-                const tireGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.28, 32);
-                const tireMesh = new THREE.Mesh(tireGeo, blackMaterial);
+                // Tires
+                const tireGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.26, 36);
+                const tireMesh = new THREE.Mesh(tireGeo, deepRubberMat);
                 tireMesh.rotation.z = Math.PI / 2;
                 tireMesh.castShadow = true;
-                group.add(tireMesh);
+                subWheelGroup.add(tireMesh);
 
-                // Rim/Hub
-                const hubGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.3, 16);
-                const hubMesh = new THREE.Mesh(hubGeo, steelMaterial);
-                hubMesh.rotation.z = Math.PI / 2;
-                group.add(hubMesh);
-                chassisGroup.add(group);
+                // Alloys
+                const rimBaseGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.27, 24);
+                const rimMesh = new THREE.Mesh(rimBaseGeo, chromeAlloyMat);
+                rimMesh.rotation.z = Math.PI / 2;
+                subWheelGroup.add(rimMesh);
 
-                // A-Arms and Shocks Setup (Corrected Geometry)
+                // Calipers and drilled discs
+                const rotorGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.03, 32);
+                const rotorMesh = new THREE.Mesh(rotorGeo, steelCageMat);
+                rotorMesh.rotation.z = Math.PI / 2;
+                rotorMesh.position.x = -0.1 * (x > 0 ? 1 : -1);
+                subWheelGroup.add(rotorMesh);
+
+                const caliperGeo = new THREE.BoxGeometry(0.06, 0.1, 0.08);
+                const caliperMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 });
+                const caliperMesh = new THREE.Mesh(caliperGeo, caliperMat);
+                caliperMesh.position.set(-0.11 * (x > 0 ? 1 : -1), 0.08, 0.05);
+                subWheelGroup.add(caliperMesh);
+
+                wheelsGroup.add(subWheelGroup);
+
+                // Wishbones linkage
                 const sign = x > 0 ? 1 : -1;
-                const subX = wS * sign;
+                const chassisMountX = wS * sign;
                 
-                // Wheel mount points (Geometric correction)
-                const wLower = new THREE.Vector3(x - (0.1*sign), wY - 0.1, z); // Lower ball joint
-                const wUpper = new THREE.Vector3(x - (0.1*sign), wY + 0.1, z); // Upper ball joint
+                const lowControlArmCenter = new THREE.Vector3(x - (0.12 * sign), wheelCenterY - 0.08, z);
+                const upControlArmCenter = new THREE.Vector3(x - (0.12 * sign), wheelCenterY + 0.08, z);
 
-                // Lower A-Arm (to L0 subframe)
-                createTube(wLower, new THREE.Vector3(subX, y0, z + 0.15), steelMaterial, 0.015);
-                createTube(wLower, new THREE.Vector3(subX, y0, z - 0.15), steelMaterial, 0.015);
+                const lowerA1 = addTubeSegment(lowControlArmCenter, new THREE.Vector3(chassisMountX, y0, z + 0.16), chromeAlloyMat, 0.018, wheelsGroup);
+                const lowerA2 = addTubeSegment(lowControlArmCenter, new THREE.Vector3(chassisMountX, y0, z - 0.16), chromeAlloyMat, 0.018, wheelsGroup);
+                const upperA1 = addTubeSegment(upControlArmCenter, new THREE.Vector3(chassisMountX, y1, z + 0.12), chromeAlloyMat, 0.018, wheelsGroup);
+                const upperA2 = addTubeSegment(upControlArmCenter, new THREE.Vector3(chassisMountX, y1, z - 0.12), chromeAlloyMat, 0.018, wheelsGroup);
 
-                // Upper A-Arm (to L1 subframe)
-                createTube(wUpper, new THREE.Vector3(subX, y1, z + 0.12), steelMaterial, 0.015);
-                createTube(wUpper, new THREE.Vector3(subX, y1, z - 0.12), steelMaterial, 0.015);
+                // Spring shocks
+                const shockUpperAnchorX = sign * (isFront ? wB : wS + 0.05);
+                const shockUpperAnchorY = y2;
+                const shockUpperAnchorZ = z - (isFront ? 0 : 0.08);
 
-                // Coilover Shock (from lower arm up to beltline rail directly above wheel)
-                const shockTopX = sign * (isFront ? wB : wS + 0.05); // Adjust for body taper
-                createTube(
-                    new THREE.Vector3(x - (0.15*sign), wY - 0.05, z), // Lower shock mount
-                    new THREE.Vector3(shockTopX, y2, z - (isFront ? 0 : 0.1)), // Top shock mount 
-                    shockMat, 
-                    0.03
-                );
+                const lowerShockMount = new THREE.Vector3(x - (0.16 * sign), wheelCenterY - 0.05, z);
+                const upperShockMount = new THREE.Vector3(shockUpperAnchorX, shockUpperAnchorY, shockUpperAnchorZ);
+
+                const shockBody = addTubeSegment(lowerShockMount, upperShockMount, steelCageMat, 0.032, wheelsGroup);
+                const coilGeo = new THREE.CylinderGeometry(0.042, 0.042, lowerShockMount.distanceTo(upperShockMount) * 0.7, 16, 4, true);
+                const coilMesh = new THREE.Mesh(coilGeo, coiloverSpringMat);
+                coilMesh.position.copy(lowerShockMount).lerp(upperShockMount, 0.5);
+                coilMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), upperShockMount.clone().sub(lowerShockMount).normalize());
+                wheelsGroup.add(coilMesh);
+
+                suspensionCorners.push({
+                    wheel: subWheelGroup,
+                    tire: tireMesh,
+                    rim: rimMesh,
+                    origX: x,
+                    sign: sign,
+                    connections: [lowerA1, lowerA2, upperA1, upperA2, shockBody, coilMesh],
+                    side: sideName
+                });
             }
 
-            // Push wheels out wide past the subframe
-            createSuspensionWheel(-0.85, zFA, true);  // Front Left
-            createSuspensionWheel(0.85, zFA, true);   // Front Right
-            createSuspensionWheel(-0.85, zRA, false); // Rear Left
-            createSuspensionWheel(0.85, zRA, false);  // Rear Right
+            assembleSuspensionArm(-0.85, zFA, true, 'FL');
+            assembleSuspensionArm(0.85, zFA, true, 'FR');
+            assembleSuspensionArm(-0.85, zRA, false, 'RL');
+            assembleSuspensionArm(0.85, zRA, false, 'RR');
 
+            // --- COCKPIT INTERIOR DECOR ---
+            function buildCarbonSeat(xOffset) {
+                const localSeatGroup = new THREE.Group();
+                localSeatGroup.position.set(xOffset, y1 + 0.04, zD - 0.65);
 
-            // --- ACCESSORIES & ENGINE ---
-            // Radiator in the nose
-            const radGeo = new THREE.BoxGeometry(0.5, 0.3, 0.05);
-            const radMat = new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8});
-            const radiator = new THREE.Mesh(radGeo, radMat);
-            radiator.position.set(0, y1 + 0.15, zN - 0.05);
-            radiator.rotation.x = -0.1;
-            chassisGroup.add(radiator);
+                const bottomGeo = new THREE.BoxGeometry(0.42, 0.08, 0.45);
+                const bottomMesh = new THREE.Mesh(bottomGeo, carbonBucketMat);
+                bottomMesh.position.y = 0.04;
+                bottomMesh.castShadow = true;
+                localSeatGroup.add(bottomMesh);
 
-            // Seats (Buckets)
-            function createSeat(x) {
-                const seatGroup = new THREE.Group();
-                // Moved seat backwards heavily for a realistic driving position
-                seatGroup.position.set(x, y1 + 0.05, zD - 0.65); 
-                
-                const bottomGeo = new THREE.BoxGeometry(0.45, 0.1, 0.45);
-                const bottomMat = new THREE.MeshStandardMaterial({color: 0x1a1a1a, roughness: 0.9});
-                const bottom = new THREE.Mesh(bottomGeo, bottomMat);
-                bottom.position.y = 0.05;
-                seatGroup.add(bottom);
+                const backrestGeo = new THREE.BoxGeometry(0.42, 0.68, 0.08);
+                const backrestMesh = new THREE.Mesh(backrestGeo, carbonBucketMat);
+                backrestMesh.position.set(0, 0.38, -0.16);
+                backrestMesh.rotation.x = -0.16;
+                backrestMesh.castShadow = true;
+                localSeatGroup.add(backrestMesh);
 
-                const backGeo = new THREE.BoxGeometry(0.45, 0.65, 0.1);
-                const back = new THREE.Mesh(backGeo, bottomMat);
-                back.position.set(0, 0.4, -0.15);
-                back.rotation.x = -0.15;
-                seatGroup.add(back);
+                const harnessMat = new THREE.MeshStandardMaterial({ color: 0xea580c, roughness: 0.8 });
+                const strapGeo = new THREE.BoxGeometry(0.04, 0.6, 0.01);
+                const leftStrap = new THREE.Mesh(strapGeo, harnessMat);
+                leftStrap.position.set(-0.1, 0.38, -0.1);
+                leftStrap.rotation.x = -0.16;
+                const rightStrap = leftStrap.clone();
+                rightStrap.position.x = 0.1;
+                localSeatGroup.add(leftStrap, rightStrap);
 
-                chassisGroup.add(seatGroup);
+                interiorGroup.add(localSeatGroup);
             }
-            createSeat(-0.38); // Driver (LHD)
-            createSeat(0.38);  // Passenger
+            buildCarbonSeat(-0.35);
+            buildCarbonSeat(0.35);
 
-            // Steering Wheel & Column (Rebuilt Geometry)
-            const steeringGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 24);
-            const steeringMesh = new THREE.Mesh(steeringGeo, blackMaterial);
-            const swZ = zD - 0.45; // Pulled back towards the driver seat
-            const swY = y2 + 0.1;  // Height
-            steeringMesh.position.set(-0.38, swY, swZ);
-            steeringMesh.rotation.x = -Math.PI / 5; // Better tilt angle
-            chassisGroup.add(steeringMesh);
+            const yokeGeo = new THREE.TorusGeometry(0.12, 0.02, 12, 32);
+            const yokeMesh = new THREE.Mesh(yokeGeo, carbonBucketMat);
+            const wheelZ = zD - 0.44;
+            const wheelY = y2 + 0.12;
+            yokeMesh.position.set(-0.35, wheelY, wheelZ);
+            yokeMesh.rotation.x = -Math.PI / 5;
+            interiorGroup.add(yokeMesh);
 
-            // Connect column explicitly from chassis dash up to the steering wheel hub
-            createTube(
-                new THREE.Vector3(-0.38, y1 + 0.1, zD - 0.1), // Base mounted near lower dash
-                new THREE.Vector3(-0.38, swY - 0.02, swZ + 0.05), // Ends directly at the steering wheel
-                steelMaterial,
-                0.018
+            addTubeSegment(
+                new THREE.Vector3(-0.35, y1 + 0.1, zD - 0.1),
+                new THREE.Vector3(-0.35, wheelY - 0.01, wheelZ + 0.04),
+                chromeAlloyMat,
+                0.018,
+                interiorGroup
             );
 
-            // --- V-TWIN ENGINE (Repositioned into Subframe Cradle) ---
-            const engineGroup = new THREE.Group();
-            engineGroup.position.set(0, y1 + 0.1, -0.85); // Tucked into the new rear subframe
+            // ==========================================
+            // --- REAR POWER ENGINE ASSEMBLY ---
+            // ==========================================
+            const mainVEngine = new THREE.Group();
+            mainVEngine.position.set(0, y1 + 0.08, -0.85);
 
-            const crankcaseGeo = new THREE.BoxGeometry(0.4, 0.25, 0.35);
-            const crankcaseMat = new THREE.MeshStandardMaterial({color: 0x333333, roughness: 0.8, metalness: 0.5});
-            const crankcase = new THREE.Mesh(crankcaseGeo, crankcaseMat);
-            crankcase.castShadow = true;
-            engineGroup.add(crankcase);
+            const casingGeo = new THREE.BoxGeometry(0.42, 0.28, 0.38);
+            const crankcaseMesh = new THREE.Mesh(casingGeo, steelCageMat);
+            crankcaseMesh.castShadow = true;
+            mainVEngine.add(crankcaseMesh);
 
-            const transGeo = new THREE.BoxGeometry(0.3, 0.2, 0.3);
-            const trans = new THREE.Mesh(transGeo, crankcaseMat);
-            trans.position.set(0, -0.02, -0.3);
-            engineGroup.add(trans);
+            const transGeo = new THREE.BoxGeometry(0.3, 0.22, 0.32);
+            const transMesh = new THREE.Mesh(transGeo, carbonBucketMat);
+            transMesh.position.set(0, -0.02, -0.32);
+            mainVEngine.add(transMesh);
 
-            const cylGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.25, 16);
-            const headGeo = new THREE.BoxGeometry(0.26, 0.12, 0.26);
-            const finMat = new THREE.MeshStandardMaterial({color: 0xaaaaaa, roughness: 0.6, metalness: 0.7});
+            const cylinderFinGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.24, 16);
+            const headCapGeo = new THREE.BoxGeometry(0.25, 0.11, 0.25);
 
-            const cyl1 = new THREE.Group();
-            const c1Body = new THREE.Mesh(cylGeo, finMat);
-            c1Body.position.y = 0.125;
-            const c1Head = new THREE.Mesh(headGeo, crankcaseMat);
-            c1Head.position.y = 0.31;
-            cyl1.add(c1Body, c1Head);
-            cyl1.rotation.x = Math.PI / 7;
-            cyl1.position.set(0, 0.1, 0.05);
-            engineGroup.add(cyl1);
+            const rightCylinder = new THREE.Group();
+            const rcBody = new THREE.Mesh(cylinderFinGeo, chromeAlloyMat);
+            rcBody.position.y = 0.12;
+            const rcHead = new THREE.Mesh(headCapGeo, steelCageMat);
+            rcHead.position.y = 0.26;
+            rightCylinder.add(rcBody, rcHead);
+            rightCylinder.rotation.x = Math.PI / 6.5;
+            rightCylinder.position.set(0, 0.1, 0.06);
+            mainVEngine.add(rightCylinder);
 
-            const cyl2 = new THREE.Group();
-            const c2Body = new THREE.Mesh(cylGeo, finMat);
-            c2Body.position.y = 0.125;
-            const c2Head = new THREE.Mesh(headGeo, crankcaseMat);
-            c2Head.position.y = 0.31;
-            cyl2.add(c2Body, c2Head);
-            cyl2.rotation.x = -Math.PI / 7;
-            cyl2.position.set(0, 0.1, -0.05);
-            engineGroup.add(cyl2);
+            const leftCylinder = new THREE.Group();
+            const lcBody = new THREE.Mesh(cylinderFinGeo, chromeAlloyMat);
+            lcBody.position.y = 0.12;
+            const lcHead = new THREE.Mesh(headCapGeo, steelCageMat);
+            lcHead.position.y = 0.26;
+            leftCylinder.add(lcBody, lcHead);
+            leftCylinder.rotation.x = -Math.PI / 6.5;
+            leftCylinder.position.set(0, 0.1, -0.06);
+            mainVEngine.add(leftCylinder);
 
-            const intakeGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.1, 16);
-            const intake = new THREE.Mesh(intakeGeo, new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.9}));
-            intake.rotation.z = Math.PI / 2;
-            intake.position.set(0.25, 0.2, 0);
-            engineGroup.add(intake);
+            // Double Heat Exhaust pipes (Heat up based on RPM)
+            const exhaustPipeGeo1 = new THREE.CylinderGeometry(0.035, 0.035, 0.5, 16);
+            const leftExhaust = new THREE.Mesh(exhaustPipeGeo1, dynamicExhaustMat);
+            leftExhaust.position.set(0.16, 0.05, -0.25);
+            leftExhaust.rotation.x = Math.PI / 2;
+            leftExhaust.rotation.y = 0.1;
+            mainVEngine.add(leftExhaust);
 
-            const twinExhaustGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.6, 16);
-            const ex1 = new THREE.Mesh(twinExhaustGeo, steelMaterial);
-            ex1.position.set(0.15, 0.1, -0.3);
-            ex1.rotation.x = Math.PI / 2;
-            engineGroup.add(ex1);
+            const rightExhaust = new THREE.Mesh(exhaustPipeGeo1, dynamicExhaustMat);
+            rightExhaust.position.set(-0.16, 0.05, -0.25);
+            rightExhaust.rotation.x = Math.PI / 2;
+            rightExhaust.rotation.y = -0.1;
+            mainVEngine.add(rightExhaust);
 
-            const ex2 = new THREE.Mesh(twinExhaustGeo, steelMaterial);
-            ex2.position.set(-0.15, 0.1, -0.3);
-            ex2.rotation.x = Math.PI / 2;
-            engineGroup.add(ex2);
+            engineGroup.add(mainVEngine);
 
-            chassisGroup.add(engineGroup);
+            // Ambient particles system (Floating dust)
+            const particleGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(ambientDustCount * 3);
+            for (let i = 0; i < ambientDustCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 10;
+                positions[i+1] = Math.random() * 5;
+                positions[i+2] = (Math.random() - 0.5) * 10;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particleMat = new THREE.PointsMaterial({
+                color: 0xff8800,
+                size: 0.02,
+                transparent: true,
+                opacity: 0.5,
+                blending: THREE.AdditiveBlending
+            });
+            particlesSystem = new THREE.Points(particleGeo, particleMat);
+            scene.add(particlesSystem);
 
-            // --- CAMERA CONTROLS ---
-            let isDragging = false;
-            let previousMousePosition = { x: 0, y: 0 };
-            let lon = 135; // Start angled viewing front-left
-            let lat = 15; // Lower angle to show off suspension
-            let radius = 5.5;
-            let autoRotate = true;
-
-            const updateCamera = () => {
-                lat = Math.max(-89, Math.min(89, lat));
-                const phi = THREE.MathUtils.degToRad(90 - lat);
-                const theta = THREE.MathUtils.degToRad(lon);
-
-                camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
-                camera.position.y = radius * Math.cos(phi);
-                camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
-                camera.lookAt(0, 0.6, 0); // Look slightly higher
+            // ==========================================
+            // --- INTERACTIVE EVENTS & LERPS ---
+            // ==========================================
+            const targetViews = {
+                all: { pos: new THREE.Vector3(4.5, 2.0, 4.5), look: new THREE.Vector3(0, 0.5, 0) },
+                engine: { pos: new THREE.Vector3(1.8, 1.2, -1.8), look: new THREE.Vector3(0, 0.5, -0.85) },
+                cockpit: { pos: new THREE.Vector3(0, 1.9, 0.4), look: new THREE.Vector3(0, 0.7, -0.4) },
+                suspension: { pos: new THREE.Vector3(1.7, 0.7, 1.5), look: new THREE.Vector3(0.85, 0.3, 1.1) }
             };
 
-            window.addEventListener('mousedown', (e) => {
-                if(e.target.tagName !== 'BUTTON') {
-                    isDragging = true;
-                    autoRotate = false;
-                    document.getElementById('btn-autorotate').innerText = "Resume Rotation";
+            // Remove the 'let' re-declaration so viewLerpTarget assigns to global viewLerpTarget
+            viewLerpTarget = null; 
+
+            document.querySelectorAll('.focus-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    playInterfaceClick();
+                    const targetId = btn.getAttribute('data-target');
+                    viewLerpTarget = targetViews[targetId];
+                    
+                    if (autoRotate) {
+                        autoRotate = false;
+                        updateRotationUI();
+                    }
+
+                    document.querySelectorAll('.focus-btn').forEach(b => {
+                        b.classList.remove('bg-orange-600/10', 'text-orange-400', 'border-orange-500/20');
+                        b.classList.add('bg-white/5', 'text-gray-300', 'border-white/5');
+                    });
+                    btn.classList.add('bg-orange-600/10', 'text-orange-400', 'border-orange-500/20');
+                    btn.classList.remove('bg-white/5', 'text-gray-300', 'border-white/5');
+                });
+            });
+
+            // Paint Selector
+            document.querySelectorAll('#color-selectors button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    playInterfaceClick();
+                    const colHex = button.getAttribute('data-color');
+                    chassisColor = parseInt(colHex, 16);
+                    chassisPaintMat.color.setHex(chassisColor);
+
+                    document.querySelectorAll('#color-selectors button').forEach(btn => {
+                        btn.classList.add('border-white/10');
+                        btn.classList.remove('border-orange-500');
+                    });
+                    button.classList.add('border-orange-500');
+                    button.classList.remove('border-white/10');
+                });
+            });
+
+            // Assembly explosion
+            const slider = document.getElementById('exploded-slider');
+            const sliderLabel = document.getElementById('exploded-value');
+            slider.addEventListener('input', (e) => {
+                explodedFactor = parseFloat(e.target.value) / 100.0;
+                sliderLabel.innerText = `${Math.round(explodedFactor * 100)}%`;
+
+                // Spacial displacement math
+                engineGroup.position.z = -explodedFactor * 0.75;
+                interiorGroup.position.y = explodedFactor * 0.45;
+
+                suspensionCorners.forEach(holder => {
+                    const offsetVal = explodedFactor * 0.55 * holder.sign;
+                    holder.wheel.position.x = holder.origX + offsetVal;
+                });
+            });
+
+            // Drivetrain rev-slider
+            const rpmSlider = document.getElementById('rpm-slider');
+            const rpmLabel = document.getElementById('rpm-label');
+            rpmSlider.addEventListener('input', (e) => {
+                targetRPM = parseInt(e.target.value);
+            });
+
+            // Wireframe toggle
+            document.getElementById('mode-wireframe').addEventListener('click', () => {
+                playInterfaceClick();
+                wireframeMode = true;
+                frameMeshes.forEach(mesh => { mesh.material.wireframe = true; });
+                document.getElementById('mode-wireframe').className = "py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg transition-all flex items-center justify-center space-x-2";
+                document.getElementById('mode-normal').className = "py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10 flex items-center justify-center space-x-2";
+            });
+
+            document.getElementById('mode-normal').addEventListener('click', () => {
+                playInterfaceClick();
+                wireframeMode = false;
+                frameMeshes.forEach(mesh => { mesh.material.wireframe = false; });
+                document.getElementById('mode-normal').className = "py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg transition-all flex items-center justify-center space-x-2";
+                document.getElementById('mode-wireframe').className = "py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10 flex items-center justify-center space-x-2";
+            });
+
+            // Rotation toggle
+            const rotateBtn = document.getElementById('btn-autorotate');
+            function updateRotationUI() {
+                const icon = document.getElementById('rotate-icon');
+                const text = document.getElementById('rotate-text');
+                if (autoRotate) {
+                    icon.classList.add('animate-spin-slow');
+                    text.innerText = "Active Rotation";
+                    rotateBtn.classList.add('border-orange-500/20');
+                } else {
+                    icon.classList.remove('animate-spin-slow');
+                    text.innerText = "Stationary Orbit";
+                    rotateBtn.classList.remove('border-orange-500/20');
                 }
-            });
+            }
 
-            window.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    const deltaMove = { x: e.offsetX - previousMousePosition.x, y: e.offsetY - previousMousePosition.y };
-                    lon -= deltaMove.x * 0.5;
-                    lat += deltaMove.y * 0.5;
-                }
-                previousMousePosition = { x: e.offsetX, y: e.offsetY };
-            });
-
-            window.addEventListener('mouseup', () => { isDragging = false; });
-            window.addEventListener('mouseleave', () => { isDragging = false; });
-            window.addEventListener('wheel', (e) => {
-                radius += e.deltaY * 0.005;
-                radius = Math.max(2.5, Math.min(12, radius));
-            });
-
-            document.getElementById('btn-autorotate').addEventListener('click', (e) => {
+            rotateBtn.addEventListener('click', () => {
+                playInterfaceClick();
                 autoRotate = !autoRotate;
-                e.target.innerText = autoRotate ? "Pause Rotation" : "Resume Rotation";
+                viewLerpTarget = null;
+                updateRotationUI();
+            });
+
+            // Particles Toggle
+            document.getElementById('btn-particles').addEventListener('click', (e) => {
+                playInterfaceClick();
+                renderParticles = !renderParticles;
+                particlesSystem.visible = renderParticles;
+                e.target.innerText = renderParticles ? "ON" : "OFF";
+                e.target.className = renderParticles ? "py-1 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20" : "py-1 px-3 bg-white/5 border border-white/10 text-gray-500 text-[10px] font-bold rounded-md hover:bg-white/10";
+            });
+
+            // Exhaust heat Toggle
+            document.getElementById('btn-exhaust-glow').addEventListener('click', (e) => {
+                playInterfaceClick();
+                renderExhaustPulse = !renderExhaustPulse;
+                e.target.innerText = renderExhaustPulse ? "PULSING" : "STATIC";
+                e.target.className = renderExhaustPulse ? "py-1 px-3 bg-orange-600/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold rounded-md hover:bg-orange-600/20" : "py-1 px-3 bg-white/5 border border-white/10 text-gray-500 text-[10px] font-bold rounded-md hover:bg-white/10";
+            });
+
+            // HUD Toggle
+            document.getElementById('btn-hud-toggle').addEventListener('click', () => {
+                playInterfaceClick();
+                showHUD = !showHUD;
+                const toggleIcon = document.getElementById('hud-toggle-icon');
+                
+                if (showHUD) {
+                    document.getElementById('left-sidebar').classList.remove('hud-hidden');
+                    document.getElementById('right-sidebar').classList.remove('hud-hidden');
+                    toggleIcon.className = "fa-solid fa-eye-slash";
+                } else {
+                    document.getElementById('left-sidebar').classList.add('hud-hidden');
+                    document.getElementById('right-sidebar').classList.add('hud-hidden');
+                    toggleIcon.className = "fa-solid fa-eye text-orange-500";
+                }
+            });
+
+            // Environment swapper
+            function resetEnvUI() {
+                document.querySelectorAll('.env-btn').forEach(btn => {
+                    btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-white/5 border border-white/5 text-gray-400 rounded-lg text-left transition-all flex justify-between items-center hover:bg-white/10";
+                    btn.querySelector('.fa-check').classList.add('opacity-0');
+                });
+            }
+
+            // Neo-Tokyo Room Setting
+            document.getElementById('env-tokyo').addEventListener('click', () => {
+                playInterfaceClick();
+                environmentPreset = 'tokyo';
+                resetEnvUI();
+                const btn = document.getElementById('env-tokyo');
+                btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-cyan-600/15 border border-cyan-500/30 text-cyan-400 rounded-lg text-left transition-all flex justify-between items-center";
+                btn.querySelector('.fa-check').classList.remove('opacity-0');
+                
+                // Color adjustment
+                scene.background.setHex(0x020205);
+                scene.fog.color.setHex(0x020205);
+                ambientLight.color.setHex(0x0b111e);
+                keyLight.color.setHex(0xfff5ec);
+                rimLight.color.setHex(0x22d3ee);
+                rimLight.intensity = 1.2;
+                particlesSystem.material.color.setHex(0xff8800);
+            });
+
+            // Desert Environment Shift
+            document.getElementById('env-desert').addEventListener('click', () => {
+                playInterfaceClick();
+                environmentPreset = 'desert';
+                resetEnvUI();
+                const btn = document.getElementById('env-desert');
+                btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-amber-600/15 border border-amber-500/30 text-amber-500 rounded-lg text-left transition-all flex justify-between items-center";
+                btn.querySelector('.fa-check').classList.remove('opacity-0');
+                
+                // Color adjustment (Warm sand colors)
+                scene.background.setHex(0x0d0805);
+                scene.fog.color.setHex(0x0d0805);
+                ambientLight.color.setHex(0x2d1b10);
+                keyLight.color.setHex(0xffaa66);
+                rimLight.color.setHex(0xff6600);
+                rimLight.intensity = 1.6;
+                particlesSystem.material.color.setHex(0xffaa44);
+            });
+
+            // Space dock Environment Shift
+            document.getElementById('env-space').addEventListener('click', () => {
+                playInterfaceClick();
+                environmentPreset = 'space';
+                resetEnvUI();
+                const btn = document.getElementById('env-space');
+                btn.className = "env-btn w-full text-[11px] font-bold py-2 px-3 bg-purple-600/15 border border-purple-500/30 text-purple-400 rounded-lg text-left transition-all flex justify-between items-center";
+                btn.querySelector('.fa-check').classList.remove('opacity-0');
+                
+                // Color adjustment (Vibrant violet deep space colors)
+                scene.background.setHex(0x03010a);
+                scene.fog.color.setHex(0x03010a);
+                ambientLight.color.setHex(0x11052c);
+                keyLight.color.setHex(0xaa99ff);
+                rimLight.color.setHex(0xd946ef);
+                rimLight.intensity = 1.5;
+                particlesSystem.material.color.setHex(0xd946ef);
+            });
+
+            // Engine ignition toggle listener
+            const engineBtn = document.getElementById('btn-engine-toggle');
+            const driveBtn = document.getElementById('btn-drive-toggle');
+            engineBtn.addEventListener('click', () => {
+                if(!audioSystemsInitialized) initializeToneAudio();
+
+                engineOn = !engineOn;
+                playInterfaceClick();
+
+                if (engineOn) {
+                    engineBtn.innerText = "KILL ENGINE";
+                    engineBtn.className = "py-2 px-3 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg border border-red-500/50 transition-all flex items-center justify-center space-x-2";
+                    driveBtn.disabled = false;
+                    rpmSlider.disabled = false;
+                    
+                    // Engine ignition starting crank sound
+                    if (audioSystemsInitialized) {
+                        const starterSynth = new Tone.NoiseSynth({
+                            noise: { type: 'pink' },
+                            envelope: { attack: 0.05, decay: 0.1, sustain: 0.1, release: 0.1 },
+                            volume: -10
+                        }).connect(mainSynthVolume);
+                        starterSynth.triggerAttackRelease("4n");
+                        
+                        setTimeout(() => {
+                            if (engineOn) {
+                                engineSynth.start();
+                                subSynth.start();
+                            }
+                        }, 250);
+                    }
+                    
+                    document.getElementById('header-pulse-icon').classList.remove('animate-spin-slow');
+                    document.getElementById('header-pulse-icon').classList.add('animate-spin');
+                } else {
+                    engineBtn.innerText = "IGNITE MOTOR";
+                    engineBtn.className = "py-2 px-3 bg-red-600/20 hover:bg-red-600/35 text-red-400 text-xs font-semibold rounded-lg border border-red-500/30 transition-all flex items-center justify-center space-x-2";
+                    
+                    // Kill drivetrain state as well
+                    driveEngaged = false;
+                    driveBtn.disabled = true;
+                    driveBtn.className = "py-2 px-3 bg-white/5 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2 opacity-50";
+                    document.getElementById('indicator-drivetrain').innerText = "DISCONNECTED";
+                    document.getElementById('indicator-drivetrain').className = "font-bold text-red-500";
+
+                    rpmSlider.disabled = true;
+                    targetRPM = 800;
+                    currentRPM = 800;
+                    rpmLabel.innerText = "0 RPM";
+
+                    if (audioSystemsInitialized) {
+                        engineSynth.stop();
+                        subSynth.stop();
+                        driveNoise.triggerRelease();
+                    }
+
+                    document.getElementById('header-pulse-icon').classList.remove('animate-spin');
+                    document.getElementById('header-pulse-icon').classList.add('animate-spin-slow');
+                }
+            });
+
+            // Engage Dyno Wheel rotation listener
+            driveBtn.addEventListener('click', () => {
+                if (!engineOn) return;
+                playInterfaceClick();
+                driveEngaged = !driveEngaged;
+
+                if (driveEngaged) {
+                    driveBtn.className = "py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-black text-xs font-extrabold rounded-lg border border-emerald-500/50 transition-all flex items-center justify-center space-x-2";
+                    document.getElementById('indicator-drivetrain').innerText = "DYNO LINK ENGAGED";
+                    document.getElementById('indicator-drivetrain').className = "font-bold text-emerald-400 animate-pulse";
+                    
+                    if (audioSystemsInitialized) {
+                        driveNoise.triggerAttack();
+                    }
+                } else {
+                    driveBtn.className = "py-2 px-3 bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold rounded-lg border border-white/10 transition-all flex items-center justify-center space-x-2";
+                    document.getElementById('indicator-drivetrain').innerText = "DISCONNECTED";
+                    document.getElementById('indicator-drivetrain').className = "font-bold text-red-500";
+                    
+                    if (audioSystemsInitialized) {
+                        driveNoise.triggerRelease();
+                    }
+                }
+            });
+
+            // Stress suspension rebound click listener
+            document.getElementById('btn-stress-test').addEventListener('click', () => {
+                playInterfaceClick();
+                playSuspensionSqueak();
+                suspensionBounceTime = 0;
+                suspensionBounceAmplitude = 0.15; // spring dip amount
+            });
+
+            // Laser scanner grid overlay
+            document.getElementById('btn-scan-laser').addEventListener('click', (e) => {
+                playInterfaceClick();
+                laserActive = !laserActive;
+
+                if (laserActive) {
+                    laserGrid.material.opacity = 0.15;
+                    laserSweepPosition = 0;
+                    e.target.className = "py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-black text-xs font-extrabold rounded-lg border border-cyan-500/50 transition-all flex items-center justify-center space-x-2";
+                } else {
+                    laserGrid.material.opacity = 0.0;
+                    e.target.className = "py-2 px-3 bg-white/5 hover:bg-cyan-600/10 hover:text-cyan-400 text-gray-300 text-xs font-semibold rounded-lg border border-white/10 hover:border-cyan-500/20 transition-all flex items-center justify-center space-x-2";
+                }
+            });
+
+            renderer.domElement.addEventListener('pointerdown', () => {
+                if (autoRotate) {
+                    autoRotate = false;
+                    viewLerpTarget = null;
+                    updateRotationUI();
+                }
             });
 
             window.addEventListener('resize', () => {
@@ -498,15 +1456,119 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            updateCamera();
+            // Start clock
+            tick();
+        }
 
-            function animate() {
-                requestAnimationFrame(animate);
-                if (autoRotate && !isDragging) lon += 0.2;
-                updateCamera();
-                renderer.render(scene, camera);
+        // ==========================================
+        // --- REAL-TIME TICKER ANIMATION LOOP ---
+        // ==========================================
+        const appClock = new THREE.Clock();
+
+        function tick() {
+            requestAnimationFrame(tick);
+            
+            const elapsed = appClock.getElapsedTime();
+            const delta = appClock.getDelta();
+
+            // Smooth RPM LERP & dynamic Tone.js frequency calculation
+            if (engineOn) {
+                currentRPM += (targetRPM - currentRPM) * 0.12;
+                document.getElementById('rpm-label').innerText = `${Math.round(currentRPM)} RPM`;
+                
+                if (audioSystemsInitialized) {
+                    // Normalize RPM scale into synth audio frequencies
+                    const targetFreq = 20 + (currentRPM / 9000) * 120;
+                    engineSynth.frequency.value = targetFreq;
+                    subSynth.frequency.value = targetFreq / 2;
+                    filter.frequency.value = 100 + (currentRPM / 9000) * 800;
+
+                    if (driveEngaged) {
+                        driveNoise.volume.value = -30 + (currentRPM / 9000) * 15;
+                    }
+                }
+
+                // High vibrational engine shake representing combustion forces
+                const engineShudder = (currentRPM / 9000) * 0.015;
+                engineGroup.position.x = (Math.random() - 0.5) * engineShudder;
+                engineGroup.position.y = 0.48 + (Math.random() - 0.5) * engineShudder;
+
+                // Heat Exhaust manifold glowing effect
+                if (renderExhaustPulse) {
+                    const heatFactor = 0.1 + (currentRPM / 9000) * 4.5;
+                    // Exhaust colors shift from cold gunmetal black to glowing bright orange
+                    engineGroup.children[3].material.emissiveIntensity = heatFactor + Math.sin(elapsed * 15) * 0.1;
+                    engineGroup.children[4].material.emissiveIntensity = heatFactor + Math.sin(elapsed * 15) * 0.1;
+                }
             }
-            animate();
+
+            // Wishbones rotating wheels when drivetrain is active
+            if (driveEngaged && engineOn) {
+                const rotationSpeed = (currentRPM / 1000) * 0.15;
+                suspensionCorners.forEach(corner => {
+                    corner.tire.rotation.x += rotationSpeed;
+                    corner.rim.rotation.x += rotationSpeed;
+                });
+            }
+
+            // Suspension Mass-Damper rebound simulation
+            if (suspensionBounceAmplitude > 0.001) {
+                suspensionBounceTime += 0.08;
+                // standard decaying spring oscillation math
+                const reboundDisplacement = -suspensionBounceAmplitude * Math.exp(-suspensionBounceTime * 1.5) * Math.cos(suspensionBounceTime * 10);
+                
+                chassisGroup.position.y = reboundDisplacement;
+                interiorGroup.position.y = explodedFactor * 0.45 + reboundDisplacement;
+                engineGroup.position.y = 0.48 - (explodedFactor * 0) + reboundDisplacement;
+
+                // Compress shock and control arms linkages synchronously
+                suspensionCorners.forEach(corner => {
+                    corner.wheel.position.y = 0.3 - (reboundDisplacement * 0.4);
+                });
+
+                // Rebound decay cutoff threshold
+                if (Math.abs(reboundDisplacement) < 0.0005) {
+                    suspensionBounceAmplitude = 0;
+                    chassisGroup.position.y = 0;
+                    suspensionCorners.forEach(corner => {
+                        corner.wheel.position.y = 0.3;
+                    });
+                }
+            }
+
+            // Holographic Laser scan plane sweep animation
+            if (laserActive) {
+                laserSweepPosition = Math.sin(elapsed * 1.8) * 1.5;
+                laserGrid.position.z = laserSweepPosition;
+            }
+
+            // Camera LERP transition target
+            if (viewLerpTarget) {
+                camera.position.lerp(viewLerpTarget.pos, 0.05);
+                controls.target.lerp(viewLerpTarget.look, 0.05);
+            }
+
+            // Ambient automatic orbit camera
+            if (autoRotate) {
+                const angle = elapsed * 0.06;
+                const orbitRadius = 6.0;
+                camera.position.x = orbitRadius * Math.cos(angle);
+                camera.position.z = orbitRadius * Math.sin(angle);
+                camera.position.y = 1.7 + Math.sin(elapsed * 0.4) * 0.25;
+            }
+
+            // Floating dust particles
+            if (renderParticles) {
+                const positions = particlesSystem.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] += 0.003;
+                    if (positions[i] > 5.0) positions[i] = 0.0; // wrap back
+                }
+                particlesSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
         }
     </script>
 </body>
