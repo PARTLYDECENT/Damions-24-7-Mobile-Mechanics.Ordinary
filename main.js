@@ -2,12 +2,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Tiled Background Grid Logic ---
     function initBackgroundGrid(callback) {
-        const totalImages = 8;
+        const resumeImages = [
+            '1776999258427.png', '1776999511555.png', '1777259613773.png',
+            '1777564351688.png', '1777572580234.png', '1778046724946.png',
+            '1779399993540.png', '1779556011960.png', '1779580347243.png',
+            '1780363484428.png', '20260328_125701.jpg', '20260328_141456.jpg',
+            '20260428_122303.jpg', '20260428_130811.jpg', '20260519_181438.jpg',
+            '20260522_214511.jpg', '20260522_214516.jpg', '20260522_214518.jpg'
+        ];
+        const imagePool = resumeImages.map(img => `assets/images/resume/${img}`);
+        const totalImages = imagePool.length;
         const totalTiles = 4;
-        const imagePool = [];
-        for (let i = 1; i <= totalImages; i++) {
-            imagePool.push(`assets/images/bg${i}.jpg`);
-        }
 
         // State
         let currentActiveIndices = [];
@@ -258,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Start the random popup scheduler after a delay
-    setTimeout(scheduleRandomPopup, 10000); // First popup after 10 seconds
+    // setTimeout(scheduleRandomPopup, 10000); // First popup after 10 seconds
 
     // --- Header Scroll Effect ---
     const header = document.getElementById('header');

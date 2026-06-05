@@ -5,8 +5,12 @@ if (slideshowCanvas) {
     const ctx = slideshowCanvas.getContext('2d');
 
 const backgroundImages = [
-    'bg1.jpg', 'bg2.jpg', 'bg3.jpg', 'bg4.jpg', 'bg5.jpg',
-    'bg6.jpg', 'bg7.jpg', 'bg8.jpg', 'bg9.jpg', 'bg10.jpg'
+    '1776999258427.png', '1776999511555.png', '1777259613773.png',
+    '1777564351688.png', '1777572580234.png', '1778046724946.png',
+    '1779399993540.png', '1779556011960.png', '1779580347243.png',
+    '1780363484428.png', '20260328_125701.jpg', '20260328_141456.jpg',
+    '20260428_122303.jpg', '20260428_130811.jpg', '20260519_181438.jpg',
+    '20260522_214511.jpg', '20260522_214516.jpg', '20260522_214518.jpg'
 ];
 
 let currentImageIndex = -1;
@@ -16,7 +20,7 @@ const loadedImages = [];
 function preloadImages() {
     backgroundImages.forEach(imgName => {
         const img = new Image();
-        img.src = `./videos/${imgName}`;
+        img.src = `./assets/images/resume/${imgName}`;
         img.onload = () => {
             loadedImages.push(img);
             if (loadedImages.length === backgroundImages.length) {

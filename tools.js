@@ -424,9 +424,18 @@ function createLabyrinthPlanes() {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
+    const resumeImages = [
+        '1776999258427.png', '1776999511555.png', '1777259613773.png',
+        '1777564351688.png', '1777572580234.png', '1778046724946.png',
+        '1779399993540.png', '1779556011960.png', '1779580347243.png',
+        '1780363484428.png', '20260328_125701.jpg', '20260328_141456.jpg',
+        '20260428_122303.jpg', '20260428_130811.jpg', '20260519_181438.jpg',
+        '20260522_214511.jpg', '20260522_214516.jpg', '20260522_214518.jpg'
+    ];
+
     for (let i = 0; i < gridPositions.length; i++) {
-        const textureIndex = (i % 8) + 1;
-        const texturePath = `assets/images/tile${textureIndex}.png`;
+        const textureIndex = i % resumeImages.length;
+        const texturePath = `assets/images/resume/${resumeImages[textureIndex]}`;
         const texture = textureLoader.load(texturePath);
         texture.colorSpace = THREE.SRGBColorSpace;
 
@@ -775,25 +784,8 @@ function initTTS() {
 }
 
 function speakRandomFact() {
-    if (!params.narratorEnabled) return;
-
-    const fact = s2Facts[Math.floor(Math.random() * s2Facts.length)];
-    const utterance = new SpeechSynthesisUtterance(fact);
-
-    // Try to find a female voice
-    const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google US English'));
-    if (femaleVoice) utterance.voice = femaleVoice;
-
-    utterance.volume = params.narratorVolume;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    window.speechSynthesis.speak(utterance);
-
-    // Schedule next
-    const delay = params.narratorInterval * 1000;
-    clearTimeout(narratorTimer);
-    narratorTimer = setTimeout(speakRandomFact, delay + (Math.random() * 5000));
+    // Disabled random TTS fact alerts
+    return;
 }
 
 function toggleNarrator(enabled) {
