@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDF Off-Road Buggy Chassis - Project Hantu Raya</title>
+    <title>SDF Off-Road Buggy Chassis - Project Hantu Raya (Realism Mode)</title>
     <style>
         body {
             margin: 0;
@@ -53,28 +53,7 @@
             color: #aaa;
             letter-spacing: 1px;
         }
-        .specs {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #333;
-            padding: 15px;
-        }
-        .specs ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 0.85rem;
-            line-height: 1.8;
-            color: #ccc;
-        }
-        .specs li span {
-            color: #fff;
-            font-weight: bold;
-            display: inline-block;
-            width: 180px;
-        }
+
         .controls-hint {
             position: absolute;
             bottom: 30px;
@@ -125,22 +104,10 @@
     <div class="ui-layer">
         <div class="header">
             <h1>SDF Engineering // Project Hantu Raya</h1>
-            <h2>Model 1 - Buggy Spaceframe Blueprint (ORB-CF-001)</h2>
+            <h2>Model 1 - Buggy Spaceframe (ORB-CF-001)</h2>
         </div>
 
-        <div class="specs">
-            <ul>
-                <li><span>MATERIAL SPECS</span>4130 CHROMOLY STEEL</li>
-                <li><span>MAIN RAILS</span>2"x4" RECTANGULAR TUBE (4130)</li>
-                <li><span>MAIN CAGE</span>1.75" DOM x 0.120"w</li>
-                <li><span>FRONT SUSP.</span>INDEPENDENT DOUBLE WISHBONE</li>
-                <li><span>REAR SUSP.</span>SOLID AXLE W/ LEAF SPRINGS</li>
-                <li><span>TIRES</span>30" ALL-TERRAIN BLUEPRINT TIRES</li>
-                <li><span>WELDING</span>TIG / SOLID SEAM</li>
-                <li><span>COATING</span>RAW / BLUEPRINT MODE</li>
-                <li><span>COMPONENTS</span>CRADLE, RECT. SUBFRAME, SHOCK TOWERS & MESH FLOOR</li>
-            </ul>
-        </div>
+
 
         <div class="controls-hint">
             LEFT CLICK + DRAG TO ROTATE<br>
@@ -165,6 +132,8 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -174,31 +143,147 @@
         controls.autoRotateSpeed = 0.5;
         controls.maxPolarAngle = Math.PI / 2 + 0.1; // Don't allow going too far below ground
 
-        // Add a technical blueprint grid on the floor
-        const gridHelper = new THREE.GridHelper(300, 60, 0x113344, 0x0a1a2a);
+        // Add a technical grid on the floor (commented out to match the pure black background of the reference image)
+        const gridHelper = new THREE.GridHelper(300, 60, 0x111122, 0x08080c);
         gridHelper.position.y = -20;
-        scene.add(gridHelper);
+        // scene.add(gridHelper);
 
         // Group to hold all chassis parts
         const chassisGroup = new THREE.Group();
         scene.add(chassisGroup);
 
-        // ----------------------------------------------------
-        // BLUEPRINT MATERIAL GENERATOR
-        // ----------------------------------------------------
-        // To create the blueprint look, we use a solid black mesh with slightly offset polygons
-        // so that the internal lines block lines behind them, and then wrap them in white EdgesGeometry.
+        // Generate a procedural environment map to make chrome reflections gorgeous
+        function createProceduralEnvMap() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0a0a0d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, '#333344');
+            grad.addColorStop(0.5, '#0a0a0d');
+            grad.addColorStop(0.7, '#15151c');
+            grad.addColorStop(1, '#22222b');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 30;
+            ctx.fillRect(40, 20, 120, 50);
+            ctx.fillRect(300, 40, 100, 60);
+            ctx.fillRect(180, 120, 80, 40);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            return texture;
+        }
+        scene.environment = createProceduralEnvMap();
+
+        // Setup studio lighting for specular metallic highlights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
         
-        const solidMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x000000, 
-            polygonOffset: true, 
-            polygonOffsetFactor: 1, 
-            polygonOffsetUnits: 1 
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        keyLight.position.set(100, 150, 50);
+        scene.add(keyLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x8899ff, 0.8);
+        fillLight.position.set(-100, 100, -50);
+        scene.add(fillLight);
+        
+        const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        rimLight.position.set(0, 50, -150);
+        scene.add(rimLight);
+        
+        const pointLight = new THREE.PointLight(0xffffff, 1.2, 120);
+        pointLight.position.set(0, 15, 0);
+        scene.add(pointLight);
+
+        // ----------------------------------------------------
+        // SHINY METALLIC MATERIALS
+        // ----------------------------------------------------
+        const chromeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            metalness: 1.0,
+            roughness: 0.12,
+            name: 'chrome'
         });
-        
-        const lineMaterial = new THREE.LineBasicMaterial({ 
-            color: 0xffffff,
-            linewidth: 1 // Note: WebGL standard restricts this to 1 on most systems, but it looks perfectly sharp.
+
+        const tireMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.1,
+            roughness: 0.75,
+            name: 'tire'
+        });
+
+        const rimMaterial = new THREE.MeshStandardMaterial({
+            color: 0xdddddd,
+            metalness: 0.95,
+            roughness: 0.15,
+            name: 'rim'
+        });
+
+        // Generate a metal diamond grating texture
+        function createGratingTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#222225';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#44444a';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(32, 0);
+            ctx.lineTo(64, 32);
+            ctx.lineTo(32, 64);
+            ctx.lineTo(0, 32);
+            ctx.closePath();
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(32, 32);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(64, 0);
+            ctx.lineTo(32, 32);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, 64);
+            ctx.lineTo(32, 32);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(64, 64);
+            ctx.lineTo(32, 32);
+            ctx.stroke();
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10, 10);
+            return texture;
+        }
+
+        const meshMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            metalness: 0.9,
+            roughness: 0.3,
+            transparent: true,
+            opacity: 0.85,
+            side: THREE.DoubleSide,
+            map: createGratingTexture(),
+            name: 'mesh'
         });
 
         // ----------------------------------------------------
@@ -208,14 +293,11 @@
         // Add a standard box tube based on exact center position and dimensions
         function addTubeCenter(w, h, d, x, y, z) {
             const geom = new THREE.BoxGeometry(w, h, d);
-            
-            const mesh = new THREE.Mesh(geom, solidMaterial);
-            const edges = new THREE.EdgesGeometry(geom);
-            const line = new THREE.LineSegments(edges, lineMaterial);
-            
-            mesh.add(line);
+            const mesh = new THREE.Mesh(geom, chromeMaterial);
             mesh.position.set(x, y, z);
+            mesh.userData = { type: 'frame', geomType: 'box' };
             chassisGroup.add(mesh);
+            return mesh;
         }
 
         // Add a tube stretching from Point 1 to Point 2 (Point-to-Point)
@@ -225,35 +307,59 @@
             const dz = z2 - z1;
             const length = Math.hypot(Math.hypot(dx, dz), dy);
             
-            // Add a tiny bit of length overlap to ensure clean solid joints in the blueprint
-            const geom = new THREE.BoxGeometry(width, height, length + 0.2); 
+            const isBox = (width === rectW && height === rectH) || (width === 2.0 && height === 4.0);
             
-            const mesh = new THREE.Mesh(geom, solidMaterial);
-            const edges = new THREE.EdgesGeometry(geom);
-            const line = new THREE.LineSegments(edges, lineMaterial);
+            let geom;
+            if (isBox) {
+                geom = new THREE.BoxGeometry(width, height, length + 0.1);
+            } else {
+                const radius = width / 2;
+                geom = new THREE.CylinderGeometry(radius, radius, length, 8);
+            }
             
-            mesh.add(line);
+            const mesh = new THREE.Mesh(geom, chromeMaterial);
             mesh.position.set((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
-            mesh.lookAt(x2, y2, z2);
+            
+            const direction = new THREE.Vector3(dx, dy, dz).normalize();
+            if (isBox) {
+                mesh.lookAt(x2, y2, z2);
+            } else {
+                const alignAxis = new THREE.Vector3(0, 1, 0); // Cylinder standard Y direction
+                mesh.quaternion.setFromUnitVectors(alignAxis, direction);
+            }
+            
+            mesh.userData = { 
+                type: isBox ? 'frame' : 'cage',
+                geomType: isBox ? 'box' : 'cylinder'
+            };
             chassisGroup.add(mesh);
+            return mesh;
+        }
+
+        // Add a curved continuous tube from an array of Vector3 points (matching realistic bends)
+        function addCurveTube(points, radius, type = 'cage') {
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geom = new THREE.TubeGeometry(curve, 64, radius, 12, false);
+            const mesh = new THREE.Mesh(geom, chromeMaterial);
+            mesh.userData = { type: type, geomType: 'tube' };
+            chassisGroup.add(mesh);
+            return mesh;
         }
 
         // Add crossmembers across the X axis
         function addCrossmember(x1, x2, y, z, height, depth) {
             const length = Math.abs(x2 - x1);
             const cx = (x1 + x2) / 2;
-            addTubeCenter(length, height, depth, cx, y, z);
+            return addTubeCenter(length, height, depth, cx, y, z);
         }
 
-        // Add a body panel with basic blueprint style
+        // Add a body panel with chrome style
         function addBodyPanel(w, h, d, x, y, z, rx = 0, ry = 0, rz = 0) {
             const geom = new THREE.BoxGeometry(w, h, d);
-            const mesh = new THREE.Mesh(geom, solidMaterial);
-            const edges = new THREE.EdgesGeometry(geom);
-            const line = new THREE.LineSegments(edges, lineMaterial);
-            mesh.add(line);
+            const mesh = new THREE.Mesh(geom, chromeMaterial);
             mesh.position.set(x, y, z);
             mesh.rotation.set(rx, ry, rz);
+            mesh.userData = { type: 'frame', geomType: 'box' };
             chassisGroup.add(mesh);
             return mesh;
         }
@@ -317,35 +423,48 @@
         addTubeP2P(fL_front.x, fL_front.y, fL_front.z, nL_front.x, nL_front.y, nL_front.z, rectW, rectH);
         addTubeP2P(fR_front.x, fR_front.y, fR_front.z, nR_front.x, nR_front.y, nR_front.z, rectW, rectH);
 
-        // Tapered rear kick-up rails
-        addTubeP2P(fL_rear.x, fL_rear.y, fL_rear.z, -15, 6, 30, rectW, rectH);
-        addTubeP2P(-15, 6, 30, tL_end.x, tL_end.y, tL_end.z, rectW, rectH);
-        addTubeP2P(fR_rear.x, fR_rear.y, fR_rear.z, 15, 6, 30, rectW, rectH);
-        addTubeP2P(15, 6, 30, tR_end.x, tR_end.y, tR_end.z, rectW, rectH);
-
         // Subframe Crossmembers
         addTubeP2P(nL_front.x, nL_front.y, nL_front.z, nR_front.x, nR_front.y, nR_front.z, rectW, rectH); // Front bumper
         addTubeP2P(fL_front.x, fL_front.y, fL_front.z, fR_front.x, fR_front.y, fR_front.z, rectW, rectH); // Firewall
         addTubeP2P(fL_mid.x, fL_mid.y, fL_mid.z, fR_mid.x, fR_mid.y, fR_mid.z, rectW, rectH); // Mid-floor
         addTubeP2P(fL_rear.x, fL_rear.y, fL_rear.z, fR_rear.x, fR_rear.y, fR_rear.z, rectW, rectH); // B-pillar base
-        addTubeP2P(tL_end.x, tL_end.y, tL_end.z, tR_end.x, tR_end.y, tR_end.z, rectW, rectH); // Tail bumper
 
 
         // --- 2. CAB MAIN HOOP & ROOF (B-PILLAR) ---
-        addTubeP2P(fL_rear.x, fL_rear.y + 1, fL_rear.z, cL_roofR.x, cL_roofR.y, cL_roofR.z, mainW, mainH);
-        addTubeP2P(fR_rear.x, fR_rear.y + 1, fR_rear.z, cR_roofR.x, cR_roofR.y, cR_roofR.z, mainW, mainH);
-        addTubeP2P(cL_roofR.x, cL_roofR.y, cL_roofR.z, cR_roofR.x, cR_roofR.y, cR_roofR.z, mainW, mainH);
+        // Beautiful continuous curved main roll bar hoop
+        addCurveTube([
+            new THREE.Vector3(fL_rear.x, fL_rear.y + 1, fL_rear.z),
+            new THREE.Vector3(fL_rear.x + 0.3, fL_rear.y + 15, fL_rear.z),
+            new THREE.Vector3(cL_roofR.x - 1.5, cL_roofR.y - 2, cL_roofR.z),
+            new THREE.Vector3(cL_roofR.x + 2, cL_roofR.y, cL_roofR.z),
+            new THREE.Vector3(cR_roofR.x - 2, cR_roofR.y, cR_roofR.z),
+            new THREE.Vector3(cR_roofR.x + 1.5, cR_roofR.y - 2, cR_roofR.z),
+            new THREE.Vector3(fR_rear.x - 0.3, fR_rear.y + 15, fR_rear.z),
+            new THREE.Vector3(fR_rear.x, fR_rear.y + 1, fR_rear.z)
+        ], mainW / 2, 'cage');
+
         addTubeP2P(cL_midB.x, cL_midB.y, cL_midB.z, cR_midB.x, cR_midB.y, cR_midB.z, mainW, mainH); // Mid B-Pillar cross
 
-        // Roof rails
-        addTubeP2P(cL_roofR.x, cL_roofR.y, cL_roofR.z, cL_roofF.x, cL_roofF.y, cL_roofF.z, mainW, mainH);
-        addTubeP2P(cR_roofR.x, cR_roofR.y, cR_roofR.z, cR_roofF.x, cR_roofF.y, cR_roofF.z, mainW, mainH);
+        // Roof rails & A-pillars integrated into smooth curved tubes on each side
+        addCurveTube([
+            new THREE.Vector3(cL_roofR.x, cL_roofR.y, cL_roofR.z),
+            new THREE.Vector3(cL_roofF.x, cL_roofF.y, cL_roofF.z + 2),
+            new THREE.Vector3(cL_roofF.x - 0.5, cL_roofF.y - 1, cL_roofF.z - 2),
+            new THREE.Vector3(cL_dash.x, cL_dash.y, cL_dash.z)
+        ], mainW / 2, 'cage');
+
+        addCurveTube([
+            new THREE.Vector3(cR_roofR.x, cR_roofR.y, cR_roofR.z),
+            new THREE.Vector3(cR_roofF.x, cR_roofF.y, cR_roofF.z + 2),
+            new THREE.Vector3(cR_roofF.x + 0.5, cR_roofF.y - 1, cR_roofF.z - 2),
+            new THREE.Vector3(cR_dash.x, cR_dash.y, cR_dash.z)
+        ], mainW / 2, 'cage');
+
+        // Front roof crossmember
         addTubeP2P(cL_roofF.x, cL_roofF.y, cL_roofF.z, cR_roofF.x, cR_roofF.y, cR_roofF.z, mainW, mainH);
 
 
         // --- 3. WINDSHIELD, DASH & NOSE CAGE ---
-        addTubeP2P(cL_roofF.x, cL_roofF.y, cL_roofF.z, cL_dash.x, cL_dash.y, cL_dash.z, mainW, mainH);
-        addTubeP2P(cR_roofF.x, cR_roofF.y, cR_roofF.z, cR_dash.x, cR_dash.y, cR_dash.z, mainW, mainH);
         addTubeP2P(cL_dash.x, cL_dash.y, cL_dash.z, cR_dash.x, cR_dash.y, cR_dash.z, mainW, mainH); // Dash cross
 
         // Front nose tubes (round upper rails)
@@ -354,13 +473,47 @@
 
 
         // --- 4. REAR TAPERED BUGGY BED (TAIL FRAME) ---
-        // Left upper tail rail (round)
-        addTubeP2P(cL_midB.x, cL_midB.y, cL_midB.z, tL_mid.x, tL_mid.y, tL_mid.z, mainW, mainH);
-        addTubeP2P(tL_mid.x, tL_mid.y, tL_mid.z, tL_end.x, tL_end.y + 1, tL_end.z, mainW, mainH);
-        
-        // Right upper tail rail (round)
-        addTubeP2P(cR_midB.x, cR_midB.y, cR_midB.z, tR_mid.x, tR_mid.y, tR_mid.z, mainW, mainH);
-        addTubeP2P(tR_mid.x, tR_mid.y, tR_mid.z, tR_end.x, tR_end.y + 1, tR_end.z, mainW, mainH);
+        // Beautiful continuous curved outer loops for the left and right bed sides
+        addCurveTube([
+            new THREE.Vector3(cL_midB.x, cL_midB.y, cL_midB.z),
+            new THREE.Vector3(-20.5, 20, 25),
+            new THREE.Vector3(-18, 16, 60),
+            new THREE.Vector3(-18, 10, 60),
+            new THREE.Vector3(-20.5, 6, 25),
+            new THREE.Vector3(fL_rear.x, fL_rear.y + 1, fL_rear.z)
+        ], mainW / 2, 'cage');
+
+        addCurveTube([
+            new THREE.Vector3(cR_midB.x, cR_midB.y, cR_midB.z),
+            new THREE.Vector3(20.5, 20, 25),
+            new THREE.Vector3(18, 16, 60),
+            new THREE.Vector3(18, 10, 60),
+            new THREE.Vector3(20.5, 6, 25),
+            new THREE.Vector3(fR_rear.x, fR_rear.y + 1, fR_rear.z)
+        ], mainW / 2, 'cage');
+
+        // Bed structural crossmembers (top round tubes and bottom box rails)
+        addTubeP2P(-20.5, 20, 25, 20.5, 20, 25, mainW, mainH); // Mid-bed top crossmember
+        addTubeP2P(-18, 16, 60, 18, 16, 60, mainW, mainH); // Rear-bed top crossmember
+        addTubeP2P(-18, 10, 60, 18, 10, 60, rectW, rectH); // Rear-bed bottom crossmember
+        addTubeP2P(-20.5, 6, 25, 20.5, 6, 25, rectW, rectH); // Mid-bed bottom crossmember
+
+        // Diagonal side bed truss structure (forming K/X bracing on bed sides)
+        addTubeP2P(fL_rear.x, fL_rear.y + 1, fL_rear.z, -20.5, 20, 25, secW, secH);
+        addTubeP2P(cL_midB.x, cL_midB.y, cL_midB.z, -20.5, 6, 25, secW, secH);
+        addTubeP2P(-20.5, 6, 25, -18, 16, 60, secW, secH);
+        addTubeP2P(-20.5, 20, 25, -18, 10, 60, secW, secH);
+
+        addTubeP2P(fR_rear.x, fR_rear.y + 1, fR_rear.z, 20.5, 20, 25, secW, secH);
+        addTubeP2P(cR_midB.x, cR_midB.y, cR_midB.z, 20.5, 6, 25, secW, secH);
+        addTubeP2P(20.5, 6, 25, 18, 16, 60, secW, secH);
+        addTubeP2P(20.5, 20, 25, 18, 10, 60, secW, secH);
+
+        // Bed floor diagonal X-bracing
+        addTubeP2P(-21, 2, -10, 20.5, 6, 25, secW, secH);
+        addTubeP2P(21, 2, -10, -20.5, 6, 25, secW, secH);
+        addTubeP2P(-20.5, 6, 25, 18, 10, 60, secW, secH);
+        addTubeP2P(20.5, 6, 25, -18, 10, 60, secW, secH);
 
 
         // --- 5. SIDE impact / DOOR BRACES ---
@@ -423,57 +576,241 @@
         addTubeCenter(2, 8, 2, 14, 16, 30);
 
 
-        // --- 10. INTEGRATED FUEL TANK CRADLE & TANK ---
-        // Cradle structure
-        addTubeP2P(-6, 4, 12, -6, 14, 12, 1.0, 1.0);
-        addTubeP2P(6, 4, 12, 6, 14, 12, 1.0, 1.0);
-        addTubeP2P(-6, 4, 28, -6, 14, 28, 1.0, 1.0);
-        addTubeP2P(6, 4, 28, 6, 14, 28, 1.0, 1.0);
+        // --- 10. V-TWIN ENGINE CRADLE & FUEL TEST BOTTLE ---
+        // Engine bed rails (bottom cradle)
+        addTubeP2P(-5, 4, 12, -5, 4, 28, 1.2, 1.2);
+        addTubeP2P(5, 4, 12, 5, 4, 28, 1.2, 1.2);
+        addTubeP2P(-5, 4, 12, 5, 4, 12, 1.2, 1.2);
+        addTubeP2P(-5, 4, 28, 5, 4, 28, 1.2, 1.2);
 
-        addTubeP2P(-6, 14, 12, 6, 14, 12, 1.0, 1.0);
-        addTubeP2P(-6, 14, 28, 6, 14, 28, 1.0, 1.0);
-        addTubeP2P(-6, 14, 12, -6, 14, 28, 1.0, 1.0);
-        addTubeP2P(6, 14, 12, 6, 14, 28, 1.0, 1.0);
+        // Engine mount uprights
+        addTubeP2P(-5, 4, 16, -3, 6, 16, 0.8, 0.8);
+        addTubeP2P(5, 4, 16, 3, 6, 16, 0.8, 0.8);
+        addTubeP2P(-5, 4, 24, -3, 6, 24, 0.8, 0.8);
+        addTubeP2P(5, 4, 24, 3, 6, 24, 0.8, 0.8);
 
-        // Solid Fuel Tank (centered in cradle)
-        addBodyPanel(10.5, 9, 14.5, 0, 9.2, 20);
+        // Vertical pole for the test bottle
+        addTubeP2P(-5, 4, 20, -5, 20, 20, 1.0, 1.0);
+        addTubeP2P(-5, 20, 20, 0, 20, 20, 1.0, 1.0); // hanger arm
+
+        // V-Twin Engine Block & Cylinders (Scaled up 700cc Size)
+        const engineGroup = new THREE.Group();
+        
+        // Crankcase (Engine Block, moved slightly forward to clear transmission)
+        const blockGeom = new THREE.BoxGeometry(8.5, 5.5, 7.0);
+        const blockMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, metalness: 0.8 });
+        const blockMesh = new THREE.Mesh(blockGeom, blockMat);
+        blockMesh.position.set(0, 6.75, 18);
+        engineGroup.add(blockMesh);
+
+        // Crankcase covers (timing / primary drive)
+        const coverGeom = new THREE.CylinderGeometry(2.4, 2.4, 1.2, 16);
+        coverGeom.rotateZ(Math.PI / 2);
+        const coverMeshL = new THREE.Mesh(coverGeom, chromeMaterial);
+        coverMeshL.position.set(-4.35, 6.75, 18);
+        engineGroup.add(coverMeshL);
+        const coverMeshR = coverMeshL.clone();
+        coverMeshR.position.x = 4.35;
+        engineGroup.add(coverMeshR);
+
+        // Cylinders in a V (larger 700cc displacement scale)
+        const cylMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6, metalness: 0.7 });
+        const finMat = chromeMaterial;
+
+        function createVCylinder(angle, zOffset) {
+            const cylSubGroup = new THREE.Group();
+            
+            // Cylinder barrel (larger bore/stroke)
+            const cylGeom = new THREE.CylinderGeometry(2.0, 2.0, 5.5, 16);
+            const cylMesh = new THREE.Mesh(cylGeom, cylMat);
+            cylMesh.position.y = 2.75;
+            cylSubGroup.add(cylMesh);
+
+            // Stacked cooling fins
+            const finCount = 8;
+            for (let i = 0; i < finCount; i++) {
+                const finGeom = new THREE.CylinderGeometry(2.5, 2.5, 0.16, 16);
+                const finMesh = new THREE.Mesh(finGeom, finMat);
+                finMesh.position.y = 1.0 + i * 0.7;
+                cylSubGroup.add(finMesh);
+            }
+
+            // Cylinder head cover (chrome, rocker box)
+            const headGeom = new THREE.BoxGeometry(4.2, 1.4, 4.2);
+            const headMesh = new THREE.Mesh(headGeom, chromeMaterial);
+            headMesh.position.y = 5.9;
+            cylSubGroup.add(headMesh);
+
+            cylSubGroup.position.set(0, 9.2, 18 + zOffset);
+            cylSubGroup.rotation.x = angle;
+            
+            engineGroup.add(cylSubGroup);
+        }
+
+        createVCylinder(-Math.PI / 5, -2.5); // Cyl 1 forward
+        createVCylinder(Math.PI / 5, 2.5);   // Cyl 2 backward
+
+        // Carburetor & Air intake
+        const carbGeom = new THREE.BoxGeometry(2.4, 2.4, 2.4);
+        const carbMesh = new THREE.Mesh(carbGeom, chromeMaterial);
+        carbMesh.position.set(0, 11.0, 18);
+        engineGroup.add(carbMesh);
+
+        // Air filter cone (larger)
+        const filterGeom = new THREE.CylinderGeometry(1.4, 2.0, 2.6, 12);
+        filterGeom.rotateZ(Math.PI / 2);
+        const filterMat = new THREE.MeshStandardMaterial({ color: 0x991111, roughness: 0.8 });
+        const filterMesh = new THREE.Mesh(filterGeom, filterMat);
+        filterMesh.position.set(2.4, 11.0, 18);
+        engineGroup.add(filterMesh);
+
+        // Filter cover
+        const filterCoverGeom = new THREE.CylinderGeometry(2.02, 2.02, 0.3, 12);
+        filterCoverGeom.rotateZ(Math.PI / 2);
+        const filterCover = new THREE.Mesh(filterCoverGeom, chromeMaterial);
+        filterCover.position.set(3.7, 11.0, 18);
+        engineGroup.add(filterCover);
+
+        // Exhaust Pipes (routed from larger cylinders)
+        addCurveTube([
+            new THREE.Vector3(0, 13.5, 15.5),
+            new THREE.Vector3(-3.2, 12, 15.5),
+            new THREE.Vector3(-4.5, 7.5, 17.5),
+            new THREE.Vector3(-4.5, 4.5, 26),
+            new THREE.Vector3(-4.5, 4.5, 38)
+        ], 0.6, 'cage');
+
+        addCurveTube([
+            new THREE.Vector3(0, 13.5, 20.5),
+            new THREE.Vector3(-3.2, 12, 20.5),
+            new THREE.Vector3(-4.3, 7.5, 19.5),
+            new THREE.Vector3(-4.3, 4.5, 28),
+            new THREE.Vector3(-4.3, 4.5, 38)
+        ], 0.6, 'cage');
+
+        // --- ATTACHED BASIC TRANSMISSION ---
+        // Transmission housing (Bellhousing + Gearbox body behind engine block)
+        const transGroup = new THREE.Group();
+        
+        // Bellhousing (flared cone pointing rearward along Z)
+        const bellGeom = new THREE.CylinderGeometry(2.2, 3.0, 2.2, 16);
+        bellGeom.rotateX(Math.PI / 2);
+        const bellMesh = new THREE.Mesh(bellGeom, blockMat); // dark grey casting
+        bellMesh.position.set(0, 6.75, 22.6);
+        transGroup.add(bellMesh);
+
+        // Gearbox main casing
+        const gearGeom = new THREE.CylinderGeometry(1.6, 2.0, 3.2, 16);
+        gearGeom.rotateX(Math.PI / 2);
+        const gearMesh = new THREE.Mesh(gearGeom, blockMat);
+        gearMesh.position.set(0, 6.75, 25.3);
+        transGroup.add(gearMesh);
+
+        // Chrome tailcone extension
+        const tailGeom = new THREE.CylinderGeometry(0.8, 1.2, 1.2, 16);
+        tailGeom.rotateX(Math.PI / 2);
+        const tailMesh = new THREE.Mesh(tailGeom, chromeMaterial);
+        tailMesh.position.set(0, 6.75, 27.5);
+        transGroup.add(tailMesh);
+
+        engineGroup.add(transGroup);
+        chassisGroup.add(engineGroup);
+
+        // --- DRIVE SHAFT TO REAR DIFFERENTIAL ---
+        // Driveshaft running from tailcone output center (0, 6.75, 28.1) to axle diff pinion yoke (0, -1, 41.5)
+        addTubeP2P(0, 6.75, 28.1, 0, -1.0, 41.5, 0.9, 0.9); // Driveshaft tube (chrome)
+        
+        // Front slip yoke / U-joint coupler
+        const frontYokeGeom = new THREE.CylinderGeometry(1.2, 1.2, 0.8, 12);
+        frontYokeGeom.rotateX(Math.PI / 2);
+        const frontYoke = new THREE.Mesh(frontYokeGeom, chromeMaterial);
+        frontYoke.position.set(0, 6.75, 28.3);
+        chassisGroup.add(frontYoke);
+
+        // Rear pinion yoke / U-joint coupler at differential
+        const rearYokeGeom = new THREE.CylinderGeometry(1.3, 1.3, 0.8, 12);
+        rearYokeGeom.rotateX(Math.PI / 2);
+        const rearYoke = new THREE.Mesh(rearYokeGeom, chromeMaterial);
+        rearYoke.position.set(0, -1.0, 41.3);
+        chassisGroup.add(rearYoke);
+
+        // Hanging test bottle
+        const bottleGroup = new THREE.Group();
+
+        // Translucent Red Fuel Bottle
+        const bottleGeom = new THREE.CylinderGeometry(1.6, 1.6, 5.0, 16);
+        const bottleMat = new THREE.MeshStandardMaterial({
+            color: 0xff3333,
+            roughness: 0.15,
+            metalness: 0.1,
+            transparent: true,
+            opacity: 0.8
+        });
+        const bottleMesh = new THREE.Mesh(bottleGeom, bottleMat);
+        bottleMesh.position.set(0, 16.5, 18); // aligned with shifted engine position
+        bottleGroup.add(bottleMesh);
+
+        // Black Bottle Cap
+        const capGeom = new THREE.CylinderGeometry(1.8, 1.8, 0.6, 16);
+        const capMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+        const capMesh = new THREE.Mesh(capGeom, capMat);
+        capMesh.position.set(0, 19.3, 18);
+        bottleGroup.add(capMesh);
+
+        // Fluid level inside
+        const fluidGeom = new THREE.CylinderGeometry(1.5, 1.5, 3.5, 16);
+        const fluidMat = new THREE.MeshStandardMaterial({ color: 0xaa0000, roughness: 0.3, metalness: 0.2 });
+        const fluidMesh = new THREE.Mesh(fluidGeom, fluidMat);
+        fluidMesh.position.set(0, 15.75, 18);
+        bottleGroup.add(fluidMesh);
+
+        // Black fuel hose running to carburetor
+        addCurveTube([
+            new THREE.Vector3(0, 14, 18),
+            new THREE.Vector3(0.5, 12, 17.5),
+            new THREE.Vector3(0.2, 11.5, 17.8),
+            new THREE.Vector3(0, 11.0, 17.5)
+        ], 0.18, 'cage');
+
+        chassisGroup.add(bottleGroup);
 
 
         // --- 11. FLOOR MESH GRID PANEL ---
-        // Generate intersecting blueprint mesh lines programmatically
+        // Programmatic grid of thin chrome wires
         for (let gz = -55; gz <= -15; gz += 5) {
-            addTubeP2P(-20, 4.2, gz, 20, 4.2, gz, 0.4, 0.4); // slightly raised above rect rails
+            addTubeP2P(-20, 4.2, gz, 20, 4.2, gz, 0.12, 0.12); 
         }
         for (let gx = -15; gx <= 15; gx += 5) {
-            addTubeP2P(gx, 4.2, -58, gx, 4.2, -12, 0.4, 0.4);
+            addTubeP2P(gx, 4.2, -58, gx, 4.2, -12, 0.12, 0.12);
         }
 
-        // --- 12. TIRES & WHEELS ---
-        function addTire(x, y, z, radius, width) {
+        // Add a semi-transparent mesh floor backing panel
+        const floorBackingGeom = new THREE.PlaneGeometry(40, 46);
+        const floorBackingMesh = new THREE.Mesh(floorBackingGeom, meshMaterial);
+        floorBackingMesh.rotation.x = -Math.PI / 2;
+        floorBackingMesh.position.set(0, 4.1, -35);
+        chassisGroup.add(floorBackingMesh);
+
+        // --- 12. CHASSIS WHEELS & TIRES ---
+        function addChassisWheel(x, y, z, radius, width) {
             const tireGroup = new THREE.Group();
             
-            // Outer tire
-            const geomTire = new THREE.CylinderGeometry(radius, radius, width, 16);
-            const meshTire = new THREE.Mesh(geomTire, solidMaterial);
-            const edgesTire = new THREE.EdgesGeometry(geomTire);
-            const lineTire = new THREE.LineSegments(edgesTire, lineMaterial);
-            meshTire.add(lineTire);
+            // Outer tire (flat cylinder)
+            const geomTire = new THREE.CylinderGeometry(radius, radius, width, 24);
+            const meshTire = new THREE.Mesh(geomTire, tireMaterial);
+            meshTire.userData = { type: 'tire' };
             tireGroup.add(meshTire);
             
-            // Inner rim
-            const geomRim = new THREE.CylinderGeometry(radius * 0.6, radius * 0.6, width + 0.2, 12);
-            const meshRim = new THREE.Mesh(geomRim, solidMaterial);
-            const edgesRim = new THREE.EdgesGeometry(geomRim);
-            const lineRim = new THREE.LineSegments(edgesRim, lineMaterial);
-            meshRim.add(lineRim);
+            // Inner rim (simple flat chrome cylinder)
+            const geomRim = new THREE.CylinderGeometry(radius * 0.6, radius * 0.6, width + 0.1, 24);
+            const meshRim = new THREE.Mesh(geomRim, chromeMaterial);
+            meshRim.userData = { type: 'rim' };
             tireGroup.add(meshRim);
 
-            // Hub center
-            const geomHub = new THREE.CylinderGeometry(radius * 0.25, radius * 0.25, width + 0.4, 6);
-            const meshHub = new THREE.Mesh(geomHub, solidMaterial);
-            const edgesHub = new THREE.EdgesGeometry(geomHub);
-            const lineHub = new THREE.LineSegments(edgesHub, lineMaterial);
-            meshHub.add(lineHub);
+            // Small chrome center cap
+            const geomHub = new THREE.CylinderGeometry(radius * 0.18, radius * 0.18, width + 0.2, 12);
+            const meshHub = new THREE.Mesh(geomHub, chromeMaterial);
+            meshHub.userData = { type: 'rim' };
             tireGroup.add(meshHub);
 
             tireGroup.position.set(x, y, z);
@@ -483,90 +820,215 @@
             return tireGroup;
         }
 
-        const tireRadius = 12.0; // Scaled down to 24" diameter, resting exactly on y = -18 ground grid
-        const tireWidth = 6.0;
+        // Add the single central tire directly under the cabin center (B-pillar, z = -10, tucked up, y = -6.0)
+        // addSingleCenterTire(0, -6.0, -10, 12.0, 6.0); // Disabled: Wheel is a reference image generation artifact
+
+        // --- 13. SIDE UTILITY BOX ---
+        const boxGroup = new THREE.Group();
         
-        // Add 4 Tires
-        addTire(-25, -6, -56, tireRadius, tireWidth); // Front Left
-        addTire(25, -6, -56, tireRadius, tireWidth);  // Front Right
-        addTire(-25, -6, 45, tireRadius, tireWidth);  // Rear Left
-        addTire(25, -6, 45, tireRadius, tireWidth);   // Rear Right
-
-
-        // --- 13. FRONT INDEPENDENT SUSPENSION (DOUBLE WISHBONE) ---
+        // Main box body
+        const boxGeom = new THREE.BoxGeometry(4, 5, 4);
+        const boxMesh = new THREE.Mesh(boxGeom, chromeMaterial);
+        boxGroup.add(boxMesh);
         
-        // Left Side control arms (aligned with track width x = -25)
-        // Lower A-arm V-shape
-        addTubeP2P(-12, 2, -60, -21, -6, -56, 1.2, 1.2);
-        addTubeP2P(-12, 2, -52, -21, -6, -56, 1.2, 1.2);
-        // Upper A-arm V-shape
-        addTubeP2P(-19, 14, -60, -21, 0, -56, 1.0, 1.0);
-        addTubeP2P(-19, 14, -52, -21, 0, -56, 1.0, 1.0);
-        // Hub carrier/spindle
-        addTubeP2P(-21, -6, -56, -21, 0, -56, 1.5, 1.5);
-        addTubeP2P(-21, -3, -56, -25, -3, -56, 1.8, 1.8); // stub axle
-        // Coilover Shock
-        addTubeP2P(-19, 20, -56, -16, -2, -56, 2.0, 2.0); // upper spring body
-        addTubeP2P(-19, 20, -56, -16, -2, -56, 0.8, 0.8); // shaft
-
-        // Right Side control arms (aligned with track width x = 25)
-        // Lower A-arm V-shape
-        addTubeP2P(12, 2, -60, 21, -6, -56, 1.2, 1.2);
-        addTubeP2P(12, 2, -52, 21, -6, -56, 1.2, 1.2);
-        // Upper A-arm V-shape
-        addTubeP2P(19, 14, -60, 21, 0, -56, 1.0, 1.0);
-        addTubeP2P(19, 14, -52, 21, 0, -56, 1.0, 1.0);
-        // Hub carrier/spindle
-        addTubeP2P(21, -6, -56, 21, 0, -56, 1.5, 1.5);
-        addTubeP2P(21, -3, -56, 25, -3, -56, 1.8, 1.8); // stub axle
-        // Coilover Shock
-        addTubeP2P(19, 20, -56, 16, -2, -56, 2.0, 2.0); // upper spring body
-        addTubeP2P(19, 20, -56, 16, -2, -56, 0.8, 0.8); // shaft
-
-
-        // --- 14. REAR SOLID AXLE & DIFFERENTIAL ---
-        // Center Differential housing
-        addBodyPanel(8, 8, 7, 0, -6, 45);
-        // Axle tubes
-        addTubeP2P(0, -6, 45, -25, -6, 45, 2.2, 2.2);
-        addTubeP2P(0, -6, 45, 25, -6, 45, 2.2, 2.2);
-
-
-        // --- 15. REAR LEAF SPRINGS (TAPERING UNDER THE FRAME RAILS) ---
-        const springW = 1.0;
-        const springH = 1.4;
-
-        // LEFT SIDE LEAF SPRING ASSEMBLY
-        // Hanger brackets on the rectangular subframe
-        addBodyPanel(2, 3, 3, -18, 4, 10);        // Front leaf hanger bracket
-        addBodyPanel(2, 3, 3, -8.5, 12.5, 72);    // Rear shackle mount bracket
-        addTubeP2P(-8.5, 11, 72, -8.5, 8.5, 72, 0.8, 0.8); // Rear shackle link
+        // Outer face details - two vertical slot indents (drawn with small dark boxes)
+        const slotGeom = new THREE.BoxGeometry(0.3, 3, 0.1);
+        const slotMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
         
-        // Leaf spring pack running directly under the subframe rails (tapering inward)
-        addTubeP2P(-18, 3, 10, -15.3, -2, 28, springW, springH);
-        addTubeP2P(-15.3, -2, 28, -12.7, -6, 45, springW, springH);
-        addTubeP2P(-12.7, -6, 45, -10.3, -2, 60, springW, springH);
-        addTubeP2P(-10.3, -2, 60, -8.5, 8.5, 72, springW, springH);
+        const slot1 = new THREE.Mesh(slotGeom, slotMaterial);
+        slot1.position.set(2.05, 0, -1);
+        boxGroup.add(slot1);
         
-        // Secondary helper leaves
-        addTubeP2P(-15.3, -2, 28, -12.7, -6, 45, springW, springH * 0.7);
-        addTubeP2P(-12.7, -6, 45, -10.3, -2, 60, springW, springH * 0.7);
+        const slot2 = new THREE.Mesh(slotGeom, slotMaterial);
+        slot2.position.set(2.05, 0, 1);
+        boxGroup.add(slot2);
+        
+        boxGroup.position.set(21, 3.8, -20); // mounted perfectly on right sill rail
+        chassisGroup.add(boxGroup);
 
-        // RIGHT SIDE LEAF SPRING ASSEMBLY
-        // Hanger brackets on the rectangular subframe
-        addBodyPanel(2, 3, 3, 18, 4, 10);
-        addBodyPanel(2, 3, 3, 8.5, 12.5, 72);
-        addTubeP2P(8.5, 11, 72, 8.5, 8.5, 72, 0.8, 0.8);
-        
-        // Leaf spring pack running directly under the subframe rails (tapering inward)
-        addTubeP2P(18, 3, 10, 15.3, -2, 28, springW, springH);
-        addTubeP2P(15.3, -2, 28, 12.7, -6, 45, springW, springH);
-        addTubeP2P(12.7, -6, 45, 10.3, -2, 60, springW, springH);
-        addTubeP2P(10.3, -2, 60, 8.5, 8.5, 72, springW, springH);
-        
-        // Secondary helper leaves
-        addTubeP2P(15.3, -2, 28, 12.7, -6, 45, springW, springH * 0.7);
-        addTubeP2P(12.7, -6, 45, 10.3, -2, 60, springW, springH * 0.7);
+        // --- 14. SUSPENSION SYSTEM (REAR LEAF SPRINGS & AXLE, FRONT IFS A-ARMS) ---
+        function addSuspensionSystem() {
+            // Helper function to create a detailed shock absorber with mounts and bell
+            function createDetailedShock(x1, y1, z1, x2, y2, z2, hasSpring) {
+                const start = new THREE.Vector3(x1, y1, z1);
+                const end = new THREE.Vector3(x2, y2, z2);
+                const dir = new THREE.Vector3().subVectors(end, start);
+                const len = dir.length();
+                dir.normalize();
+
+                const alignGroup = new THREE.Group();
+                alignGroup.position.copy(start);
+
+                const up = new THREE.Vector3(0, 1, 0);
+                if (Math.abs(dir.dot(up)) < 0.999) {
+                    const axis = new THREE.Vector3().crossVectors(up, dir).normalize();
+                    const angle = Math.acos(up.dot(dir));
+                    alignGroup.quaternion.setFromAxisAngle(axis, angle);
+                } else {
+                    if (dir.y < 0) alignGroup.scale.y = -1;
+                }
+
+                // Mount brackets at start (frame)
+                const mountGeom = new THREE.BoxGeometry(0.8, 1.2, 1.8);
+                const mountMesh = new THREE.Mesh(mountGeom, chromeMaterial);
+                mountMesh.position.set(0, 0.5, 0);
+                alignGroup.add(mountMesh);
+
+                // Shock body (lower half of assembly)
+                const bodyLen = len * 0.45;
+                const bodyGeom = new THREE.CylinderGeometry(1.1, 1.1, bodyLen, 16);
+                const bodyMesh = new THREE.Mesh(bodyGeom, chromeMaterial);
+                bodyMesh.position.y = bodyLen / 2 + 1.0;
+                alignGroup.add(bodyMesh);
+
+                // Shock shaft (upper half)
+                const shaftLen = len - bodyLen - 2.0;
+                const shaftGeom = new THREE.CylinderGeometry(0.4, 0.4, shaftLen, 8);
+                const shaftMesh = new THREE.Mesh(shaftGeom, chromeMaterial);
+                shaftMesh.position.y = bodyLen + 1.0 + shaftLen / 2;
+                alignGroup.add(shaftMesh);
+
+                // Shock "Bell" (shroud cup at the top of the body/shaft connection)
+                const bellGeom = new THREE.CylinderGeometry(1.6, 1.3, 1.8, 16);
+                const bellMesh = new THREE.Mesh(bellGeom, chromeMaterial);
+                bellMesh.position.y = bodyLen + 1.0;
+                alignGroup.add(bellMesh);
+
+                // Mount brackets at end (control arm / axle)
+                const endMountGeom = new THREE.BoxGeometry(0.8, 1.2, 1.8);
+                const endMountMesh = new THREE.Mesh(endMountGeom, chromeMaterial);
+                endMountMesh.position.set(0, len - 0.5, 0);
+                alignGroup.add(endMountMesh);
+
+                // Optional Helical Coil Spring (for coilovers)
+                if (hasSpring) {
+                    const springRadius = 1.4;
+                    const springTurns = 8;
+                    const springStart = 1.5;
+                    const springEnd = len - 1.5;
+                    const points = [];
+                    for (let i = 0; i <= 100; i++) {
+                        const t = i / 100;
+                        const angle = t * Math.PI * 2 * springTurns;
+                        const y = springStart + t * (springEnd - springStart);
+                        const x = Math.cos(angle) * springRadius;
+                        const z = Math.sin(angle) * springRadius;
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    const springCurve = new THREE.CatmullRomCurve3(points);
+                    const springGeom = new THREE.TubeGeometry(springCurve, 100, 0.25, 8, false);
+                    const springMesh = new THREE.Mesh(springGeom, chromeMaterial);
+                    alignGroup.add(springMesh);
+                }
+
+                chassisGroup.add(alignGroup);
+            }
+
+            // Shock Towers (mount hoops on the front frame)
+            addTubeP2P(-12, 2, -60, -14, 20, -60, mainW, mainH);
+            addTubeP2P(12, 2, -60, 14, 20, -60, mainW, mainH);
+
+            // Left Front IFS (A-Arms & Spindles)
+            addTubeP2P(-12, 2, -65, -24, -6, -60, secW, secH);
+            addTubeP2P(-12, 2, -55, -24, -6, -60, secW, secH);
+            addTubeP2P(-15, 10, -63, -22, 4, -60, secW, secH);
+            addTubeP2P(-15, 10, -57, -22, 4, -60, secW, secH);
+            addTubeP2P(-22, 4, -60, -24, -6, -60, 1.4, 1.4); // Knuckle
+            addTubeP2P(-23, -1, -60, -27, -1, -60, 1.8, 1.8); // Spindle Stub
+            createDetailedShock(-14, 18, -60, -20, -1, -60, true); // Detailed Coilover with Bell
+
+            // Right Front IFS (A-Arms & Spindles)
+            addTubeP2P(12, 2, -65, 24, -6, -60, secW, secH);
+            addTubeP2P(12, 2, -55, 24, -6, -60, secW, secH);
+            addTubeP2P(15, 10, -63, 22, 4, -60, secW, secH);
+            addTubeP2P(15, 10, -57, 22, 4, -60, secW, secH);
+            addTubeP2P(22, 4, -60, 24, -6, -60, 1.4, 1.4); // Knuckle
+            addTubeP2P(23, -1, -60, 27, -1, -60, 1.8, 1.8); // Spindle Stub
+            createDetailedShock(14, 18, -60, 20, -1, -60, true); // Detailed Coilover with Bell
+
+            // Rear Solid Axle & Leaf Springs
+            const axleY = -1;
+            const axleZ = 45;
+            
+            // Diff Pumpkin
+            const diffGeom = new THREE.SphereGeometry(3.5, 16, 16);
+            const diffMesh = new THREE.Mesh(diffGeom, chromeMaterial);
+            diffMesh.position.set(0, axleY, axleZ);
+            chassisGroup.add(diffMesh);
+
+            // Axle Housing & Hubs
+            addTubeP2P(-24, axleY, axleZ, 24, axleY, axleZ, 2.5, 2.5);
+            addTubeP2P(-24, axleY, axleZ, -27, axleY, axleZ, 2.8, 2.8);
+            addTubeP2P(24, axleY, axleZ, 27, axleY, axleZ, 2.8, 2.8);
+
+            // Left Leaf Spring Pack - 3 stacked leaves (Main, Second, Third)
+            // Main Leaf
+            addCurveTube([
+                new THREE.Vector3(-21, 2, 20),
+                new THREE.Vector3(-21.5, 0, 32),
+                new THREE.Vector3(-22, axleY - 1.0, axleZ),
+                new THREE.Vector3(-20.5, 0, 58),
+                new THREE.Vector3(-18, 5, 65)
+            ], 0.8, 'cage');
+            // Second Leaf
+            addCurveTube([
+                new THREE.Vector3(-21.2, 1, 25),
+                new THREE.Vector3(-21.7, -0.2, 34),
+                new THREE.Vector3(-22, axleY - 1.2, axleZ),
+                new THREE.Vector3(-20.7, -0.2, 54),
+                new THREE.Vector3(-19.0, 3.5, 61)
+            ], 0.7, 'cage');
+            // Third Leaf
+            addCurveTube([
+                new THREE.Vector3(-21.6, 0.5, 32),
+                new THREE.Vector3(-22, axleY - 1.4, axleZ),
+                new THREE.Vector3(-20.9, 0.5, 52)
+            ], 0.6, 'cage');
+            // Left Shackle link
+            addTubeP2P(-18, 5, 65, -18, 9, 65, 0.6, 0.6);
+            // Left clamping block / U-bolt bracket
+            const leftClampGeom = new THREE.BoxGeometry(1.8, 2.2, 1.8);
+            const leftClampMesh = new THREE.Mesh(leftClampGeom, chromeMaterial);
+            leftClampMesh.position.set(-22, axleY - 0.5, axleZ);
+            chassisGroup.add(leftClampMesh);
+
+            // Right Leaf Spring Pack - 3 stacked leaves (Main, Second, Third)
+            // Main Leaf
+            addCurveTube([
+                new THREE.Vector3(21, 2, 20),
+                new THREE.Vector3(21.5, 0, 32),
+                new THREE.Vector3(22, axleY - 1.0, axleZ),
+                new THREE.Vector3(20.5, 0, 58),
+                new THREE.Vector3(18, 5, 65)
+            ], 0.8, 'cage');
+            // Second Leaf
+            addCurveTube([
+                new THREE.Vector3(21.2, 1, 25),
+                new THREE.Vector3(21.7, -0.2, 34),
+                new THREE.Vector3(22, axleY - 1.2, axleZ),
+                new THREE.Vector3(20.7, -0.2, 54),
+                new THREE.Vector3(19.0, 3.5, 61)
+            ], 0.7, 'cage');
+            // Third Leaf
+            addCurveTube([
+                new THREE.Vector3(21.6, 0.5, 32),
+                new THREE.Vector3(22, axleY - 1.4, axleZ),
+                new THREE.Vector3(20.9, 0.5, 52)
+            ], 0.6, 'cage');
+            // Right Shackle link
+            addTubeP2P(18, 5, 65, 18, 9, 65, 0.6, 0.6);
+            // Right clamping block / U-bolt bracket
+            const rightClampMesh = leftClampMesh.clone();
+            rightClampMesh.position.x = 22;
+            chassisGroup.add(rightClampMesh);
+
+            // Add 4 simple wheels/tires (matched rear wheel height to front at y = -1)
+            addChassisWheel(-27, -1, -60, 11, 5.5);  // Front Left
+            addChassisWheel(27, -1, -60, 11, 5.5);   // Front Right
+            addChassisWheel(-27, -1, 45, 12, 6.0);   // Rear Left
+            addChassisWheel(27, -1, 45, 12, 6.0);    // Rear Right
+        }
+        addSuspensionSystem();
 
 
         // ----------------------------------------------------
