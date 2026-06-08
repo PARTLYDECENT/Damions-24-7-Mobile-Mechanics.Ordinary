@@ -768,43 +768,43 @@
 
 
         // --- 10. V-TWIN ENGINE CRADLE & FUEL TEST BOTTLE ---
-        // Engine bed rails (bottom cradle - widened and adjusted to support 3x engine centered at z=8)
-        addTubeP2P(-7, 4, -4, -7, 4, 28, 1.2, 1.2);
-        addTubeP2P(7, 4, -4, 7, 4, 28, 1.2, 1.2);
-        addTubeP2P(-7, 4, -4, 7, 4, -4, 1.2, 1.2);
-        addTubeP2P(-7, 4, 28, 7, 4, 28, 1.2, 1.2);
+        // Engine bed rails (bottom cradle - widened and adjusted to support 2x engine centered at z=8)
+        addTubeP2P(-6, 4, -4, -6, 4, 28, 1.2, 1.2);
+        addTubeP2P(6, 4, -4, 6, 4, 28, 1.2, 1.2);
+        addTubeP2P(-6, 4, -4, 6, 4, -4, 1.2, 1.2);
+        addTubeP2P(-6, 4, 28, 6, 4, 28, 1.2, 1.2);
 
         // Engine mount uprights
-        addTubeP2P(-7, 4, 2, -4.35 * 3, 12.25, 2, 0.8, 0.8);
-        addTubeP2P(7, 4, 2, 4.35 * 3, 12.25, 2, 0.8, 0.8);
-        addTubeP2P(-7, 4, 14, -4.35 * 3, 12.25, 14, 0.8, 0.8);
-        addTubeP2P(7, 4, 14, 4.35 * 3, 12.25, 14, 0.8, 0.8);
+        addTubeP2P(-6, 4, 2, -4.35 * 2, 9.5, 2, 0.8, 0.8);
+        addTubeP2P(6, 4, 2, 4.35 * 2, 9.5, 2, 0.8, 0.8);
+        addTubeP2P(-6, 4, 14, -4.35 * 2, 9.5, 14, 0.8, 0.8);
+        addTubeP2P(6, 4, 14, 4.35 * 2, 9.5, 14, 0.8, 0.8);
 
         // Vertical pole for the test bottle
-        addTubeP2P(-7, 4, 8, -7, 26, 8, 1.2, 1.2);
-        addTubeP2P(-7, 26, 8, 0, 26, 8, 1.2, 1.2); // hanger arm
+        addTubeP2P(-6, 4, 8, -6, 22, 8, 1.2, 1.2);
+        addTubeP2P(-6, 22, 8, 0, 22, 8, 1.2, 1.2); // hanger arm
 
-        // V-Twin Engine Block & Cylinders (Scaled up 3x for realistic Kei truck scale)
+        // V-Twin Engine Block & Cylinders (Scaled up 2x for realistic Kei truck scale)
         const engineGroup = new THREE.Group();
         
-        // Crankcase (Engine Block, centered locally at 0,0,0 inside engineGroup, which is placed at (0, 12.25, 8))
-        const blockGeom = new THREE.BoxGeometry(25.5, 16.5, 21.0); // 8.5x3, 5.5x3, 7.0x3
+        // Crankcase (Engine Block, centered locally at 0,0,0 inside engineGroup, which is placed at (0, 9.5, 8))
+        const blockGeom = new THREE.BoxGeometry(17.0, 11.0, 14.0); // 8.5x2, 5.5x2, 7.0x2
         const blockMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7, metalness: 0.8 });
         const blockMesh = new THREE.Mesh(blockGeom, blockMat);
         blockMesh.position.set(0, 0, 0);
         engineGroup.add(blockMesh);
 
         // Crankcase covers (timing / primary drive)
-        const coverGeom = new THREE.CylinderGeometry(7.2, 7.2, 3.6, 16); // 2.4x3, 1.2x3
+        const coverGeom = new THREE.CylinderGeometry(4.8, 4.8, 2.4, 16); // 2.4x2, 1.2x2
         coverGeom.rotateZ(Math.PI / 2);
         const coverMeshL = new THREE.Mesh(coverGeom, chromeMaterial);
-        coverMeshL.position.set(-13.05, 0, 0); // -4.35x3
+        coverMeshL.position.set(-8.7, 0, 0); // -4.35x2
         engineGroup.add(coverMeshL);
         const coverMeshR = coverMeshL.clone();
-        coverMeshR.position.x = 13.05;
+        coverMeshR.position.x = 8.7;
         engineGroup.add(coverMeshR);
 
-        // Cylinders in a V (larger 3x displacement scale)
+        // Cylinders in a V (larger 2x displacement scale)
         const cylMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6, metalness: 0.7 });
         const finMat = chromeMaterial;
 
@@ -812,103 +812,103 @@
             const cylSubGroup = new THREE.Group();
             
             // Cylinder barrel (larger bore/stroke)
-            const cylGeom = new THREE.CylinderGeometry(6.0, 6.0, 16.5, 16);
+            const cylGeom = new THREE.CylinderGeometry(4.0, 4.0, 11.0, 16);
             const cylMesh = new THREE.Mesh(cylGeom, cylMat);
-            cylMesh.position.y = 8.25;
+            cylMesh.position.y = 5.5;
             cylSubGroup.add(cylMesh);
 
             // Stacked cooling fins
             const finCount = 8;
             for (let i = 0; i < finCount; i++) {
-                const finGeom = new THREE.CylinderGeometry(7.5, 7.5, 0.48, 16);
+                const finGeom = new THREE.CylinderGeometry(5.0, 5.0, 0.32, 16);
                 const finMesh = new THREE.Mesh(finGeom, finMat);
-                finMesh.position.y = 3.0 + i * 2.1;
+                finMesh.position.y = 2.0 + i * 1.4;
                 cylSubGroup.add(finMesh);
             }
 
             // Cylinder head cover (chrome, rocker box)
-            const headGeom = new THREE.BoxGeometry(12.6, 4.2, 12.6);
+            const headGeom = new THREE.BoxGeometry(8.4, 2.8, 8.4);
             const headMesh = new THREE.Mesh(headGeom, chromeMaterial);
-            headMesh.position.y = 17.7;
+            headMesh.position.y = 11.8;
             cylSubGroup.add(headMesh);
 
-            cylSubGroup.position.set(0, 7.35, zOffset); // 7.35 is local Y offset (2.45 * 3)
+            cylSubGroup.position.set(0, 4.9, zOffset); // 4.9 is local Y offset (2.45 * 2)
             cylSubGroup.rotation.x = angle;
             
             engineGroup.add(cylSubGroup);
         }
 
-        createVCylinder(-Math.PI / 5, -7.5); // Cyl 1 forward (-2.5 * 3)
-        createVCylinder(Math.PI / 5, 7.5);   // Cyl 2 backward (2.5 * 3)
+        createVCylinder(-Math.PI / 5, -5.0); // Cyl 1 forward (-2.5 * 2)
+        createVCylinder(Math.PI / 5, 5.0);   // Cyl 2 backward (2.5 * 2)
 
         // Carburetor & Air intake
-        const carbGeom = new THREE.BoxGeometry(7.2, 7.2, 7.2);
+        const carbGeom = new THREE.BoxGeometry(4.8, 4.8, 4.8);
         const carbMesh = new THREE.Mesh(carbGeom, chromeMaterial);
-        carbMesh.position.set(0, 12.75, 0); // 4.25 * 3
+        carbMesh.position.set(0, 8.5, 0); // 4.25 * 2
         engineGroup.add(carbMesh);
 
         // Air filter cone (larger)
-        const filterGeom = new THREE.CylinderGeometry(4.2, 6.0, 7.8, 12);
+        const filterGeom = new THREE.CylinderGeometry(2.8, 4.0, 5.2, 12);
         filterGeom.rotateZ(Math.PI / 2);
         const filterMat = new THREE.MeshStandardMaterial({ color: 0x991111, roughness: 0.8 });
         const filterMesh = new THREE.Mesh(filterGeom, filterMat);
-        filterMesh.position.set(7.2, 12.75, 0);
+        filterMesh.position.set(4.8, 8.5, 0);
         engineGroup.add(filterMesh);
 
         // Filter cover
-        const filterCoverGeom = new THREE.CylinderGeometry(6.06, 6.06, 0.9, 12);
+        const filterCoverGeom = new THREE.CylinderGeometry(4.04, 4.04, 0.6, 12);
         filterCoverGeom.rotateZ(Math.PI / 2);
         const filterCover = new THREE.Mesh(filterCoverGeom, chromeMaterial);
-        filterCover.position.set(11.1, 12.75, 0);
+        filterCover.position.set(7.4, 8.5, 0);
         engineGroup.add(filterCover);
 
-        // Exhaust Pipes (routed from larger cylinders, scaled 3x in local engine coords)
+        // Exhaust Pipes (routed from larger cylinders, scaled 2x in local engine coords)
         const pipe1 = addCurveTube([
-            new THREE.Vector3(0, 20.25, -7.5),
-            new THREE.Vector3(-9.6, 15.75, -7.5),
-            new THREE.Vector3(-13.5, 2.25, -4.5),
-            new THREE.Vector3(-13.5, -6.75, 24.0),
-            new THREE.Vector3(-13.5, -6.75, 60.0)
-        ], 1.8, 'cage');
+            new THREE.Vector3(0, 13.50, -5.0),
+            new THREE.Vector3(-6.4, 10.50, -5.0),
+            new THREE.Vector3(-9.0, 1.50, -3.0),
+            new THREE.Vector3(-9.0, -4.50, 16.0),
+            new THREE.Vector3(-9.0, -4.50, 60.0)
+        ], 1.2, 'cage');
         engineGroup.add(pipe1);
 
         const pipe2 = addCurveTube([
-            new THREE.Vector3(0, 20.25, 7.5),
-            new THREE.Vector3(-9.6, 15.75, 7.5),
-            new THREE.Vector3(-12.9, 2.25, 4.5),
-            new THREE.Vector3(-12.9, -6.75, 30.0),
-            new THREE.Vector3(-12.9, -6.75, 60.0)
-        ], 1.8, 'cage');
+            new THREE.Vector3(0, 13.50, 5.0),
+            new THREE.Vector3(-6.4, 10.50, 5.0),
+            new THREE.Vector3(-8.6, 1.50, 3.0),
+            new THREE.Vector3(-8.6, -4.50, 20.0),
+            new THREE.Vector3(-8.6, -4.50, 60.0)
+        ], 1.2, 'cage');
         engineGroup.add(pipe2);
 
         // Red Spark Plug Wires & Ignition Coil (high-fidelity engine detail)
-        const coilGeom = new THREE.CylinderGeometry(1.5, 1.5, 5.4, 8);
+        const coilGeom = new THREE.CylinderGeometry(1.0, 1.0, 3.6, 8);
         const coilMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
         const coilMesh = new THREE.Mesh(coilGeom, coilMat);
-        coilMesh.position.set(0, 5.25, 0); // local center valley (1.75 * 3)
+        coilMesh.position.set(0, 3.5, 0); // local center valley (1.75 * 2)
         engineGroup.add(coilMesh);
 
         // Plug wires (bright red)
         const wireMat = new THREE.MeshStandardMaterial({ color: 0xcc1111, roughness: 0.5 });
         // Front wire to Cyl 1
         const pointsWire1 = [
-            new THREE.Vector3(0, 7.95, -0.6), // local points relative to engineGroup
-            new THREE.Vector3(-3.0, 12.75, -3.0),
-            new THREE.Vector3(-1.5, 20.25, -7.5)
+            new THREE.Vector3(0, 5.3, -0.4), // local points relative to engineGroup
+            new THREE.Vector3(-2.0, 8.5, -2.0),
+            new THREE.Vector3(-1.0, 13.5, -5.0)
         ];
         const curveWire1 = new THREE.CatmullRomCurve3(pointsWire1);
-        const geomWire1 = new THREE.TubeGeometry(curveWire1, 20, 0.36, 6, false);
+        const geomWire1 = new THREE.TubeGeometry(curveWire1, 20, 0.24, 6, false);
         const meshWire1 = new THREE.Mesh(geomWire1, wireMat);
         engineGroup.add(meshWire1);
 
         // Rear wire to Cyl 2
         const pointsWire2 = [
-            new THREE.Vector3(0, 7.95, 0.6),
-            new THREE.Vector3(3.0, 12.75, 3.0),
-            new THREE.Vector3(1.5, 20.25, 7.5)
+            new THREE.Vector3(0, 5.3, 0.4),
+            new THREE.Vector3(2.0, 8.5, 2.0),
+            new THREE.Vector3(1.0, 13.5, 5.0)
         ];
         const curveWire2 = new THREE.CatmullRomCurve3(pointsWire2);
-        const geomWire2 = new THREE.TubeGeometry(curveWire2, 20, 0.36, 6, false);
+        const geomWire2 = new THREE.TubeGeometry(curveWire2, 20, 0.24, 6, false);
         const meshWire2 = new THREE.Mesh(geomWire2, wireMat);
         engineGroup.add(meshWire2);
 
@@ -917,55 +917,55 @@
         const transGroup = new THREE.Group();
         
         // Bellhousing (flared cone pointing rearward along Z)
-        const bellGeom = new THREE.CylinderGeometry(6.6, 9.0, 6.6, 16);
+        const bellGeom = new THREE.CylinderGeometry(4.4, 6.0, 4.4, 16);
         bellGeom.rotateX(Math.PI / 2);
         const bellMesh = new THREE.Mesh(bellGeom, blockMat); // dark grey casting
-        bellMesh.position.set(0, 0, 13.8); // 4.6 * 3
+        bellMesh.position.set(0, 0, 9.2); // 4.6 * 2
         transGroup.add(bellMesh);
 
         // Gearbox main casing
-        const gearGeom = new THREE.CylinderGeometry(4.8, 6.0, 9.6, 16);
+        const gearGeom = new THREE.CylinderGeometry(3.2, 4.0, 6.4, 16);
         gearGeom.rotateX(Math.PI / 2);
         const gearMesh = new THREE.Mesh(gearGeom, blockMat);
-        gearMesh.position.set(0, 0, 21.9); // 7.3 * 3
+        gearMesh.position.set(0, 0, 14.6); // 7.3 * 2
         transGroup.add(gearMesh);
 
         // Chrome tailcone extension
-        const tailGeom = new THREE.CylinderGeometry(2.4, 3.6, 3.6, 16);
+        const tailGeom = new THREE.CylinderGeometry(1.6, 2.4, 2.4, 16);
         tailGeom.rotateX(Math.PI / 2);
         const tailMesh = new THREE.Mesh(tailGeom, chromeMaterial);
-        tailMesh.position.set(0, 0, 28.5); // 9.5 * 3
+        tailMesh.position.set(0, 0, 19.0); // 9.5 * 2
         transGroup.add(tailMesh);
 
         engineGroup.add(transGroup);
 
         // Set engine group position and scale
-        engineGroup.position.set(0, 12.25, 8);
+        engineGroup.position.set(0, 9.5, 8);
         chassisGroup.add(engineGroup);
 
         // --- DRIVE SHAFT TO REAR DIFFERENTIAL ---
-        // Driveshaft running from tailcone output center (0, 12.25, 38.3) to axle diff pinion yoke (0, -1, 41.5)
-        addTubeP2P(0, 12.25, 38.3, 0, -1.0, 41.5, 2.7, 2.7); // 3x driveshaft thickness
+        // Driveshaft running from tailcone output center (0, 9.5, 28.2) to axle diff pinion yoke (0, -1, 41.5)
+        addTubeP2P(0, 9.5, 28.2, 0, -1.0, 41.5, 1.8, 1.8); // 2x driveshaft thickness
         
         // Front slip yoke / U-joint coupler
-        const frontYokeGeom = new THREE.CylinderGeometry(3.6, 3.6, 2.4, 12);
+        const frontYokeGeom = new THREE.CylinderGeometry(2.4, 2.4, 1.6, 12);
         frontYokeGeom.rotateX(Math.PI / 2);
         const frontYoke = new THREE.Mesh(frontYokeGeom, chromeMaterial);
-        frontYoke.position.set(0, 12.25, 38.5);
+        frontYoke.position.set(0, 9.5, 28.3);
         chassisGroup.add(frontYoke);
 
         // Rear pinion yoke / U-joint coupler at differential
-        const rearYokeGeom = new THREE.CylinderGeometry(3.9, 3.9, 2.4, 12);
+        const rearYokeGeom = new THREE.CylinderGeometry(2.6, 2.6, 1.6, 12);
         rearYokeGeom.rotateX(Math.PI / 2);
         const rearYoke = new THREE.Mesh(rearYokeGeom, chromeMaterial);
         rearYoke.position.set(0, -1.0, 41.3);
         chassisGroup.add(rearYoke);
 
-        // Hanging test bottle (scaled 3x)
+        // Hanging test bottle (scaled 2x)
         const bottleGroup = new THREE.Group();
 
         // Translucent Red Fuel Bottle
-        const bottleGeom = new THREE.CylinderGeometry(4.8, 4.8, 15.0, 16); // 1.6x3, 5.0x3
+        const bottleGeom = new THREE.CylinderGeometry(3.2, 3.2, 10.0, 16); // 1.6x2, 5.0x2
         const bottleMat = new THREE.MeshStandardMaterial({
             color: 0xff3333,
             roughness: 0.15,
@@ -974,29 +974,29 @@
             opacity: 0.8
         });
         const bottleMesh = new THREE.Mesh(bottleGeom, bottleMat);
-        bottleMesh.position.set(0, 19.5, 8); // aligned with scaled engine center
+        bottleMesh.position.set(0, 16.5, 8); // aligned with scaled engine center
         bottleGroup.add(bottleMesh);
 
         // Black Bottle Cap
-        const capGeom = new THREE.CylinderGeometry(5.4, 5.4, 1.8, 16);
+        const capGeom = new THREE.CylinderGeometry(3.6, 3.6, 1.2, 16);
         const capMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
         const capMesh = new THREE.Mesh(capGeom, capMat);
-        capMesh.position.set(0, 27.9, 8);
+        capMesh.position.set(0, 22.1, 8);
         bottleGroup.add(capMesh);
 
         // Fluid level inside
-        const fluidGeom = new THREE.CylinderGeometry(4.5, 4.5, 10.5, 16);
+        const fluidGeom = new THREE.CylinderGeometry(3.0, 3.0, 7.0, 16);
         const fluidMat = new THREE.MeshStandardMaterial({ color: 0xaa0000, roughness: 0.3, metalness: 0.2 });
         const fluidMesh = new THREE.Mesh(fluidGeom, fluidMat);
-        fluidMesh.position.set(0, 17.25, 8);
+        fluidMesh.position.set(0, 15.0, 8);
         bottleGroup.add(fluidMesh);
 
-        // Black fuel hose running to carburetor (scaled 3x)
+        // Black fuel hose running to carburetor (scaled 2x)
         addCurveTube([
-            new THREE.Vector3(0, 12.0, 8),
-            new THREE.Vector3(1.5, 20.0, 8.5),
-            new THREE.Vector3(0, 24.5, 8.0)
-        ], 0.54, 'cage');
+            new THREE.Vector3(0, 11.5, 8),
+            new THREE.Vector3(1.0, 16.0, 8.3),
+            new THREE.Vector3(0, 19.0, 8.0)
+        ], 0.36, 'cage');
 
         chassisGroup.add(bottleGroup);
 
