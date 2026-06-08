@@ -91,6 +91,68 @@
             pointer-events: none;
             z-index: 1;
         }
+
+        /* Legend UI panel styling */
+        .legend-panel {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #333;
+            border-left: 4px solid #00ffcc;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: #ccc;
+            z-index: 10;
+            width: 240px;
+            pointer-events: auto;
+        }
+        .legend-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            color: #fff;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .legend-buttons {
+            margin-top: 15px;
+            border-top: 1px dashed #333;
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .legend-btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+        .legend-btn:hover {
+            background: #00ffcc;
+            color: #000;
+            border-color: #00ffcc;
+        }
     </style>
     <!-- Import Three.js, OrbitControls, and Details Map -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -109,6 +171,35 @@
         </div>
 
 
+
+        <div class="legend-panel">
+            <div class="legend-title">System Legend</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #00ffcc;"></div>
+                <span>Chassis Spaceframe</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #222222; border: 1px solid #555;"></div>
+                <span>700cc Engine Block</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff3333;"></div>
+                <span>Fuel Test Bottle & Lines</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #cccccc;"></div>
+                <span>Suspension & Steering</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #111111; border: 1px solid #333;"></div>
+                <span>Tires & Wheel Hubs</span>
+            </div>
+            
+            <div class="legend-buttons">
+                <button class="legend-btn" id="btn-labels">Toggle Tube Labels [L]</button>
+                <button class="legend-btn" id="btn-ply">Toggle Point Cloud [P]</button>
+            </div>
+        </div>
 
         <div class="controls-hint">
             LEFT CLICK + DRAG TO ROTATE<br>
@@ -152,6 +243,47 @@
         // Group to hold all chassis parts
         const chassisGroup = new THREE.Group();
         scene.add(chassisGroup);
+
+        // Group to hold all tube number labels
+        const tubeLabelsGroup = new THREE.Group();
+        chassisGroup.add(tubeLabelsGroup);
+        let tubeCounter = 0;
+
+        function createNumberSprite(number) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw circular background
+            ctx.beginPath();
+            ctx.arc(32, 32, 28, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 255, 200, 0.85)';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw number text
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 32px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(number.toString(), 32, 32);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(3, 3, 1);
+            return sprite;
+        }
+
+        function addTubeLabel(x, y, z) {
+            tubeCounter++;
+            const sprite = createNumberSprite(tubeCounter);
+            sprite.position.set(x, y, z);
+            tubeLabelsGroup.add(sprite);
+        }
 
         // Generate a procedural environment map to make chrome reflections gorgeous
         function createProceduralEnvMap() {
@@ -298,6 +430,7 @@
             mesh.position.set(x, y, z);
             mesh.userData = { type: 'frame', geomType: 'box' };
             chassisGroup.add(mesh);
+            addTubeLabel(x, y, z); // Label this tube
             return mesh;
         }
 
@@ -334,6 +467,7 @@
                 geomType: isBox ? 'box' : 'cylinder'
             };
             chassisGroup.add(mesh);
+            addTubeLabel((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2); // Label this tube
             return mesh;
         }
 
@@ -344,6 +478,8 @@
             const mesh = new THREE.Mesh(geom, chromeMaterial);
             mesh.userData = { type: type, geomType: 'tube' };
             chassisGroup.add(mesh);
+            const midPoint = curve.getPointAt(0.5);
+            addTubeLabel(midPoint.x, midPoint.y, midPoint.z); // Label this tube
             return mesh;
         }
 
@@ -1164,13 +1300,32 @@
             })
             .catch(err => console.error("Error loading hantu_raya_bounds.ply:", err));
 
-        // Press 'P' to toggle visibility of PLY coordinate points
-        window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'p' && pointsCloud) {
+        // Toggle functions for labels and point cloud
+        function toggleLabels() {
+            tubeLabelsGroup.visible = !tubeLabelsGroup.visible;
+            console.log(`Tube labels visibility: ${tubeLabelsGroup.visible}`);
+        }
+
+        function togglePointCloud() {
+            if (pointsCloud) {
                 pointsCloud.material.visible = !pointsCloud.material.visible;
                 console.log(`PLY Coordinate cloud visibility: ${pointsCloud.material.visible}`);
             }
+        }
+
+        // Keydown handlers
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'p') {
+                togglePointCloud();
+            }
+            if (e.key.toLowerCase() === 'l') {
+                toggleLabels();
+            }
         });
+
+        // UI click handlers
+        document.getElementById('btn-labels').addEventListener('click', toggleLabels);
+        document.getElementById('btn-ply').addEventListener('click', togglePointCloud);
 
         window.addEventListener('resize', onWindowResize, false);
 
