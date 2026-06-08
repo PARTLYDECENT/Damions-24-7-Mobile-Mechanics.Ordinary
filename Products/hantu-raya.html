@@ -713,27 +713,60 @@
         addTubeCenter(2, 8, 2, 14, 16, 30);
 
         // --- 9.5 COCKPIT DETAILS (SEATS & STEERING) ---
-        // Skeletal Racing Seats (Driver and Passenger)
-        function addSkeletalSeat(offsetX) {
-            // Seat Base
+        // Premium Bucket Seats (Driver and Passenger with Leather Cushions and Shell backs)
+        function addDetailedSeat(offsetX) {
+            const seatGroup = new THREE.Group();
+            
+            // Tubing seat frame
             addTubeP2P(offsetX - 5, 5, -28, offsetX + 5, 5, -28, 0.6, 0.6);
             addTubeP2P(offsetX - 5, 5, -16, offsetX + 5, 5, -16, 0.6, 0.6);
             addTubeP2P(offsetX - 5, 5, -28, offsetX - 5, 5, -16, 0.6, 0.6);
             addTubeP2P(offsetX + 5, 5, -28, offsetX + 5, 5, -16, 0.6, 0.6);
             
-            // Seat Back (angled upward)
             addTubeP2P(offsetX - 5, 5, -16, offsetX - 5, 16, -12, 0.6, 0.6);
             addTubeP2P(offsetX + 5, 5, -16, offsetX + 5, 16, -12, 0.6, 0.6);
             addTubeP2P(offsetX - 5, 16, -12, offsetX + 5, 16, -12, 0.6, 0.6);
 
-            // Seat side bolsters
             addTubeP2P(offsetX - 5, 5, -28, offsetX - 5, 10, -22, 0.4, 0.4);
             addTubeP2P(offsetX + 5, 5, -28, offsetX + 5, 10, -22, 0.4, 0.4);
             addTubeP2P(offsetX - 5, 10, -22, offsetX - 5, 16, -12, 0.4, 0.4);
             addTubeP2P(offsetX + 5, 10, -22, offsetX + 5, 16, -12, 0.4, 0.4);
+
+            // Shell & Cushion Materials
+            const seatShellMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1 });
+            const seatCushionMat = new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.7, metalness: 0.1 });
+
+            // Bottom Seat Cushion
+            const baseCushionGeom = new THREE.BoxGeometry(9.0, 1.2, 11.0);
+            const baseCushion = new THREE.Mesh(baseCushionGeom, seatCushionMat);
+            baseCushion.position.set(offsetX, 5.2, -22.0);
+            seatGroup.add(baseCushion);
+
+            // Backrest Cushion (angled)
+            const backCushionGeom = new THREE.BoxGeometry(9.0, 11.5, 1.0);
+            const backCushion = new THREE.Mesh(backCushionGeom, seatCushionMat);
+            backCushion.position.set(offsetX, 10.5, -14.0);
+            backCushion.rotation.x = 0.35; // angled backrest
+            seatGroup.add(backCushion);
+
+            // Headrest
+            const headrestGeom = new THREE.BoxGeometry(5.0, 2.5, 1.2);
+            const headrest = new THREE.Mesh(headrestGeom, seatCushionMat);
+            headrest.position.set(offsetX, 16.5, -11.8);
+            headrest.rotation.x = 0.35;
+            seatGroup.add(headrest);
+
+            // Carbon-fiber look seat shell back
+            const backShellGeom = new THREE.BoxGeometry(9.2, 11.7, 0.2);
+            const backShell = new THREE.Mesh(backShellGeom, seatShellMat);
+            backShell.position.set(offsetX, 10.5, -14.6);
+            backShell.rotation.x = 0.35;
+            seatGroup.add(backShell);
+
+            chassisGroup.add(seatGroup);
         }
-        addSkeletalSeat(-8); // Driver Seat
-        addSkeletalSeat(8);  // Passenger Seat
+        addDetailedSeat(-8); // Driver Seat
+        addDetailedSeat(8);  // Passenger Seat
 
         // Steering Column and Wheel (Left Hand Drive)
         const colStartX = -8;
@@ -744,20 +777,66 @@
         const colEndZ = -30; // steering wheel position
         addTubeP2P(colStartX, colStartY, colStartZ, colEndX, colEndY, colEndZ, 0.7, 0.7); // steering column
 
+        // Quick Release Collar (anodized red detail)
+        const qrGeom = new THREE.CylinderGeometry(1.0, 1.0, 1.2, 12);
+        qrGeom.rotateX(Math.PI / 2);
+        const qrMat = new THREE.MeshStandardMaterial({ color: 0xcc1111, metalness: 0.9, roughness: 0.2 });
+        const qrMesh = new THREE.Mesh(qrGeom, qrMat);
+        qrMesh.position.set(colEndX, colEndY, colEndZ - 0.6);
+        chassisGroup.add(qrMesh);
+
         // Steering Wheel (angled)
         const wheelGroup = new THREE.Group();
-        const wheelGeom = new THREE.TorusGeometry(2.4, 0.25, 8, 24);
-        const wheelMesh = new THREE.Mesh(wheelGeom, chromeMaterial);
+        
+        // Dark leather outer rim
+        const leatherMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.85 });
+        const wheelGeom = new THREE.TorusGeometry(2.4, 0.35, 12, 32);
+        const wheelMesh = new THREE.Mesh(wheelGeom, leatherMat);
         wheelGroup.add(wheelMesh);
 
-        // Steering Wheel spokes (3-spoke)
-        const spokeGeom = new THREE.CylinderGeometry(0.18, 0.18, 2.4, 6);
+        // Inner chrome steel support ring
+        const innerRingGeom = new THREE.TorusGeometry(2.0, 0.08, 6, 32);
+        const innerRing = new THREE.Mesh(innerRingGeom, chromeMaterial);
+        wheelGroup.add(innerRing);
+
+        // Center Horn Hub & Mounting Bolts
+        const hubGeom = new THREE.CylinderGeometry(0.8, 0.8, 0.6, 16);
+        hubGeom.rotateX(Math.PI / 2);
+        const hubMesh = new THREE.Mesh(hubGeom, chromeMaterial);
+        wheelGroup.add(hubMesh);
+        
+        const centerCapGeom = new THREE.CylinderGeometry(0.5, 0.5, 0.7, 16);
+        centerCapGeom.rotateX(Math.PI / 2);
+        const centerCap = new THREE.Mesh(centerCapGeom, leatherMat);
+        wheelGroup.add(centerCap);
+
+        // 6 tiny hex bolts around the horn center
+        const boltGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6);
+        boltGeom.rotateX(Math.PI / 2);
+        for (let i = 0; i < 6; i++) {
+            const bolt = new THREE.Mesh(boltGeom, chromeMaterial);
+            const r = 0.65;
+            const theta = (i * Math.PI * 2) / 6;
+            bolt.position.set(Math.cos(theta) * r, Math.sin(theta) * r, 0.05);
+            wheelGroup.add(bolt);
+        }
+
+        // 3 lightweight slotted spokes (slotted racing wheel style)
         for (let i = 0; i < 3; i++) {
-            const spoke = new THREE.Mesh(spokeGeom, chromeMaterial);
-            const angle = (i * Math.PI * 2) / 3;
-            spoke.rotation.z = angle;
-            spoke.position.set(Math.sin(angle) * 1.2, -Math.cos(angle) * 1.2, 0);
-            wheelGroup.add(spoke);
+            const angle = (i * Math.PI * 2) / 3 - Math.PI / 2; // offset to point downwards and left/right
+            
+            // Double rod spokes to make it look high-end and slotted
+            const spokeGeom = new THREE.CylinderGeometry(0.12, 0.12, 1.8, 6);
+            
+            const rod1 = new THREE.Mesh(spokeGeom, chromeMaterial);
+            rod1.position.set(Math.cos(angle - 0.08) * 1.1, Math.sin(angle - 0.08) * 1.1, -0.05);
+            rod1.rotation.z = angle + Math.PI / 2;
+            wheelGroup.add(rod1);
+
+            const rod2 = new THREE.Mesh(spokeGeom, chromeMaterial);
+            rod2.position.set(Math.cos(angle + 0.08) * 1.1, Math.sin(angle + 0.08) * 1.1, -0.05);
+            rod2.rotation.z = angle + Math.PI / 2;
+            wheelGroup.add(rod2);
         }
         
         // Align steering wheel to the column angle
@@ -1001,6 +1080,146 @@
         chassisGroup.add(bottleGroup);
 
 
+        // --- 10.5 ADDITIONAL ENGINE SYSTEMS, BATTERY, AND WIRING LOOM ---
+        
+        // 1. Racing Battery (yellow-top racing battery mounted on cradle)
+        const batteryGroup = new THREE.Group();
+        const battBoxGeom = new THREE.BoxGeometry(4.0, 3.6, 2.8);
+        const battBoxMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+        const battBox = new THREE.Mesh(battBoxGeom, battBoxMat);
+        battBox.position.set(0, 0, 0);
+        batteryGroup.add(battBox);
+
+        // Yellow top cover
+        const battTopGeom = new THREE.BoxGeometry(4.1, 0.6, 2.9);
+        const battTopMat = new THREE.MeshStandardMaterial({ color: 0xddaa00, roughness: 0.5 });
+        const battTop = new THREE.Mesh(battTopGeom, battTopMat);
+        battTop.position.set(0, 2.0, 0);
+        batteryGroup.add(battTop);
+
+        // Terminal posts (Red positive, Black negative)
+        const postGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.5, 8);
+        const redMat = new THREE.MeshStandardMaterial({ color: 0xcc1111, roughness: 0.3 });
+        const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+        
+        const posTerminal = new THREE.Mesh(postGeom, redMat);
+        posTerminal.position.set(-1.2, 2.3, 0);
+        batteryGroup.add(posTerminal);
+
+        const negTerminal = new THREE.Mesh(postGeom, blackMat);
+        negTerminal.position.set(1.2, 2.3, 0);
+        batteryGroup.add(negTerminal);
+
+        batteryGroup.position.set(5.0, 5.8, 18.0); // Mounted on passenger side engine rail
+        chassisGroup.add(batteryGroup);
+
+        // 2. Starter Motor (chrome cylinder mounted on the V-twin crankcase bottom front)
+        const starterGeom = new THREE.CylinderGeometry(1.6, 1.6, 4.0, 12);
+        starterGeom.rotateX(Math.PI / 2);
+        const starterMesh = new THREE.Mesh(starterGeom, chromeMaterial);
+        starterMesh.position.set(-3.0, 7.5, 3.0); // relative to chassisGroup
+        chassisGroup.add(starterMesh);
+
+        // Heavy positive battery cable (Red cable from positive terminal to starter motor)
+        addCurveTube([
+            new THREE.Vector3(3.8, 8.1, 18.0), // positive terminal post
+            new THREE.Vector3(2.0, 10.0, 16.0),
+            new THREE.Vector3(-1.0, 8.0, 8.0),
+            new THREE.Vector3(-3.0, 7.5, 5.0) // starter motor input
+        ], 0.3, 'cage'); // rendered as red tube
+
+        // Ground strap (black cable from negative terminal to frame)
+        addTubeP2P(6.2, 8.1, 18.0, 6.0, 4.0, 20.0, 0.3, 0.3); // directly down to chassis rail
+
+        // 3. Oil Cooler Radiator (mounted at the front of the cradle to cool the engine)
+        const coolerGroup = new THREE.Group();
+        const coreGeom = new THREE.BoxGeometry(8.0, 3.0, 1.2);
+        const coreMesh = new THREE.Mesh(coreGeom, chromeMaterial);
+        coolerGroup.add(coreMesh);
+
+        // Fin texture slats
+        for (let i = -1.2; i <= 1.2; i += 0.4) {
+            const slatGeom = new THREE.BoxGeometry(7.6, 0.12, 1.3);
+            const slat = new THREE.Mesh(slatGeom, blackMat);
+            slat.position.set(0, i, 0);
+            coolerGroup.add(slat);
+        }
+
+        // Bracket ears
+        addTubeP2P(-4.5, 1.2, 0, -4.0, 1.2, 0, 0.24, 0.24);
+        addTubeP2P(4.5, 1.2, 0, 4.0, 1.2, 0, 0.24, 0.24);
+
+        coolerGroup.position.set(0, 6.5, -3.5); // mounted at front bumper area of the engine cradle
+        chassisGroup.add(coolerGroup);
+
+        // Braided oil lines (dual silver tubes running from cooler core to crankcase cover)
+        addCurveTube([
+            new THREE.Vector3(-3.0, 6.5, -3.0), // cooler left side port
+            new THREE.Vector3(-5.0, 5.5, 4.0),
+            new THREE.Vector3(-5.0, 7.5, 7.5)  // crankcase oil filter block
+        ], 0.24, 'cage');
+
+        addCurveTube([
+            new THREE.Vector3(3.0, 6.5, -3.0),  // cooler right side port
+            new THREE.Vector3(2.0, 5.5, 4.0),
+            new THREE.Vector3(5.0, 7.5, 7.5)   // crankcase bypass loop
+        ], 0.24, 'cage');
+
+        // 4. Cockpit Starter Control & Switch Panel
+        const panelGeom = new THREE.BoxGeometry(5.0, 3.0, 0.4);
+        const panelMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 });
+        const panel = new THREE.Mesh(panelGeom, panelMat);
+        panel.position.set(0, 15.0, -42.2); // center dash
+        panel.rotation.x = -Math.PI / 6;
+        chassisGroup.add(panel);
+
+        // Red Push-Button Starter
+        const btnGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.4, 12);
+        btnGeom.rotateX(Math.PI / 2);
+        const btn = new THREE.Mesh(btnGeom, redMat);
+        btn.position.set(-1.5, 15.0, -42.0);
+        btn.rotation.x = -Math.PI / 6;
+        chassisGroup.add(btn);
+
+        // Toggle switches (2 tiny chrome toggles)
+        const toggleGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
+        toggleGeom.rotateX(Math.PI / 2);
+        const toggle1 = new THREE.Mesh(toggleGeom, chromeMaterial);
+        toggle1.position.set(0.5, 15.0, -42.0);
+        toggle1.rotation.x = 0.2 - Math.PI / 6;
+        chassisGroup.add(toggle1);
+
+        const toggle2 = toggle1.clone();
+        toggle2.position.x = 1.5;
+        chassisGroup.add(toggle2);
+
+        // 5. Wiring Loom Conduit (thick protective sleeve routing around chassis)
+        const loomMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.95 });
+        
+        // Main loom trunk line along driver side sill rail up to dash panel
+        addCurveTube([
+            new THREE.Vector3(-8.0, 13.5, -41.8), // Dash back connection
+            new THREE.Vector3(-14.0, 11.5, -41.8),
+            new THREE.Vector3(-20.5, 5.0, -38.0), // down to floor frame
+            new THREE.Vector3(-20.5, 5.0, 0.0),
+            new THREE.Vector3(-10.0, 5.0, 10.0),  // branches into engine bay
+            new THREE.Vector3(-3.0, 6.0, 8.0)    // branch connection near ignition coil
+        ], 0.45, 'cage');
+
+        // Throttle Control Cable Linkage (yellow throttle cable from carb to driver floor area)
+        const throttleCableMat = new THREE.MeshStandardMaterial({ color: 0xddaa00, roughness: 0.6 }); // yellow jacket
+        const pointsThrottle = [
+            new THREE.Vector3(0.0, 18.0, 8.0),   // carburetor top inlet
+            new THREE.Vector3(0.0, 12.0, 4.0),
+            new THREE.Vector3(-4.0, 5.2, -10.0), // tunnel floor line
+            new THREE.Vector3(-8.0, 5.2, -28.0)  // driver foot pedal area
+        ];
+        const curveThrottle = new THREE.CatmullRomCurve3(pointsThrottle);
+        const geomThrottle = new THREE.TubeGeometry(curveThrottle, 30, 0.18, 6, false);
+        const meshThrottle = new THREE.Mesh(geomThrottle, throttleCableMat);
+        chassisGroup.add(meshThrottle);
+
+
         // --- 11. FLOOR MESH GRID PANEL ---
         // Programmatic grid of thin chrome wires
         for (let gz = -55; gz <= -15; gz += 5) {
@@ -1174,7 +1393,7 @@
 
             // Rear Solid Axle & Leaf Springs
             const axleY = -1;
-            const axleZ = 45;
+            const axleZ = 41.5;
             
             // Diff Pumpkin
             const diffGeom = new THREE.SphereGeometry(3.5, 16, 16);
@@ -1187,72 +1406,72 @@
             addTubeP2P(-24, axleY, axleZ, -27, axleY, axleZ, 2.8, 2.8);
             addTubeP2P(24, axleY, axleZ, 27, axleY, axleZ, 2.8, 2.8);
 
-            // Left Leaf Spring Pack - 3 stacked leaves (Main, Second, Third)
+            // Left Leaf Spring Pack - 3 stacked leaves (Main, Second, Third) - Spring-over-axle setup
             // Main Leaf
             addCurveTube([
-                new THREE.Vector3(-21, 2, 20),
-                new THREE.Vector3(-21.5, 0, 32),
-                new THREE.Vector3(-22, axleY - 1.0, axleZ),
-                new THREE.Vector3(-20.5, 0, 58),
-                new THREE.Vector3(-18, 5, 65)
+                new THREE.Vector3(-20.5, 5.0, 16.5),
+                new THREE.Vector3(-21.2, 3.2, 29.0),
+                new THREE.Vector3(-22.0, 1.5, axleZ),
+                new THREE.Vector3(-20.0, 4.0, 52.0),
+                new THREE.Vector3(-18.0, 7.5, 60.0)
             ], 0.8, 'cage');
             // Second Leaf
             addCurveTube([
-                new THREE.Vector3(-21.2, 1, 25),
-                new THREE.Vector3(-21.7, -0.2, 34),
-                new THREE.Vector3(-22, axleY - 1.2, axleZ),
-                new THREE.Vector3(-20.7, -0.2, 54),
-                new THREE.Vector3(-19.0, 3.5, 61)
+                new THREE.Vector3(-20.6, 4.5, 21.0),
+                new THREE.Vector3(-21.4, 2.3, 31.0),
+                new THREE.Vector3(-22.0, 1.3, axleZ),
+                new THREE.Vector3(-20.2, 3.2, 50.0),
+                new THREE.Vector3(-18.5, 6.2, 57.0)
             ], 0.7, 'cage');
             // Third Leaf
             addCurveTube([
-                new THREE.Vector3(-21.6, 0.5, 32),
-                new THREE.Vector3(-22, axleY - 1.4, axleZ),
-                new THREE.Vector3(-20.9, 0.5, 52)
+                new THREE.Vector3(-21.0, 3.2, 28.0),
+                new THREE.Vector3(-22.0, 1.1, axleZ),
+                new THREE.Vector3(-20.5, 2.4, 49.0)
             ], 0.6, 'cage');
             // Left Shackle link
-            addTubeP2P(-18, 5, 65, -18, 9, 65, 0.6, 0.6);
-            // Left clamping block / U-bolt bracket
+            addTubeP2P(-18, 7.5, 60, -18, 10, 60, 0.6, 0.6);
+            // Left clamping block / U-bolt bracket (shifted to top of axle housing / leaf spring stack)
             const leftClampGeom = new THREE.BoxGeometry(1.8, 2.2, 1.8);
             const leftClampMesh = new THREE.Mesh(leftClampGeom, chromeMaterial);
-            leftClampMesh.position.set(-22, axleY - 0.5, axleZ);
+            leftClampMesh.position.set(-22, axleY + 2.0, axleZ);
             chassisGroup.add(leftClampMesh);
 
-            // Right Leaf Spring Pack - 3 stacked leaves (Main, Second, Third)
+            // Right Leaf Spring Pack - 3 stacked leaves (Main, Second, Third) - Spring-over-axle setup
             // Main Leaf
             addCurveTube([
-                new THREE.Vector3(21, 2, 20),
-                new THREE.Vector3(21.5, 0, 32),
-                new THREE.Vector3(22, axleY - 1.0, axleZ),
-                new THREE.Vector3(20.5, 0, 58),
-                new THREE.Vector3(18, 5, 65)
+                new THREE.Vector3(20.5, 5.0, 16.5),
+                new THREE.Vector3(21.2, 3.2, 29.0),
+                new THREE.Vector3(22.0, 1.5, axleZ),
+                new THREE.Vector3(20.0, 4.0, 52.0),
+                new THREE.Vector3(18.0, 7.5, 60.0)
             ], 0.8, 'cage');
             // Second Leaf
             addCurveTube([
-                new THREE.Vector3(21.2, 1, 25),
-                new THREE.Vector3(21.7, -0.2, 34),
-                new THREE.Vector3(22, axleY - 1.2, axleZ),
-                new THREE.Vector3(20.7, -0.2, 54),
-                new THREE.Vector3(19.0, 3.5, 61)
+                new THREE.Vector3(20.6, 4.5, 21.0),
+                new THREE.Vector3(21.4, 2.3, 31.0),
+                new THREE.Vector3(22.0, 1.3, axleZ),
+                new THREE.Vector3(20.2, 3.2, 50.0),
+                new THREE.Vector3(18.5, 6.2, 57.0)
             ], 0.7, 'cage');
             // Third Leaf
             addCurveTube([
-                new THREE.Vector3(21.6, 0.5, 32),
-                new THREE.Vector3(22, axleY - 1.4, axleZ),
-                new THREE.Vector3(20.9, 0.5, 52)
+                new THREE.Vector3(21.0, 3.2, 28.0),
+                new THREE.Vector3(22.0, 1.1, axleZ),
+                new THREE.Vector3(20.5, 2.4, 49.0)
             ], 0.6, 'cage');
             // Right Shackle link
-            addTubeP2P(18, 5, 65, 18, 9, 65, 0.6, 0.6);
+            addTubeP2P(18, 7.5, 60, 18, 10, 60, 0.6, 0.6);
             // Right clamping block / U-bolt bracket
             const rightClampMesh = leftClampMesh.clone();
             rightClampMesh.position.x = 22;
             chassisGroup.add(rightClampMesh);
 
-            // Add 4 simple wheels/tires (matched rear wheel height to front at y = -1)
+            // Add 4 simple wheels/tires (matched rear wheel height to front at y = -1, shifted rear to z = 41.5)
             addChassisWheel(-27, -1, -60, 11, 5.5);  // Front Left
             addChassisWheel(27, -1, -60, 11, 5.5);   // Front Right
-            addChassisWheel(-27, -1, 45, 12, 6.0);   // Rear Left
-            addChassisWheel(27, -1, 45, 12, 6.0);    // Rear Right
+            addChassisWheel(-27, -1, axleZ, 12, 6.0);   // Rear Left
+            addChassisWheel(27, -1, axleZ, 12, 6.0);    // Rear Right
         }
         addSuspensionSystem();
 

@@ -146,17 +146,37 @@ const HantuRayaDetails = {
             id: "rear_axle",
             name: "Rear Solid Axle & Differential",
             category: "suspension",
-            bounds: { x: [-28, 28], y: [-2, 3], z: [44, 46] },
+            bounds: { x: [-28, 28], y: [-2, 3], z: [40.5, 42.5] },
             description: "Rear solid axle tubes, outer hubs, and center differential pumpkin casing."
         },
         {
             id: "leaf_springs",
             name: "Multi-Leaf Spring Packs",
             category: "suspension",
-            bounds: { x: [-23, 23], y: [-3, 10], z: [19, 66] },
-            description: "Triple-stacked leaf springs under axle with shackles and U-bolt clamps."
+            bounds: { x: [-23, 23], y: [-1, 11], z: [15.5, 61.5] },
+            description: "Triple-stacked leaf springs over axle with shackles and U-bolt clamps."
         },
-
+        {
+            id: "battery_cooler",
+            name: "Auxiliary Battery & Oil Cooler",
+            category: "engine",
+            bounds: { x: [-9, 9], y: [3, 10], z: [-5, 21] },
+            description: "Yellow-top battery with cables, aluminum oil cooler radiator with braided metal hoses."
+        },
+        {
+            id: "switch_panel",
+            name: "Dashboard Switch Panel & Horn Hub",
+            category: "interior",
+            bounds: { x: [-11, 3], y: [10, 17], z: [-43, -29] },
+            description: "Cockpit starter button and toggle switches panel, plus detailed sports steering wheel."
+        },
+        {
+            id: "wiring_loom",
+            name: "Main Wiring Loom & Throttle Cable",
+            category: "engine",
+            bounds: { x: [-22, 1], y: [3, 19], z: [-43, 12] },
+            description: "Thick protective loom conduit routing around chassis rails and yellow throttle control cable."
+        },
         // --- WHEELS ---
         {
             id: "wheel_fl",
@@ -176,14 +196,14 @@ const HantuRayaDetails = {
             id: "wheel_rl",
             name: "Rear Left Wheel",
             category: "wheel",
-            bounds: { x: [-30, -24], y: [-13, 11], z: [39, 51] },
+            bounds: { x: [-30, -24], y: [-13, 11], z: [35.5, 47.5] },
             description: "Rear left simple tire and center rim cap (radius 12, width 6.0)."
         },
         {
             id: "wheel_rr",
             name: "Rear Right Wheel",
             category: "wheel",
-            bounds: { x: [24, 30], y: [-13, 11], z: [39, 51] },
+            bounds: { x: [24, 30], y: [-13, 11], z: [35.5, 47.5] },
             description: "Rear right simple tire and center rim cap (radius 12, width 6.0)."
         }
     ],
