@@ -88,42 +88,42 @@ const HantuRayaDetails = {
             id: "vtwin_engine",
             name: "700cc V-Twin Engine Block",
             category: "engine",
-            bounds: { x: [-5, 5], y: [4.5, 16], z: [15, 21] },
-            description: "Air-cooled 700cc V-twin motor with primary drive covers and timing gears."
+            bounds: { x: [-13.0, 13.0], y: [4.0, 30.0], z: [-3.0, 19.5] },
+            description: "Air-cooled 3x V-twin motor with primary drive covers and timing gears."
         },
         {
             id: "carburetor_filter",
             name: "Intake Carb & Air Filter",
             category: "engine",
-            bounds: { x: [-3, 5.8], y: [9.5, 13.5], z: [16, 20] },
+            bounds: { x: [-3.6, 11.5], y: [21.0, 31.0], z: [4.0, 12.0] },
             description: "Intake carburetor and red high-flow air filter cone with chrome cap."
         },
         {
             id: "exhaust_pipes",
             name: "Dual Swept Exhaust Pipes",
             category: "engine",
-            bounds: { x: [-5, 1], y: [4, 14], z: [14.5, 39] },
+            bounds: { x: [-14.0, 0.0], y: [5.0, 33.0], z: [-8.0, 60.0] },
             description: "Dual pipes exiting engine cylinders and sweeping rearward under the bed."
         },
         {
             id: "transmission",
             name: "Basic Transmission Gearbox",
             category: "engine",
-            bounds: { x: [-3.5, 3.5], y: [4.5, 9.5], z: [21.5, 28.5] },
+            bounds: { x: [-9.0, 9.0], y: [3.0, 21.5], z: [18.5, 38.5] },
             description: "Manual gearbox casing including front bellhousing and tailcone output."
         },
         {
             id: "driveshaft",
             name: "Rear Driveshaft & Yokes",
             category: "engine",
-            bounds: { x: [-1.5, 1.5], y: [-1.5, 8], z: [28, 42] },
+            bounds: { x: [-4.0, 4.0], y: [-2.0, 13.0], z: [38.0, 42.0] },
             description: "Chrome driveshaft transmitting torque from transmission output to rear axle."
         },
         {
             id: "fuel_bottle",
             name: "Hanging Fuel Test Bottle",
             category: "engine",
-            bounds: { x: [-2, 2], y: [13, 20], z: [16, 20] },
+            bounds: { x: [-5.5, 5.5], y: [12.0, 29.0], z: [3.0, 13.0] },
             description: "Temporary gravity-feed test bottle containing fuel mixture, hanging from subframe."
         },
 
