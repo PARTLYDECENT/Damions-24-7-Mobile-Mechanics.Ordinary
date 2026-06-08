@@ -575,6 +575,60 @@
         addTubeCenter(2, 8, 2, -14, 16, 30);
         addTubeCenter(2, 8, 2, 14, 16, 30);
 
+        // --- 9.5 COCKPIT DETAILS (SEATS & STEERING) ---
+        // Skeletal Racing Seats (Driver and Passenger)
+        function addSkeletalSeat(offsetX) {
+            // Seat Base
+            addTubeP2P(offsetX - 5, 5, -28, offsetX + 5, 5, -28, 0.6, 0.6);
+            addTubeP2P(offsetX - 5, 5, -16, offsetX + 5, 5, -16, 0.6, 0.6);
+            addTubeP2P(offsetX - 5, 5, -28, offsetX - 5, 5, -16, 0.6, 0.6);
+            addTubeP2P(offsetX + 5, 5, -28, offsetX + 5, 5, -16, 0.6, 0.6);
+            
+            // Seat Back (angled upward)
+            addTubeP2P(offsetX - 5, 5, -16, offsetX - 5, 16, -12, 0.6, 0.6);
+            addTubeP2P(offsetX + 5, 5, -16, offsetX + 5, 16, -12, 0.6, 0.6);
+            addTubeP2P(offsetX - 5, 16, -12, offsetX + 5, 16, -12, 0.6, 0.6);
+
+            // Seat side bolsters
+            addTubeP2P(offsetX - 5, 5, -28, offsetX - 5, 10, -22, 0.4, 0.4);
+            addTubeP2P(offsetX + 5, 5, -28, offsetX + 5, 10, -22, 0.4, 0.4);
+            addTubeP2P(offsetX - 5, 10, -22, offsetX - 5, 16, -12, 0.4, 0.4);
+            addTubeP2P(offsetX + 5, 10, -22, offsetX + 5, 16, -12, 0.4, 0.4);
+        }
+        addSkeletalSeat(-8); // Driver Seat
+        addSkeletalSeat(8);  // Passenger Seat
+
+        // Steering Column and Wheel (Left Hand Drive)
+        const colStartX = -8;
+        const colStartY = 15;
+        const colStartZ = -42; // dash line
+        const colEndX = -8;
+        const colEndY = 11.5;
+        const colEndZ = -30; // steering wheel position
+        addTubeP2P(colStartX, colStartY, colStartZ, colEndX, colEndY, colEndZ, 0.7, 0.7); // steering column
+
+        // Steering Wheel (angled)
+        const wheelGroup = new THREE.Group();
+        const wheelGeom = new THREE.TorusGeometry(2.4, 0.25, 8, 24);
+        const wheelMesh = new THREE.Mesh(wheelGeom, chromeMaterial);
+        wheelGroup.add(wheelMesh);
+
+        // Steering Wheel spokes (3-spoke)
+        const spokeGeom = new THREE.CylinderGeometry(0.18, 0.18, 2.4, 6);
+        for (let i = 0; i < 3; i++) {
+            const spoke = new THREE.Mesh(spokeGeom, chromeMaterial);
+            const angle = (i * Math.PI * 2) / 3;
+            spoke.rotation.z = angle;
+            spoke.position.set(Math.sin(angle) * 1.2, -Math.cos(angle) * 1.2, 0);
+            wheelGroup.add(spoke);
+        }
+        
+        // Align steering wheel to the column angle
+        wheelGroup.position.set(colEndX, colEndY, colEndZ);
+        wheelGroup.rotation.x = -Math.PI / 6; // angle towards driver
+        chassisGroup.add(wheelGroup);
+
+
 
         // --- 10. V-TWIN ENGINE CRADLE & FUEL TEST BOTTLE ---
         // Engine bed rails (bottom cradle)
@@ -687,6 +741,38 @@
             new THREE.Vector3(-4.3, 4.5, 28),
             new THREE.Vector3(-4.3, 4.5, 38)
         ], 0.6, 'cage');
+
+        // Red Spark Plug Wires & Ignition Coil (high-fidelity engine detail)
+        const coilGeom = new THREE.CylinderGeometry(0.5, 0.5, 1.8, 8);
+        const coilMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        const coilMesh = new THREE.Mesh(coilGeom, coilMat);
+        coilMesh.position.set(0, 8.5, 18); // center valley
+        engineGroup.add(coilMesh);
+
+        // Plug wires (bright red)
+        const wireMat = new THREE.MeshStandardMaterial({ color: 0xcc1111, roughness: 0.5 });
+        // Front wire to Cyl 1
+        const pointsWire1 = [
+            new THREE.Vector3(0, 9.4, 17.8),
+            new THREE.Vector3(-1.0, 11.0, 17.0),
+            new THREE.Vector3(-0.5, 13.5, 15.5)
+        ];
+        const curveWire1 = new THREE.CatmullRomCurve3(pointsWire1);
+        const geomWire1 = new THREE.TubeGeometry(curveWire1, 20, 0.12, 6, false);
+        const meshWire1 = new THREE.Mesh(geomWire1, wireMat);
+        engineGroup.add(meshWire1);
+
+        // Rear wire to Cyl 2
+        const pointsWire2 = [
+            new THREE.Vector3(0, 9.4, 18.2),
+            new THREE.Vector3(1.0, 11.0, 19.0),
+            new THREE.Vector3(0.5, 13.5, 20.5)
+        ];
+        const curveWire2 = new THREE.CatmullRomCurve3(pointsWire2);
+        const geomWire2 = new THREE.TubeGeometry(curveWire2, 20, 0.12, 6, false);
+        const meshWire2 = new THREE.Mesh(geomWire2, wireMat);
+        engineGroup.add(meshWire2);
+
 
         // --- ATTACHED BASIC TRANSMISSION ---
         // Transmission housing (Bellhousing + Gearbox body behind engine block)
