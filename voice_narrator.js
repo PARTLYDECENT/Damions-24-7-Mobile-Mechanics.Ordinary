@@ -5,7 +5,7 @@
 
 class VoiceNarrator {
     constructor() {
-        this.narratorText = "Welcome to my website. I am a mechanic. If you need help, reach out! I can change engines and stuff. Thanks!";
+        this.narratorText = "Welcome to Damion's 24/7 Mobile Automotive and Professional Roofing Solutions. Whether you need an emergency roadside mechanic or expert roof leak repair, I come directly to your location, day or night. Select a service below or tap the hotline to connect with me immediately. Professional assistance is just one call away.";
         this.synth = window.speechSynthesis;
         this.utterance = null;
         this.words = [];

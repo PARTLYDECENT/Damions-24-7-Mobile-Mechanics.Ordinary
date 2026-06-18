@@ -620,6 +620,172 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+        /* ═══ MOBILE ROLLING BANNER ═══ */
+        .mobile-rolling-banner {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            overflow: hidden;
+            background: #0c0903;
+            z-index: 1000;
+        }
+
+        .mobile-rolling-banner-inner {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            animation: mobile-marquee-scroll 35s linear infinite;
+            font-family: 'Orbitron', 'Cinzel Decorative', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(0, 242, 234, 0.6);
+        }
+
+        .mobile-rolling-banner-inner span {
+            flex-shrink: 0;
+        }
+
+        .mobile-rolling-banner-inner span.separator {
+            margin: 0 20px;
+            color: #ff5e00;
+            text-shadow: 0 0 8px #ff5e00;
+        }
+
+        @keyframes mobile-marquee-scroll {
+            0% {
+                transform: translate3d(0, 0, 0);
+            }
+            100% {
+                transform: translate3d(-100%, 0, 0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-rolling-banner {
+                display: flex !important;
+            }
+            #rolling-banner-canvas {
+                display: none !important;
+            }
+        }
+
+        /* ═══ MOBILE QUOTE MODAL ═══ */
+        .mobile-quote-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(4, 6, 11, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 200000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .mobile-quote-content {
+            background: rgba(12, 18, 33, 0.95);
+            border: 2px solid #00f2ea;
+            box-shadow: 0 0 25px rgba(0, 242, 234, 0.4);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .mobile-quote-content .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 242, 234, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .mobile-quote-content .modal-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            color: #fff;
+            text-shadow: 0 0 8px rgba(0, 242, 234, 0.5);
+            margin: 0;
+        }
+
+        .mobile-quote-content .close-modal-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+
+        .mobile-quote-content .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: left;
+        }
+
+        .mobile-quote-content label {
+            font-size: 0.85rem;
+            color: #00f2ea;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .mobile-quote-content input,
+        .mobile-quote-content select,
+        .mobile-quote-content textarea {
+            background: rgba(4, 6, 11, 0.8) !important;
+            border: 1px solid rgba(0, 242, 234, 0.3) !important;
+            color: #fff !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
+            font-size: 0.95rem !important;
+            font-family: 'Inter', sans-serif !important;
+            width: 100% !important;
+        }
+
+        .mobile-quote-content input:focus,
+        .mobile-quote-content select:focus,
+        .mobile-quote-content textarea:focus {
+            border-color: #ff5e00 !important;
+            outline: none !important;
+            box-shadow: 0 0 10px rgba(255, 94, 0, 0.3) !important;
+        }
+
+        .mobile-quote-content .submit-quote-btn {
+            background: #ff5e00;
+            border: none;
+            color: #fff;
+            padding: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 94, 0, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .mobile-quote-content .submit-quote-btn:active {
+            transform: scale(0.98);
+        }
         `;
         document.head.appendChild(style);
     }
@@ -714,6 +880,7 @@
 
     // ─── BOTTOM ACTION BAR ───────────────────────────
     function initBottomBar() {
+        // Bottom bar is now built into index.html — skip injection
         if (document.querySelector('.mobile-bottom-bar')) return;
 
         const bar = document.createElement('div');
@@ -724,21 +891,21 @@
                     <span class="icon">🏠</span>
                     <span>Home</span>
                 </button>
-                <button class="mobile-bottom-btn" data-action="services" aria-label="Services">
-                    <span class="icon">⚙️</span>
-                    <span>Services</span>
+                <button class="mobile-bottom-btn" data-action="mechanic" aria-label="Mobile Mechanics">
+                    <span class="icon">🔧</span>
+                    <span>Mechanics</span>
                 </button>
                 <button class="mobile-bottom-btn call-btn" data-action="call" aria-label="Call Now">
                     <span class="icon">📞</span>
                     <span>Call</span>
                 </button>
-                <button class="mobile-bottom-btn" data-action="tools" aria-label="Tools">
-                    <span class="icon">🔧</span>
-                    <span>Tools</span>
+                <button class="mobile-bottom-btn" data-action="roofing" aria-label="Roofing Solutions">
+                    <span class="icon">🏠</span>
+                    <span>Roofing</span>
                 </button>
-                <button class="mobile-bottom-btn" data-action="top" aria-label="Scroll to top">
-                    <span class="icon">⬆️</span>
-                    <span>Top</span>
+                <button class="mobile-bottom-btn" data-action="quote" aria-label="Get Quote">
+                    <span class="icon">📋</span>
+                    <span>Quote</span>
                 </button>
             </div>
         `;
@@ -753,21 +920,97 @@
                 case 'home':
                     scrollToSection('#home');
                     break;
-                case 'services':
+                case 'mechanic':
                     scrollToSection('#services');
+                    if (typeof window.switchServiceTab === 'function') {
+                        window.switchServiceTab('mechanics');
+                    }
                     break;
                 case 'call':
                     window.location.href = 'tel:7245051350';
                     break;
-                case 'tools':
-                    const sidebar = document.getElementById('functions-sidebar');
-                    if (sidebar) sidebar.classList.toggle('open');
+                case 'roofing':
+                    scrollToSection('#services');
+                    if (typeof window.switchServiceTab === 'function') {
+                        window.switchServiceTab('roofing');
+                    }
                     break;
-                case 'top':
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                case 'quote':
+                    openQuoteModal();
                     break;
             }
         });
+    }
+
+    function openQuoteModal() {
+        let modal = document.getElementById('mobile-quote-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'mobile-quote-modal';
+            modal.className = 'mobile-quote-modal';
+            
+            modal.innerHTML = `
+                <div class="mobile-quote-content">
+                    <div class="modal-header">
+                        <h2>Quick Quote Request</h2>
+                        <button class="close-modal-btn" onclick="document.getElementById('mobile-quote-modal').style.display='none'">&times;</button>
+                    </div>
+                    <form id="mobile-quote-form" onsubmit="handleQuoteSubmit(event)">
+                        <div class="form-group">
+                            <label for="quote-name">Your Name</label>
+                            <input type="text" id="quote-name" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="quote-phone">Phone Number</label>
+                            <input type="tel" id="quote-phone" required placeholder="e.g. 123-456-7890">
+                        </div>
+                        <div class="form-group">
+                            <label for="quote-service">Required Service</label>
+                            <select id="quote-service" required>
+                                <option value="mechanics">🔧 24/7 Mobile Mechanic</option>
+                                <option value="roofing">🏠 Roofing Solutions</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quote-details">Job Details / Emergency Info</label>
+                            <textarea id="quote-details" required placeholder="Tell me what you need (e.g. car won't start, active roof leak)..." rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="submit-quote-btn">Send Dispatch Alert</button>
+                    </form>
+                    <div id="quote-success-state" style="display: none; text-align: center; padding: 20px 0;">
+                        <span class="success-icon" style="font-size: 3rem; color: #00f2ea; text-shadow: 0 0 10px #00f2ea;">⚡</span>
+                        <h3 style="font-family: 'Orbitron', sans-serif; color: #00f2ea; margin-top: 15px;">Dispatch Alert Sent!</h3>
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px;">I have received your request. I will call you immediately at the number provided.</p>
+                        <button class="cta-button" onclick="document.getElementById('mobile-quote-modal').style.display='none'" style="margin-top: 20px; width: 100%;">Close Panel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            window.handleQuoteSubmit = (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('.submit-quote-btn');
+                btn.textContent = "TRANSMITTING TELEMETRY...";
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    document.getElementById('mobile-quote-form').style.display = 'none';
+                    document.getElementById('quote-success-state').style.display = 'block';
+                }, 1200);
+            };
+        }
+        
+        modal.style.display = 'flex';
+        const form = document.getElementById('mobile-quote-form');
+        const success = document.getElementById('quote-success-state');
+        if (form && success) {
+            form.style.display = 'block';
+            form.reset();
+            const btn = form.querySelector('.submit-quote-btn');
+            btn.textContent = "Send Dispatch Alert";
+            btn.disabled = false;
+            success.style.display = 'none';
+        }
     }
 
     // ─── SMOOTH SCROLL WITH HEADER OFFSET ────────────
@@ -844,12 +1087,52 @@
         });
     }
 
+    // ─── MOBILE ROLLING BANNER ───────────────────────
+    function initMobileBanner() {
+        // Mobile banner is now built into index.html — skip injection if already present
+        const parent = document.querySelector('.rolling-banner');
+        if (!parent || parent.querySelector('.mobile-rolling-banner')) return;
+
+        const capabilities = [
+            "DAMION'S 24/7 MOBILE MECHANICS",
+            "ALL-VEHICLE EMERGENCY ROADSIDE SOLUTIONS",
+            "ON-SITE COMPUTER DIAGNOSTICS & SYSTEM RESTORES",
+            "BRAKE & SUSPENSION ADVANCED REMEDIES",
+            "HEAVY DIESEL FLEET CALIBRATIONS",
+            "HIGH-VOLTAGE EV & HYBRID BATTERY CORES SERVICED",
+            "VINTAGE MUSCLE ENGINE & CARBURETOR REBUILDS",
+            "DISPATCH HOTLINE ACTIVE: 724-505-1350"
+        ];
+
+        const banner = document.createElement('div');
+        banner.className = 'mobile-rolling-banner';
+
+        const makeSpansHtml = () => {
+            return capabilities.map((text, idx) => {
+                const sep = idx < capabilities.length - 1 ? `<span class="separator">⚡</span>` : '';
+                return `<span>${text}</span>${sep}`;
+            }).join('');
+        };
+
+        banner.innerHTML = `
+            <div class="mobile-rolling-banner-inner">
+                ${makeSpansHtml()}
+            </div>
+            <div class="mobile-rolling-banner-inner" aria-hidden="true">
+                <span class="separator">⚡</span>
+                ${makeSpansHtml()}
+            </div>
+        `;
+        parent.appendChild(banner);
+    }
+
     // ─── INIT ────────────────────────────────────────
     function init() {
         // Always inject CSS (it's gated by @media queries)
         injectMobileCSS();
         fixViewportHeight();
         preventOverflow();
+        initMobileBanner();
 
         // Only run interactive JS on mobile
         if (isMobile() || isTouchDevice()) {

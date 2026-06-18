@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Damion's 24/7 Mobile Mechanics &amp; Roofing | Emergency Auto &amp; Roof Repairs</title>
+    <meta name="description" content="Damion's professional mobile mechanics and emergency roofing solutions available 24/7. Auto repairs, diagnostics, and roof emergency services delivered directly to your location.">
+    <meta name="theme-color" content="#04060b">
+    <meta property="og:title" content="Damion's 24/7 Mobile Mechanics &amp; Roofing | Emergency Auto &amp; Roof Repairs">
+    <meta property="og:description" content="Professional mobile mechanics and emergency roofing solutions available 24/7. Prompt, reliable service delivered to your location.">
+    <meta property="og:image" content="v8.png">
+    <meta property="og:type" content="website">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="intro_hud.css">
+    <link rel="stylesheet" href="voice_narrator.css">
+</head>
+
+<body>
+
+    <!-- ══ ANIMATED BACKGROUND GRID ══ -->
+    <div id="bg-grid">
+        <div class="bg-tile"><div class="bg-tile-inner" id="bg-tile-0"></div></div>
+        <div class="bg-tile"><div class="bg-tile-inner" id="bg-tile-1"></div></div>
+        <div class="bg-tile"><div class="bg-tile-inner" id="bg-tile-2"></div></div>
+        <div class="bg-tile"><div class="bg-tile-inner" id="bg-tile-3"></div></div>
+    </div>
+
+    <!-- ══ UNIFIED SHADER CANVAS ══ -->
+    <canvas id="unified-panel-canvas"></canvas>
+
+    <!-- ══ ENTER / SPLASH OVERLAY ══ -->
+    <div id="enter-overlay">
+        <canvas id="enter-shader-canvas"></canvas>
+
+        <!-- Mechanical Shutter -->
+        <div id="shutter-wrapper">
+            <div class="shutter-blade shutter-top"></div>
+            <div class="shutter-blade shutter-bottom"></div>
+        </div>
+
+        <!-- HUD Telemetry -->
+        <div id="hud-overlay">
+            <div class="hud-scanline"></div>
+            <div class="hud-corner top-left glitch">
+                <span class="hud-label">System Status</span>
+                <span class="hud-value" id="hud-status">DIAGNOSING...</span>
+            </div>
+            <div class="hud-corner top-right">
+                <span class="hud-label">Engine Specs</span>
+                <span class="hud-value" id="hud-specs">V8 TWIN-TURBO</span>
+            </div>
+            <div class="hud-corner bottom-left glitch">
+                <span class="hud-label">Vitals / TEMP</span>
+                <span class="hud-value" id="hud-vitals">92°C | 65 PSI</span>
+            </div>
+            <div class="hud-corner bottom-right">
+                <span class="hud-label">VIN Decoder</span>
+                <span class="hud-value" id="hud-vin">1GCEC19... [DECODING]</span>
+            </div>
+            <div class="hud-status-bar">
+                <div class="hud-progress" id="hud-progress-bar"></div>
+            </div>
+            <div id="hud-alerts-panel">
+                <div class="alert-header">DIAGNOSTIC FEED // ERROR LOG</div>
+                <div id="alert-feed"></div>
+            </div>
+            <div class="hud-reticle"></div>
+        </div>
+
+        <!-- Splash Content -->
+        <div class="enter-content">
+            <h1 class="enter-title">DAMION'S <span class="highlight">24/7</span></h1>
+            <p class="enter-subtitle">MOBILE AUTOMOTIVE SOLUTIONS</p>
+            <div class="enter-divider"></div>
+            <p class="enter-status">READY FOR INITIALIZATION</p>
+            <button id="enter-btn" class="enter-button">START SYSTEM</button>
+        </div>
+    </div>
+
+    <!-- ══ FUNCTIONS SIDEBAR (Tool Hub) ══ -->
+    <div id="functions-sidebar" class="functions-sidebar">
+        <button id="sidebar-close-btn" class="sidebar-toggle-btn close-btn">&times;</button>
+        <h2 class="sidebar-title">Function Hub</h2>
+
+        <div class="sidebar-content">
+            <!-- Tire Size Calculator -->
+            <div id="calculator-panel" class="sidebar-panel">
+                <h2 class="panel-title">Tire Size Calculator</h2>
+                <div class="tire-section">
+                    <h3>Stock Tire Size</h3>
+                    <div class="input-group">
+                        <input type="number" id="s_width" value="225" placeholder="Width">
+                        <span>/</span>
+                        <input type="number" id="s_ratio" value="45" placeholder="Ratio">
+                        <span>R</span>
+                        <input type="number" id="s_diam" value="17" placeholder="Diameter">
+                    </div>
+                </div>
+                <div class="tire-section">
+                    <h3>New Tire Size</h3>
+                    <div class="input-group">
+                        <input type="number" id="n_width" value="245" placeholder="Width">
+                        <span>/</span>
+                        <input type="number" id="n_ratio" value="40" placeholder="Ratio">
+                        <span>R</span>
+                        <input type="number" id="n_diam" value="18" placeholder="Diameter">
+                    </div>
+                </div>
+                <div class="results-section">
+                    <div class="results-grid">
+                        <div class="result-item"><div class="result-label">Stock OD</div><div class="result-value" id="s_od">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">New OD</div><div class="result-value" id="n_od">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">Stock SW</div><div class="result-value" id="s_sw">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">New SW</div><div class="result-value" id="n_sw">0.0 in</div></div>
+                        <div class="result-item"><div class="result-label">OD Diff.</div><div class="result-value difference" id="diff_od">0.0%</div></div>
+                        <div class="result-item"><div class="result-label">SW Diff.</div><div class="result-value difference" id="diff_sw">0.0%</div></div>
+                    </div>
+                    <div class="speedo-result">60 MPH on Speedo = <span class="value" id="speedo_actual">60.0 MPH</span> Actual</div>
+                </div>
+            </div>
+
+            <!-- Unit Converter -->
+            <div id="converter-panel" class="sidebar-panel">
+                <h2 class="panel-title">Unit Converter</h2>
+                <div class="converter-row">
+                    <label for="conversion-type">Conversion:</label>
+                    <select id="conversion-type">
+                        <option value="torque">Torque (ft-lbs ↔ Nm)</option>
+                        <option value="pressure">Pressure (PSI ↔ Bar)</option>
+                        <option value="power">Power (HP ↔ kW)</option>
+                        <option value="volume">Volume (Gallons ↔ Liters)</option>
+                    </select>
+                </div>
+                <div class="converter-row inputs">
+                    <div class="converter-input-group"><input type="number" id="unit1-input" value="100"><label id="unit1-label">ft-lbs</label></div>
+                    <div class="equals-sign">⇌</div>
+                    <div class="converter-input-group"><input type="number" id="unit2-input"><label id="unit2-label">Nm</label></div>
+                </div>
+            </div>
+
+            <!-- Symptom Analyzer -->
+            <div id="symptom-analyzer-panel" class="sidebar-panel">
+                <h2 class="panel-title">Symptom Analyzer</h2>
+                <p class="panel-subtitle">Select observed symptoms to diagnose potential issues.</p>
+                <div id="symptom-selector"></div>
+                <button id="diagnose-btn">Analyze Symptoms</button>
+                <div id="diagnosis-results" style="display: none;">
+                    <h3>Potential Causes:</h3>
+                    <ul id="diagnosis-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="sidebar-open-btn" class="sidebar-toggle-btn open-btn">🔧</button>
+
+    <!-- ══ HEADER ══ -->
+    <header class="header" id="header">
+        <div class="nav-container">
+            <a href="#home" class="logo">DAMIONS<span>24/7</span><img src="v8.png" alt="V8 Engine" class="logo-img"></a>
+            <nav class="nav-links" id="navLinks">
+                <a href="#services">Services</a>
+                <a href="#why-us">Why Us</a>
+                <a href="#news">News</a>
+                <a href="#contact">Contact</a>
+                <a href="tools/toolbox.html">Toolbox</a>
+                <a href="resources.html">Resources</a>
+                <a href="s2.html">S2</a>
+                <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank" rel="noopener">3D Garage</a>
+                <div class="dropdown media-dropdown">
+                    <a href="#" class="dropbtn media-dropbtn">Media</a>
+                    <div class="dropdown-content media-dropdown-content">
+                        <a href="mediaviewer.html?folder=1" target="_blank">Media Folder 1</a>
+                        <a href="mediaviewer.html?folder=2" target="_blank">Media Folder 2</a>
+                        <a href="mediaviewer.html?folder=3" target="_blank">Media Folder 3</a>
+                        <a href="mediaviewer.html?folder=4" target="_blank">Media Folder 4</a>
+                        <a href="mediaviewer.html?folder=5" target="_blank">Media Folder 5</a>
+                    </div>
+                </div>
+                <div class="dropdown products-dropdown">
+                    <a href="#" class="dropbtn products-dropbtn">Products</a>
+                    <div class="dropdown-content" id="products-dropdown-content">
+                        <a href="Products/Homestead1.html">Homestead 1</a>
+                        <a href="Products/hantu-raya.html">Hantu Raya</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <a href="#" class="dropbtn">Games</a>
+                    <div class="dropdown-content">
+                        <a href="videos/game1.html">Game 1</a><a href="videos/game2.html">Game 2</a>
+                        <a href="videos/game3.html">Game 3</a><a href="videos/game4.html">Game 4</a>
+                        <a href="videos/game5.html">Game 5</a><a href="videos/game6.html">Game 6</a>
+                        <a href="videos/game7.html">Game 7</a><a href="videos/game8.html">Game 8</a>
+                        <a href="videos/game9.html">Game 9</a><a href="videos/game10.html">Game 10</a>
+                    </div>
+                </div>
+            </nav>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+        </div>
+    </header>
+
+    <!-- ══ ROLLING BANNER ══ -->
+    <div class="rolling-banner" role="marquee">
+        <div class="orange-rail"></div>
+        <canvas id="rolling-banner-canvas"></canvas>
+        <!-- Mobile fallback marquee -->
+        <div class="mobile-rolling-banner">
+            <div class="mobile-rolling-banner-inner">
+                <span>🔧 24/7 Mobile Mechanics</span><span class="separator">◆</span>
+                <span>Emergency Roadside Assist</span><span class="separator">◆</span>
+                <span>📞 (724) 505-1350</span><span class="separator">◆</span>
+                <span>🏠 Emergency Roof Repairs</span><span class="separator">◆</span>
+                <span>⚙️ On-Site Diagnostics</span><span class="separator">◆</span>
+                <span>🛑 Brake &amp; Suspension</span><span class="separator">◆</span>
+                <span>🔋 Battery &amp; Electrical</span><span class="separator">◆</span>
+                <span>🌧️ Storm Damage Tarping</span><span class="separator">◆</span>
+                <!-- Duplicate for seamless loop -->
+                <span>🔧 24/7 Mobile Mechanics</span><span class="separator">◆</span>
+                <span>Emergency Roadside Assist</span><span class="separator">◆</span>
+                <span>📞 (724) 505-1350</span><span class="separator">◆</span>
+                <span>🏠 Emergency Roof Repairs</span><span class="separator">◆</span>
+                <span>⚙️ On-Site Diagnostics</span><span class="separator">◆</span>
+                <span>🛑 Brake &amp; Suspension</span><span class="separator">◆</span>
+                <span>🔋 Battery &amp; Electrical</span><span class="separator">◆</span>
+                <span>🌧️ Storm Damage Tarping</span><span class="separator">◆</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <main>
+
+        <!-- ── HERO ── -->
+        <section class="hero" id="home">
+            <canvas id="hero-shader-canvas"></canvas>
+            <div class="hero-content animate-on-scroll">
+                <h1>Damion: 24/7 Mobile Mechanics &amp; Roofing</h1>
+                <p>Expert emergency auto repair and professional roofing solutions delivered directly to you. Day or night, prompt and reliable service is just one call away.</p>
+                <div class="hero-cta-group">
+                    <a href="#services" class="cta-button">Our Services</a>
+                    <a href="tel:7245051350" class="cta-button call">📞 Call Now — (724) 505-1350</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── TRUST STATS STRIP ── -->
+        <section style="padding: 0; position: relative; z-index: 1;">
+            <div class="container" style="padding-top: 0; padding-bottom: 0; transform: translateY(-20px);">
+                <div class="stats-strip">
+                    <div class="stat-item">
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">Always On Call</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">&lt;35<span style="font-size:0.6em">min</span></div>
+                        <div class="stat-label">Avg. Response</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">85%</div>
+                        <div class="stat-label">Repairs On-Site</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Upfront Pricing</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── SERVICES ── -->
+        <section class="section" id="services">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Emergency Services</h2>
+                    <p class="section-subtitle">Rapid dispatch to your location, 24 hours a day. Select a category below.</p>
+                </div>
+
+                <!-- Tab Switcher -->
+                <div class="service-tabs-container">
+                    <button class="service-tab-btn active" id="btn-mechanic" onclick="switchServiceTab('mechanics')">🔧 Mobile Mechanics</button>
+                    <button class="service-tab-btn" id="btn-roofing" onclick="switchServiceTab('roofing')">🏠 Roofing Solutions</button>
+                </div>
+
+                <!-- Mechanics Grid -->
+                <div id="grid-mechanics" class="services-grid service-tab-content">
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Emergency Dispatch: Prompt response for battery jumps, lockouts, flat tires, and critical roadside failures.">
+                        <span class="service-icon">🚨</span>
+                        <h3>Emergency Roadside Assist</h3>
+                        <p>Stranded? I provide fast jump starts, tire changes, fuel delivery, and lockout help, day or night.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Advanced Diagnostics: Deep scans to read ECU error codes, sensor readouts, and solve mechanical mysteries.">
+                        <span class="service-icon">🔍</span>
+                        <h3>On-Site Diagnostics</h3>
+                        <p>Complete computer diagnostics at your home or work. I pinpoint engine lights and faults instantly.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Brake and Suspension: Safety checks and repairs of pads, rotors, struts, control arms, and steering joints.">
+                        <span class="service-icon">🛑</span>
+                        <h3>Brake &amp; Suspension</h3>
+                        <p>Professional replacement of brake pads, rotors, calipers, shocks, and steering components to keep you safe.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Engine Core repairs: Tuning engines, alternators, starters, water pumps, belts, hoses, and cooling systems.">
+                        <span class="service-icon">⚙️</span>
+                        <h3>Engine &amp; Core Repair</h3>
+                        <p>Expert repairs for cooling system leaks, bad alternators, failed starters, belts, water pumps, and ignition components.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Electrical Systems: Battery testing, wiring repairs, tracking draws, fuses, and alternator calibrations.">
+                        <span class="service-icon">🔋</span>
+                        <h3>Battery &amp; Electrical</h3>
+                        <p>Accurate battery checks, quick on-site replacements, starter wiring troubleshooting, and harness repairs.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll mechanic-card" data-tooltip="Scheduled Care: Oil changes, filter swaps, fluid inspections, and preventative maintenance for cars and fleets.">
+                        <span class="service-icon">🚛</span>
+                        <h3>Maintenance &amp; Tuning</h3>
+                        <p>Mobile oil changes, spark plug replacements, fluid flushes, filters, and safety checks without leaving home.</p>
+                    </div>
+                </div>
+
+                <!-- Roofing Grid -->
+                <div id="grid-roofing" class="services-grid service-tab-content" style="display: none;">
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Emergency Leak Detection: Rapid localization of roofing punctures, flashing failures, and ceiling drips.">
+                        <span class="service-icon">💧</span>
+                        <h3>Emergency Leak Repair</h3>
+                        <p>Active ceiling drips or attic leaks? I trace water entry and patch roof punctures immediately to prevent water damage.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Storm Response: Prompt structural tarping and storm wind cover wraps to prevent storm rain intrusions.">
+                        <span class="service-icon">🌧️</span>
+                        <h3>Storm Damage Tarping</h3>
+                        <p>Wind or trees damaged your roof? I install emergency tarps and temporary shields to secure your home from rain.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Shingle Repairs: Fixing missing asphalt shingles, slate, wood shakes, and flashing components.">
+                        <span class="service-icon">🛠️</span>
+                        <h3>Shingle &amp; Flat Roof Fixes</h3>
+                        <p>Quick repairs of cracked or missing shingles, exposed roof decking, damaged valley flashings, and chimney seals.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Roofing Analysis: Documenting structural health, shingle wear, soft spots, and repair estimates.">
+                        <span class="service-icon">📐</span>
+                        <h3>Roof Inspections</h3>
+                        <p>Detailed structural checks. I inspect gutters, flashings, shingles, and underlayment to evaluate repair costs.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Gutter Care: Clearing debris, sealing joints, and fixing slopes to guarantee proper stormwater drainage.">
+                        <span class="service-icon">🌊</span>
+                        <h3>Gutter &amp; Drainage Repair</h3>
+                        <p>Clearing blockages, sealing leaks, and securing sagging gutters to route water safely away from your walls.</p>
+                    </div>
+                    <div class="service-card animate-on-scroll roofing-card" data-tooltip="Protective Coating: Applying elastomeric roof sealants to shield low-slope roofs from leaks and UV wear.">
+                        <span class="service-icon">🏢</span>
+                        <h3>Roof Sealing &amp; Coating</h3>
+                        <p>Applying rubberized sealant layers to prevent leaks, reflect sunlight, and extend the lifespan of your roof.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab switcher logic inline (minimal) -->
+        <script>
+            function switchServiceTab(type) {
+                const btnMechanic = document.getElementById('btn-mechanic');
+                const btnRoofing  = document.getElementById('btn-roofing');
+                const gridMechanics = document.getElementById('grid-mechanics');
+                const gridRoofing   = document.getElementById('grid-roofing');
+                if (type === 'mechanics') {
+                    btnMechanic.classList.add('active'); btnRoofing.classList.remove('active');
+                    gridMechanics.style.display = 'grid'; gridRoofing.style.display = 'none';
+                } else {
+                    btnRoofing.classList.add('active'); btnMechanic.classList.remove('active');
+                    gridRoofing.style.display = 'grid'; gridMechanics.style.display = 'none';
+                }
+            }
+        </script>
+
+        <!-- ── WHY US ── -->
+        <section class="section" id="why-us">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">The Damion's 24/7 Advantage</h2>
+                    <p class="section-subtitle">I am committed to providing an unmatched level of convenience, expertise, and transparent service.</p>
+                </div>
+                <div class="feature-grid">
+                    <div class="feature-item animate-on-scroll" data-tooltip="Temporal Anomaly: My operational cycle is not bound by standard solar rotations. Service available at all temporal coordinates.">
+                        <span class="feature-icon">🕒</span>
+                        <h3>Around the Clock</h3>
+                        <p>Car trouble doesn't wait for business hours. I'm on call 24 hours a day, 7 days a week.</p>
+                    </div>
+                    <div class="feature-item animate-on-scroll" data-tooltip="Field Operatives: All technicians are certified and equipped with neural-link diagnostic interfaces.">
+                        <span class="feature-icon">🛠️</span>
+                        <h3>Certified Expertise</h3>
+                        <p>Damion is an experienced, certified professional equipped with the latest tools and knowledge.</p>
+                    </div>
+                    <div class="feature-item animate-on-scroll" data-tooltip="Data Transparency Protocol: All work orders and cost estimates are provided upfront with no hidden fees.">
+                        <span class="feature-icon">🛡️</span>
+                        <h3>Transparent Estimates</h3>
+                        <p>No surprises. I provide clear, upfront cost estimates before any work begins.</p>
+                    </div>
+                    <div class="feature-item animate-on-scroll" data-tooltip="Personal Deployment: Damion's mobile unit is dispatched to your precise coordinates.">
+                        <span class="feature-icon">📍</span>
+                        <h3>We Come to You</h3>
+                        <p>I perform repairs at your home, office, or roadside, eliminating the need for a tow.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── VIDEO PROMO ── -->
+        <section class="section" id="video-promo">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">A Glimpse Into My Work</h2>
+                    <p class="section-subtitle">Watch Damion in action, providing top-tier service on the go.</p>
+                </div>
+                <div class="video-container" style="text-align: center;">
+                    <video controls autoplay muted loop playsinline>
+                        <source src="videos/vid1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── NEWS ── -->
+        <section class="section" id="news">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Automotive News &amp; Info</h2>
+                    <p class="section-subtitle">Stay informed with the latest trends, maintenance tips, and news from the automotive world.</p>
+                </div>
+                <div class="news-grid">
+                    <article class="news-card animate-on-scroll">
+                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1617551139495-30472f859292?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600');"></div>
+                        <div class="news-content">
+                            <h3>The Future is Electric: Are You Ready?</h3>
+                            <p class="news-meta">Sep 12, 2025 | Tech Trends</p>
+                            <p class="news-excerpt">Electric vehicles are transforming the industry. I break down what you need to know about EV maintenance.</p>
+                            <a href="#" class="read-more-btn">Read More →</a>
+                        </div>
+                    </article>
+                    <article class="news-card animate-on-scroll">
+                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1599493356243-a2d95c721a11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600');"></div>
+                        <div class="news-content">
+                            <h3>5 Signs Your Engine Needs a Check-Up</h3>
+                            <p class="news-meta">Sep 05, 2025 | Maintenance Tips</p>
+                            <p class="news-excerpt">Don't ignore the warning signs. Learn to spot potential engine trouble before it becomes a major problem.</p>
+                            <a href="#" class="read-more-btn">Read More →</a>
+                        </div>
+                    </article>
+                    <article class="news-card animate-on-scroll">
+                        <div class="news-image" style="background-image: url('https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600');"></div>
+                        <div class="news-content">
+                            <h3>Choosing the Right Tires for the Season</h3>
+                            <p class="news-meta">Aug 28, 2025 | Buyer's Guide</p>
+                            <p class="news-excerpt">Your tires are critical for safety and performance. Our guide helps you select the perfect set for any weather.</p>
+                            <a href="#" class="read-more-btn">Read More →</a>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── SLIDESHOW SECTION ── -->
+        <section class="section" id="slideshow-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Background Slideshow</h2>
+                    <p class="section-subtitle">A slideshow of background images.</p>
+                </div>
+                <canvas id="hero-slideshow-canvas" style="width: 100%; height: 340px; border-radius: 16px; border: 1px solid rgba(0,242,234,0.2);"></canvas>
+            </div>
+        </section>
+
+        <!-- ── VIDEO PLAYER ── -->
+        <section class="section" id="videoplayer-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Video Player</h2>
+                    <p class="section-subtitle">A selection of our videos.</p>
+                </div>
+                <div id="video-player-container"></div>
+            </div>
+        </section>
+
+        <!-- ── ENGINE BAY ── -->
+        <section class="section" id="engine-bay">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">The Interactive Engine Bay</h2>
+                    <p class="section-subtitle">Explore the heart of the machine and uncover the secrets of the internal combustion engine.</p>
+                </div>
+
+                <div class="engine-history">
+                    <h3 style="font-family: var(--font-display); color: var(--accent-cyan); margin-bottom: 10px; font-size: 1.1rem;">A Spark of Genius: The ICE Story</h3>
+                    <p style="color: var(--text-gray); font-size: 0.95rem; line-height: 1.75;">The internal combustion engine (ICE) is a heat engine that converts chemical energy into mechanical energy. Nicolaus Otto created the first successful four-stroke engine in 1876, and Karl Benz developed the first automobile powered by an ICE in 1886 — revolutionizing transportation and paving the way for the modern world.</p>
+                </div>
+
+                <div class="interactive-engine-diagram" style="position: relative;">
+                    <canvas id="engine-bay-canvas" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.25; pointer-events: none;"></canvas>
+                    <h3 style="position: relative; z-index: 1; font-family: var(--font-display); color: var(--text-light); margin-bottom: 16px;">Explore the V8</h3>
+                    <div class="engine-v8">
+                        <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
+                        <map name="v8map">
+                            <area shape="rect" coords="150,100,250,150" href="#" alt="Cylinder Head" title="Cylinder Head" data-info="The cylinder head sits above the cylinders and houses the valvetrain, including the valves and spark plugs.">
+                            <area shape="rect" coords="100,150,300,250" href="#" alt="Engine Block" title="Engine Block" data-info="The engine block is the main structure of the engine, containing the cylinders and other major components.">
+                            <area shape="rect" coords="180,250,220,300" href="#" alt="Crankshaft" title="Crankshaft" data-info="The crankshaft converts the linear motion of the pistons into rotational motion.">
+                        </map>
+                        <p class="engine-info-box"></p>
+                    </div>
+                </div>
+
+                <div class="engine-quiz">
+                    <div id="quiz-app" class="quiz-container">
+                        <div class="quiz-start-screen">
+                            <h3>Master Mechanic Challenge</h3>
+                            <p>Test your knowledge of engines, history, and diagnostics.</p>
+                            <button id="start-quiz-btn" class="cta-button">Start Engine</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── SERVICE AREA ── -->
+        <section class="section" id="service-area">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">24/7 Operational Zone</h2>
+                    <p class="section-subtitle">Always on patrol, ensuring rapid response times across the entire metropolitan area and surrounding sectors.</p>
+                </div>
+                <div class="map-container">
+                    <img src="assets/images/map.png" alt="Service Area Map" class="map-image">
+                    <div class="map-point" style="top: 40%; left: 50%;"></div>
+                    <div class="map-point" style="top: 60%; left: 35%;"></div>
+                    <div class="map-point" style="top: 30%; left: 65%;"></div>
+                    <div class="map-point" style="top: 75%; left: 55%;"></div>
+                    <div class="map-scanline"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── FAQ ── -->
+        <section class="section" id="faq">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Frequently Asked Questions</h2>
+                    <p class="section-subtitle">Accessing our knowledge base for common inquiries. Select a query to expand.</p>
+                </div>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question"><span>How fast can you get to me?</span><span class="faq-icon">+</span></button>
+                        <div class="faq-answer"><p>My average response time within the primary metro zone is 35 minutes. This can vary based on traffic and my current operational load. I always prioritize emergency calls to minimize your wait.</p></div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question"><span>Are your prices competitive with traditional shops?</span><span class="faq-icon">+</span></button>
+                        <div class="faq-answer"><p>Yes. As a solo operator, I have significantly lower overhead than a garage or large fleet. I pass those savings directly to you. You also save on towing fees. I provide a transparent estimate before any work begins.</p></div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question"><span>What kind of repairs can you do on-site?</span><span class="faq-icon">+</span></button>
+                        <div class="faq-answer"><p>My mobile unit is equipped to handle approximately 85% of all common vehicle repairs. This includes diagnostics, brake jobs, alternator/starter replacement, battery service, fluid changes, and much more. For major engine work, I can refer you to trusted partners.</p></div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question"><span>Do you work on all makes and models?</span><span class="faq-icon">+</span></button>
+                        <div class="faq-answer"><p>I service a vast range of vehicles, including domestic, European, and Asian makes. I am equipped with multi-brand diagnostic tools and have extensive experience across different manufacturers. I am also an expert in classic cars, diesel engines, and high-performance vehicles.</p></div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question"><span>Do you offer roofing emergency services at night?</span><span class="faq-icon">+</span></button>
+                        <div class="faq-answer"><p>Absolutely. Storm damage and roof leaks don't keep business hours. I offer emergency tarping and temporary leak mitigation 24/7 to prevent further damage to your home until a permanent repair can be made.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── CONTACT ── -->
+        <section class="section contact-section" id="contact">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Get In Touch</h2>
+                    <p class="section-subtitle">Emergency or scheduled — I'm here. Call for immediate assistance or drop a message below.</p>
+                </div>
+                <div class="contact-grid">
+                    <!-- Contact Info -->
+                    <div class="contact-info">
+                        <a href="tel:7245051350" class="call-now-big animate-on-scroll">
+                            <span class="call-icon">📞</span>
+                            <div class="call-text">
+                                <span class="call-label">Call 24/7 Emergency Line</span>
+                                <span class="call-number">(724) 505-1350</span>
+                            </div>
+                        </a>
+                        <div class="contact-card animate-on-scroll">
+                            <span class="contact-card-icon">📍</span>
+                            <h4>Service Area</h4>
+                            <p>Greater Pittsburgh Metro &amp; Surrounding Counties</p>
+                            <span class="sub">Mobile — I come to you</span>
+                        </div>
+                        <div class="contact-card animate-on-scroll">
+                            <span class="contact-card-icon">⏰</span>
+                            <h4>Availability</h4>
+                            <a href="tel:7245051350">24 Hours / 7 Days a Week</a>
+                            <span class="sub">Including holidays &amp; emergencies</span>
+                        </div>
+                        <div class="contact-card animate-on-scroll">
+                            <span class="contact-card-icon">💬</span>
+                            <h4>Instant Response</h4>
+                            <p style="font-size: 0.95rem;">Call or text for fastest response. Online quotes typically answered within 2 hours.</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Form -->
+                    <div class="contact-form-wrap animate-on-scroll">
+                        <h3>Request a Quote</h3>
+                        <p>Tell me about your situation and I'll get back to you ASAP.</p>
+                        <form id="contact-form" onsubmit="handleContactSubmit(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="contact-name">Your Name</label>
+                                    <input type="text" id="contact-name" name="name" placeholder="John Smith" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-phone">Phone Number</label>
+                                    <input type="tel" id="contact-phone" name="phone" placeholder="(555) 000-0000" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-service">Service Needed</label>
+                                <select id="contact-service" name="service">
+                                    <option value="">— Select a Service —</option>
+                                    <optgroup label="Mobile Mechanics">
+                                        <option value="roadside">Emergency Roadside Assist</option>
+                                        <option value="diagnostics">On-Site Diagnostics</option>
+                                        <option value="brakes">Brake &amp; Suspension</option>
+                                        <option value="engine">Engine &amp; Core Repair</option>
+                                        <option value="electrical">Battery &amp; Electrical</option>
+                                        <option value="maintenance">Maintenance &amp; Tuning</option>
+                                    </optgroup>
+                                    <optgroup label="Roofing">
+                                        <option value="leak">Emergency Leak Repair</option>
+                                        <option value="tarp">Storm Damage Tarping</option>
+                                        <option value="shingle">Shingle Repairs</option>
+                                        <option value="inspection">Roof Inspection</option>
+                                        <option value="gutter">Gutter &amp; Drainage</option>
+                                        <option value="sealing">Roof Sealing &amp; Coating</option>
+                                    </optgroup>
+                                    <option value="other">Other / Not Sure</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-location">Your Location</label>
+                                <input type="text" id="contact-location" name="location" placeholder="Address or cross streets">
+                            </div>
+                            <div class="form-group">
+                                <label for="contact-message">Describe the Issue</label>
+                                <textarea id="contact-message" name="message" placeholder="What's happening? The more detail, the better..."></textarea>
+                            </div>
+                            <button type="submit" class="cta-button" style="width: 100%; justify-content: center; margin-top: 4px;">
+                                Send Request →
+                            </button>
+                        </form>
+                        <p id="form-success" style="display:none; color: #2ecc71; text-align:center; margin-top: 16px; font-family: var(--font-display); font-size: 0.95rem;">✓ Message sent! I'll be in touch shortly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ══ FOOTER ══ -->
+    <footer class="footer">
+        <div class="container">
+            <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
+            <ul class="footer-links">
+                <li><a href="#services">Services</a></li>
+                <li><a href="#why-us">Why Us</a></li>
+                <li><a href="#news">News</a></li>
+                <li><a href="#service-area">Service Area</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="footer-controls">
+                <button id="mute-btn" class="cta-button secondary" title="Toggle Music" style="font-size: 1.2rem; padding: 10px 18px; min-height: 44px;">🔊</button>
+            </div>
+            <img src="assets/images/banner.jpeg" alt="Banner" class="footer-banner">
+            <p class="copyright">© 2025 Damion's 24/7 Mobile Mechanics. All Rights Reserved.</p>
+            <p style="font-size: 0.65rem; opacity: 0.4; margin-top: 6px;">Developed using experimental AI tools from Google's advanced beta testing program.</p>
+        </div>
+    </footer>
+
+    <!-- ══ MOBILE BOTTOM NAV BAR ══ -->
+    <nav class="mobile-bottom-bar" aria-label="Quick actions">
+        <div class="mobile-bottom-bar-inner">
+            <a href="tel:7245051350" class="mobile-bottom-btn call-btn">
+                <span class="icon">📞</span>
+                <span>Call</span>
+            </a>
+            <a href="#services" class="mobile-bottom-btn">
+                <span class="icon">🔧</span>
+                <span>Services</span>
+            </a>
+            <a href="#contact" class="mobile-bottom-btn">
+                <span class="icon">✉️</span>
+                <span>Quote</span>
+            </a>
+            <button class="mobile-bottom-btn" onclick="document.getElementById('functions-sidebar').classList.toggle('open')">
+                <span class="icon">⚙️</span>
+                <span>Tools</span>
+            </button>
+            <button class="mobile-bottom-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+                <span class="icon">▲</span>
+                <span>Top</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ══ INFO POPUP ══ -->
+    <div id="info-popup" class="info-popup">
+        <div class="popup-content">
+            <span class="close-btn">&times;</span>
+            <div class="popup-header">
+                <span class="popup-icon">💡</span>
+                <h3 id="popup-title"></h3>
+            </div>
+            <p id="popup-text"></p>
+            <div class="popup-buttons">
+                <button id="next-tip-btn" class="cta-button">Next Tip</button>
+                <button id="dont-show-btn" class="cta-button secondary">Don't Show Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ AUDIO ══ -->
+    <audio id="hover-audio" src="./videos/impact.mp3" preload="auto"></audio>
+    <audio id="background-music" src="./assets/music/bg.wav" loop preload="auto"></audio>
+
+    <!-- ══ SCRIPTS ══ -->
+    <script src="translator.js"></script>
+    <script src="mobile.js"></script>
+    <script src="tooltips.js"></script>
+    <script src="ShaderLibrary.js"></script>
+    <script src="unified_shader.js"></script>
+    <script src="rolling_banner_shader.js"></script>
+    <script src="main.js"></script>
+    <script src="videoplayer.js"></script>
+    <script src="hero_slideshow.js"></script>
+    <script src="enter_shader.js"></script>
+    <script src="tentacle_overlay.js"></script>
+    <script src="voice_narrator.js"></script>
+    <script src="intro.js"></script>
+    <script src="live.js"></script>
+    <script src="fact.js"></script>
+    <script src="hero_shader.js"></script>
+    <script src="ui_effects.js"></script>
+    <script src="shader.js"></script>
+
+    <script>
+        // Contact form handler
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+            setTimeout(() => {
+                e.target.style.display = 'none';
+                document.getElementById('form-success').style.display = 'block';
+            }, 900);
+        }
+    </script>
+
+</body>
+</html>

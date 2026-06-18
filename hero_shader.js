@@ -1,112 +1,108 @@
+/**
+ * hero_shader.js — Translator-integrated, 30 FPS capped, shared mouse state
+ */
 const heroCanvas = document.getElementById('hero-shader-canvas');
-const heroGl = heroCanvas.getContext('webgl');
+const heroGl     = heroCanvas
+    ? heroCanvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'low-power' })
+    : null;
 
 if (!heroGl) {
-    console.error('WebGL not supported for Hero Section');
+    if (heroCanvas) console.warn('[hero_shader] WebGL not supported');
 } else {
-    // Vertex Shader
     const vsSource = `
         attribute vec4 aVertexPosition;
-        void main() {
-            gl_Position = aVertexPosition;
-        }
+        void main() { gl_Position = aVertexPosition; }
     `;
 
-    // Fragment Shader - Use from library or fallback
-    const fsSource = window.ShaderLibrary && window.ShaderLibrary.HexGrille ? window.ShaderLibrary.HexGrille : `
-        precision mediump float;
-        void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); } // Error fallback
-    `;
+    const fsSource = (window.ShaderLibrary && window.ShaderLibrary.HexGrille)
+        ? window.ShaderLibrary.HexGrille
+        : `precision mediump float; void main() { gl_FragColor = vec4(0.0, 0.6, 0.8, 0.5); }`;
 
-    // Compile Shader
     function compileShader(gl, source, type) {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+            console.error('[hero_shader] compile error:', gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
             return null;
         }
         return shader;
     }
 
-    const vertexShader = compileShader(heroGl, vsSource, heroGl.VERTEX_SHADER);
-    const fragmentShader = compileShader(heroGl, fsSource, heroGl.FRAGMENT_SHADER);
+    const vs = compileShader(heroGl, vsSource, heroGl.VERTEX_SHADER);
+    const fs = compileShader(heroGl, fsSource, heroGl.FRAGMENT_SHADER);
 
-    if (!vertexShader || !fragmentShader) {
-        console.error("Failed to compile shaders.");
-    } else {
-        // Link Program
-        const shaderProgram = heroGl.createProgram();
-        heroGl.attachShader(shaderProgram, vertexShader);
-        heroGl.attachShader(shaderProgram, fragmentShader);
-        heroGl.linkProgram(shaderProgram);
+    if (vs && fs) {
+        const prog = heroGl.createProgram();
+        heroGl.attachShader(prog, vs);
+        heroGl.attachShader(prog, fs);
+        heroGl.linkProgram(prog);
 
-        if (!heroGl.getProgramParameter(shaderProgram, heroGl.LINK_STATUS)) {
-            console.error('Unable to initialize the shader program: ' + heroGl.getProgramInfoLog(shaderProgram));
+        if (!heroGl.getProgramParameter(prog, heroGl.LINK_STATUS)) {
+            console.error('[hero_shader] link error:', heroGl.getProgramInfoLog(prog));
         } else {
-            // Use Program
-            heroGl.useProgram(shaderProgram);
+            heroGl.useProgram(prog);
 
-            // Attributes & Uniforms
-            const positionAttributeLocation = heroGl.getAttribLocation(shaderProgram, 'aVertexPosition');
-            const resolutionLoc = heroGl.getUniformLocation(shaderProgram, "u_resolution");
-            const timeLoc = heroGl.getUniformLocation(shaderProgram, "u_time");
-            const colorLoc = heroGl.getUniformLocation(shaderProgram, "u_color");
-            const mouseLoc = heroGl.getUniformLocation(shaderProgram, "u_mouse");
-            const speedLoc = heroGl.getUniformLocation(shaderProgram, "u_speed");
+            const posLoc = heroGl.getAttribLocation(prog,  'aVertexPosition');
+            const resLoc = heroGl.getUniformLocation(prog, 'u_resolution');
+            const timLoc = heroGl.getUniformLocation(prog, 'u_time');
+            const colLoc = heroGl.getUniformLocation(prog, 'u_color');
+            const mouLoc = heroGl.getUniformLocation(prog, 'u_mouse');
+            const spdLoc = heroGl.getUniformLocation(prog, 'u_speed');
 
-            // Buffer
-            const positionBuffer = heroGl.createBuffer();
-            heroGl.bindBuffer(heroGl.ARRAY_BUFFER, positionBuffer);
-            const positions = [
-                -1.0, 1.0,
-                1.0, 1.0,
-                -1.0, -1.0,
-                1.0, -1.0,
-            ];
-            heroGl.bufferData(heroGl.ARRAY_BUFFER, new Float32Array(positions), heroGl.STATIC_DRAW);
+            const buf = heroGl.createBuffer();
+            heroGl.bindBuffer(heroGl.ARRAY_BUFFER, buf);
+            heroGl.bufferData(heroGl.ARRAY_BUFFER, new Float32Array([
+                -1,  1,   1,  1,
+                -1, -1,   1, -1
+            ]), heroGl.STATIC_DRAW);
 
-            // Mouse State
-            let mouseX = 0;
-            let mouseY = 0;
-            document.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX / window.innerWidth;
-                mouseY = 1.0 - (e.clientY / window.innerHeight);
-            });
+            // ── Use translator shared mouse — no duplicate listener ──
+            function getMouse() {
+                return (window.TranslatorState && window.TranslatorState.mouse) || { x: 0.5, y: 0.5 };
+            }
 
-            // Resize
             function resize() {
-                heroCanvas.width = window.innerWidth;
+                heroCanvas.width  = window.innerWidth;
                 heroCanvas.height = window.innerHeight;
                 heroGl.viewport(0, 0, heroCanvas.width, heroCanvas.height);
             }
-            window.addEventListener('resize', resize);
+            // Subscribe to unified resize event or fallback
+            if (window.TranslatorBus) window.TranslatorBus.on('resize', resize);
+            else window.addEventListener('resize', resize, { passive: true });
             resize();
 
-            // Render Loop
-            function render(time) {
-                time *= 0.001; // Convert to seconds
+            // ── 30 FPS cap — hero background doesn't need 60 FPS ──
+            const TARGET_MS = 1000 / 30;
+            let lastT = 0;
 
-                heroGl.clearColor(0.0, 0.0, 0.0, 0.0); // Transparent background
+            function render(now) {
+                requestAnimationFrame(render);
+
+                // Pause when off-screen (translator visibility gate)
+                if (heroCanvas._translatorPaused) return;
+                if (document.hidden) return;
+                if (now - lastT < TARGET_MS) return;
+                lastT = now;
+
+                const t = now * 0.001;
+                const m = getMouse();
+
+                heroGl.clearColor(0, 0, 0, 0);
                 heroGl.clear(heroGl.COLOR_BUFFER_BIT);
 
-                heroGl.enableVertexAttribArray(positionAttributeLocation);
-                heroGl.bindBuffer(heroGl.ARRAY_BUFFER, positionBuffer);
-                heroGl.vertexAttribPointer(positionAttributeLocation, 2, heroGl.FLOAT, false, 0, 0);
+                heroGl.enableVertexAttribArray(posLoc);
+                heroGl.bindBuffer(heroGl.ARRAY_BUFFER, buf);
+                heroGl.vertexAttribPointer(posLoc, 2, heroGl.FLOAT, false, 0, 0);
 
-                // Update Uniforms
-                heroGl.uniform2f(resolutionLoc, heroCanvas.width, heroCanvas.height);
-                heroGl.uniform1f(timeLoc, time);
-                // Hero Color: Dynamic High-Tech Cyan (Reverted)
-                heroGl.uniform3f(colorLoc, 0.0, 0.6, 0.8);
-                heroGl.uniform2f(mouseLoc, mouseX, mouseY);
-                heroGl.uniform1f(speedLoc, 0.15);
+                heroGl.uniform2f(resLoc, heroCanvas.width, heroCanvas.height);
+                heroGl.uniform1f(timLoc, t);
+                heroGl.uniform3f(colLoc, 0.0, 0.6, 0.8);
+                heroGl.uniform2f(mouLoc, m.x, m.y);
+                heroGl.uniform1f(spdLoc, 0.15);
 
                 heroGl.drawArrays(heroGl.TRIANGLE_STRIP, 0, 4);
-
-                requestAnimationFrame(render);
             }
             requestAnimationFrame(render);
         }

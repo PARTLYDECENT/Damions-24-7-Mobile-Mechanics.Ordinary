@@ -76,13 +76,38 @@ class LiveFeedConsole {
 
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
+        
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
+            this.handleMobileState();
+        });
 
         // Initial logs
         this.addLog("SYSTEM BOOT: CONNECTING TO 2026 AUTO-VOID...", true);
         this.addLog("COSMIC QUANTUM CODES LOADED.", false);
 
+        this.isLooping = true;
+        this.handleMobileState();
+
         requestAnimationFrame((t) => this.tick(t));
+    }
+
+    handleMobileState() {
+        const isMobile = window.innerWidth <= 1024;
+        if (isMobile) {
+            if (this.container) {
+                this.container.style.display = 'none';
+            }
+            this.isLooping = false;
+        } else {
+            if (this.container) {
+                this.container.style.display = 'block';
+            }
+            if (!this.isLooping) {
+                this.isLooping = true;
+                requestAnimationFrame((t) => this.tick(t));
+            }
+        }
     }
 
     resizeCanvas() {
@@ -213,6 +238,8 @@ class LiveFeedConsole {
     }
 
     tick(time) {
+        if (!this.isLooping) return;
+
         if (!this.lastTime) this.lastTime = time;
         const delta = time - this.lastTime;
         this.lastTime = time;

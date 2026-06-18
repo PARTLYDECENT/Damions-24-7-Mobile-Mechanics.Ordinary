@@ -1,824 +1,688 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- DEV: Git helper script added at ./git-helpers/push.sh
+     To run locally:
+       chmod +x git-helpers/push.sh
+       ./git-helpers/push.sh [branch] ["commit message"]
+     Or run:
+       git add .
+       git commit -m "your message"
+       git push origin <branch>
+-->
 
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance</title>
-    <meta name="description"
-        content="Damion's professional mobile mechanic service available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are.">
-    <meta property="og:title" content="Damions 24/7 Mobile Mechanics | Expert Auto Repair & Maintenance">
-    <meta property="og:description"
-        content="Damion's professional mobile mechanic service available 24/7. Expert auto repair, diagnostics, and maintenance wherever you are.">
-    <meta property="og:image" content="v8.png">
-    <meta property="og:url" content="">
-    <!-- URL left empty as it's not known, but image is key for the preview issue -->
-    <meta property="og:type" content="website">
-    <link id="favicon" rel="icon"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="intro_hud.css">
-    <link rel="stylesheet" href="voice_narrator.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Damion's 24/7 | Mobile Mechanics & Roofing</title>
+    <meta name="description" content="Damion's 24/7 Mobile Mechanics and Emergency Roofing. We come to you. Call (724) 505-1350 anytime.">
+    <meta name="theme-color" content="#0a0a05">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Creepster&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rajdhani', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif'],
+                        fever: ['Creepster', 'cursive'],
+                    },
+                    colors: {
+                        hazard: {
+                            yellow: '#facc15',
+                            main: '#eab308',
+                            dark: '#854d0e',
+                            rust: '#9a3412',
+                            bg: '#0a0a05',
+                            alert: '#ff003c',
+                            toxic: '#39ff14'
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'flicker': 'flicker 0.5s linear infinite',
+                        'glitch': 'glitch 1s linear infinite',
+                        'breathe': 'breathe 6s ease-in-out infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, textShadow: '0 0 10px #facc15, 0 0 20px #eab308' },
+                            '50%': { opacity: .7, textShadow: '0 0 5px #854d0e' },
+                        },
+                        flicker: {
+                            '0%, 100%': { opacity: 1 },
+                            '50%': { opacity: 0.2 },
+                            '80%': { opacity: 0.8 },
+                        },
+                        breathe: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.02)' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* --- Refined Animations --- */
-
-        /* Staggered scroll animations for grid items */
-        .animate-on-scroll.loaded {
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        body {
+            background-color: #0a0a05;
+            color: #d6d3d1;
+            overflow-x: hidden;
+            overscroll-behavior: none;
         }
 
-        .services-grid .animate-on-scroll,
-        .feature-grid .animate-on-scroll,
-        .news-grid .animate-on-scroll {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        /* Stagger delay for each item in a grid */
-        .animate-on-scroll.loaded:nth-child(1) {
-            transition-delay: 0.1s;
-        }
-
-        .animate-on-scroll.loaded:nth-child(2) {
-            transition-delay: 0.2s;
-        }
-
-        .animate-on-scroll.loaded:nth-child(3) {
-            transition-delay: 0.3s;
-        }
-
-        .animate-on-scroll.loaded:nth-child(4) {
-            transition-delay: 0.4s;
-        }
-
-        .animate-on-scroll.loaded:nth-child(5) {
-            transition-delay: 0.5s;
-        }
-
-        .animate-on-scroll.loaded:nth-child(6) {
-            transition-delay: 0.6s;
-        }
-
-        /* Smoother header transition */
-        .header {
-            transition: background-color 0.4s ease, padding 0.4s ease;
-        }
-
-        /* Enter site background image animation - REMOVED */
-        /* #enter-bg.zooming {
-            animation: zoomAndBlur 1s ease-in-out forwards;
-        }
-        @keyframes zoomAndBlur {
-            to { transform: scale(1.1); filter: blur(5px); }
-        } */
-
-        /* --- Mobile Responsiveness --- */
-        @media (max-width: 1024px) {
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background-color: var(--header-bg-scrolled);
-                flex-direction: column;
-                width: 100%;
-                padding: 1rem 0;
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
-
-            .nav-links.active {
-                display: flex;
-            }
-
-            .nav-links a {
-                padding: 1rem 2rem;
-                text-align: center;
-                border-bottom: 1px solid var(--border-color-translucent);
-            }
-
-            .nav-links a:last-child {
-                border-bottom: none;
-            }
-
-            .menu-toggle {
-                display: block;
-            }
-
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content p {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-
-            .services-grid,
-            .feature-grid,
-            .news-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .footer-links {
-                flex-direction: column;
-                gap: 0.5rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .popup-content {
-                width: 90%;
-            }
-        }
-    </style>
-    <style>
-        /* --- Dynamic Tooltip Styles --- */
-        .dynamic-tooltip {
+        #canvas-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            background: rgba(26, 34, 56, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: var(--text-light);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            max-width: 300px;
-            z-index: 9999;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -2;
             pointer-events: none;
-            opacity: 0;
-            transform: translate3d(0, 0, 0) scale(0.95);
-            transition: opacity 0.3s ease, transform 0.2s ease;
         }
 
-        .dynamic-tooltip.visible {
-            opacity: 1;
-            transform: translate3d(0, 0, 0) scale(1);
+        .fever-layer {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            animation: hueShift 15s infinite alternate linear;
+            background: linear-gradient(45deg, rgba(234,179,8,0.1), rgba(154,52,18,0.2), rgba(57,255,20,0.05));
+        }
+
+        @keyframes hueShift {
+            0%   { filter: hue-rotate(0deg)   saturate(1); }
+            50%  { filter: hue-rotate(90deg)  saturate(2); }
+            100% { filter: hue-rotate(-90deg) saturate(1.5); }
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background:
+                linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%),
+                linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 9997;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .screen-glitch {
+            animation: screenTear 0.3s cubic-bezier(0.25,0.46,0.45,0.94) both;
+        }
+
+        @keyframes screenTear {
+            0%   { transform: skew(0deg);    filter: blur(0px); }
+            20%  { transform: skew(-10deg) translate(-10px,5px);  filter: blur(4px) hue-rotate(90deg); }
+            40%  { transform: skew(10deg)  translate(10px,-5px);  filter: blur(2px) invert(0.5); }
+            60%  { transform: skew(-5deg)  translate(-5px,2px);   filter: blur(0px); }
+            100% { transform: skew(0deg);    filter: blur(0px); }
+        }
+
+        .text-glitch-layer            { position: relative; display: inline-block; }
+        .text-glitch-layer::before,
+        .text-glitch-layer::after     { content: attr(data-text); position: absolute; top:0; left:0; width:100%; height:100%; opacity:0.8; }
+        .text-glitch-layer::before    { left: 2px;  text-shadow: -2px 0 red;  clip: rect(24px,550px,90px,0);  animation: glitch-anim-2 3s   infinite linear alternate-reverse; }
+        .text-glitch-layer::after     { left: -2px; text-shadow: -2px 0 blue; clip: rect(85px,550px,140px,0); animation: glitch-anim   2.5s infinite linear alternate-reverse; }
+
+        @keyframes glitch-anim {
+            0%   { clip: rect(13px,9999px,83px,0); }
+            20%  { clip: rect(65px,9999px,11px,0); }
+            40%  { clip: rect(41px,9999px,99px,0); }
+            60%  { clip: rect(93px,9999px,14px,0); }
+            80%  { clip: rect(2px, 9999px,75px,0); }
+            100% { clip: rect(51px,9999px,34px,0); }
+        }
+        @keyframes glitch-anim-2 {
+            0%   { clip: rect(29px,9999px,8px,0);  }
+            20%  { clip: rect(14px,9999px,96px,0); }
+            40%  { clip: rect(85px,9999px,45px,0); }
+            60%  { clip: rect(6px, 9999px,12px,0); }
+            80%  { clip: rect(91px,9999px,63px,0); }
+            100% { clip: rect(32px,9999px,78px,0); }
+        }
+
+        #loader {
+            position: fixed; inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.2s ease, transform 0.5s ease;
+        }
+
+        .hazard-stripes {
+            background: repeating-linear-gradient(45deg, #0a0a05, #0a0a05 10px, #eab308 10px, #eab308 20px);
+        }
+
+        .glass-panel {
+            background: rgba(10,10,5,0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(234,179,8,0.5);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 30px rgba(234,179,8,0.2);
+        }
+
+        /* ── BACKEND BUTTON ── */
+        #backend-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: clamp(1rem, 3vw, 1.35rem);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #0a0a05;
+            background: #facc15;
+            border: 4px solid #000;
+            padding: 18px 48px;
+            text-decoration: none;
+            transition: color 0.3s ease, background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 8px 8px 0 #ff003c;
+        }
+        #backend-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: #ff003c;
+            transform: translateX(-100%);
+            transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+            z-index: 0;
+        }
+        #backend-btn:hover::before  { transform: translateX(0); }
+        #backend-btn:hover          { color: #fff; box-shadow: 12px 12px 0 #facc15; transform: translate(-3px,-3px); }
+        #backend-btn:active         { transform: translate(2px,2px); box-shadow: 4px 4px 0 #ff003c; }
+        #backend-btn span           { position: relative; z-index: 1; }
+        #backend-btn .btn-icon      { font-size: 1.6rem; position: relative; z-index: 1; transition: transform 0.3s ease; }
+        #backend-btn:hover .btn-icon { transform: rotate(15deg) scale(1.2); }
+
+        /* scanning animation on btn */
+        #backend-btn::after {
+            content: '';
+            position: absolute;
+            top: -100%; left: 0;
+            width: 100%; height: 40%;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.25), transparent);
+            animation: btn-scan 3s linear infinite;
+        }
+        @keyframes btn-scan {
+            from { top: -100%; }
+            to   { top: 200%; }
+        }
+
+        .backend-section {
+            position: relative;
+            z-index: 10;
+            border-top: 8px solid #facc15;
+            background: #000;
+            padding: 64px 24px;
+            text-align: center;
         }
     </style>
 </head>
+<body class="antialiased selection:bg-hazard-alert selection:text-white" id="body-container">
 
-<body>
-    <!-- 2x2 Tiled Background Grid -->
-    <div id="bg-grid">
-        <div class="bg-tile">
-            <div class="bg-tile-inner" id="bg-tile-0"></div>
-        </div>
-        <div class="bg-tile">
-            <div class="bg-tile-inner" id="bg-tile-1"></div>
-        </div>
-        <div class="bg-tile">
-            <div class="bg-tile-inner" id="bg-tile-2"></div>
-        </div>
-        <div class="bg-tile">
-            <div class="bg-tile-inner" id="bg-tile-3"></div>
-        </div>
+    <div class="crt-overlay"></div>
+    <div class="fever-layer"></div>
+
+    <!-- ══ FEVER DREAM LOADER ══ -->
+    <div id="loader" class="cursor-pointer">
+        <div class="w-32 h-32 border-8 border-t-hazard-alert border-b-hazard-toxic border-l-hazard-yellow border-r-black rounded-full animate-spin mb-8 shadow-[0_0_50px_rgba(255,0,60,0.5)]"></div>
+        <h2 class="font-display text-4xl md:text-6xl text-white tracking-[0.5em] uppercase text-glitch-layer mb-4" data-text="SYSTEM HALTED">SYSTEM HALTED</h2>
+        <p class="text-hazard-toxic text-xl mt-2 tracking-widest font-sans animate-pulse font-black text-center px-4">TAP ANYWHERE TO INJECT PROTOCOLS</p>
+        <div class="absolute inset-0 bg-hazard-alert/20 animate-pulse mix-blend-overlay pointer-events-none"></div>
     </div>
 
-    <canvas id="unified-panel-canvas"></canvas>
-    <!-- Functions Sidebar -->
-    <div id="functions-sidebar" class="functions-sidebar">
-        <button id="sidebar-close-btn" class="sidebar-toggle-btn close-btn">&times;</button>
-        <h2 class="sidebar-title">Function Hub</h2>
+    <!-- ══ 3D BACKGROUND CANVAS ══ -->
+    <div id="canvas-container"></div>
 
-        <div class="sidebar-content">
-            <!-- Tire Size Calculator -->
-            <div id="calculator-panel" class="sidebar-panel">
-                <h2 class="panel-title">Tire Size Calculator</h2>
-                <div class="tire-section">
-                    <h3>Stock Tire Size</h3>
-                    <div class="input-group">
-                        <input type="number" id="s_width" value="225" placeholder="Width">
-                        <span>/</span>
-                        <input type="number" id="s_ratio" value="45" placeholder="Ratio">
-                        <span>R</span>
-                        <input type="number" id="s_diam" value="17" placeholder="Diameter">
-                    </div>
+    <!-- ══ NAV ══ -->
+    <nav class="fixed w-full z-50 transition-all duration-300 mix-blend-difference" id="navbar">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8 mt-2">
+            <div class="flex items-center justify-between h-16 border-b-4 border-hazard-alert border-dashed pb-2">
+                <div class="flex-shrink-0 animate-breathe">
+                    <a href="#" class="font-display font-black text-2xl tracking-tighter flex flex-col items-start leading-none group">
+                        <span class="text-hazard-yellow group-hover:text-hazard-toxic transition-colors text-glitch-layer" data-text="DAMION'S">DAMION'S</span>
+                        <span class="bg-hazard-alert text-black px-2 py-1 rounded-sm font-black text-xl mt-1 rotate-2 group-hover:-rotate-2 transition-transform">247</span>
+                    </a>
                 </div>
-                <div class="tire-section">
-                    <h3>New Tire Size</h3>
-                    <div class="input-group">
-                        <input type="number" id="n_width" value="245" placeholder="Width">
-                        <span>/</span>
-                        <input type="number" id="n_ratio" value="40" placeholder="Ratio">
-                        <span>R</span>
-                        <input type="number" id="n_diam" value="18" placeholder="Diameter">
-                    </div>
-                </div>
-                <div class="results-section">
-                    <div class="results-grid">
-                        <div class="result-item">
-                            <div class="result-label">Stock OD</div>
-                            <div class="result-value" id="s_od">0.0 in</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">New OD</div>
-                            <div class="result-value" id="n_od">0.0 in</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">Stock SW</div>
-                            <div class="result-value" id="s_sw">0.0 in</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">New SW</div>
-                            <div class="result-value" id="n_sw">0.0 in</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">OD Diff.</div>
-                            <div class="result-value difference" id="diff_od">0.0%</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">SW Diff.</div>
-                            <div class="result-value difference" id="diff_sw">0.0%</div>
-                        </div>
-                    </div>
-                    <div class="speedo-result">60 MPH on Speedo = <span class="value" id="speedo_actual">60.0 MPH</span>
-                        Actual</div>
-                </div>
-            </div>
 
-            <!-- Unit Converter -->
-            <div id="converter-panel" class="sidebar-panel">
-                <h2 class="panel-title">Unit Converter</h2>
-                <div class="converter-row">
-                    <label for="conversion-type">Conversion:</label>
-                    <select id="conversion-type">
-                        <option value="torque">Torque (ft-lbs ↔ Nm)</option>
-                        <option value="pressure">Pressure (PSI ↔ Bar)</option>
-                        <option value="power">Power (HP ↔ kW)</option>
-                        <option value="volume">Volume (Gallons ↔ Liters)</option>
-                    </select>
+                <div class="hidden md:flex items-baseline space-x-6 bg-black/50 p-2 border border-hazard-yellow/30 backdrop-blur-md">
+                    <a href="#auto"    class="text-white hover:text-hazard-alert  px-3 py-2 text-sm font-bold uppercase tracking-widest transform hover:scale-110 hover:skew-x-12   transition-all">Mechanic</a>
+                    <a href="#roofing" class="text-white hover:text-hazard-toxic  px-3 py-2 text-sm font-bold uppercase tracking-widest transform hover:scale-110 hover:-skew-x-12  transition-all">Structure</a>
+                    <a href="tel:7245051350" class="text-black bg-hazard-yellow px-6 py-2 text-lg font-black uppercase tracking-widest border-2 border-transparent hover:border-white hover:bg-transparent hover:text-white transition-all animate-pulse">
+                        724-505-1350
+                    </a>
                 </div>
-                <div class="converter-row inputs">
-                    <div class="converter-input-group"><input type="number" id="unit1-input" value="100"><label
-                            id="unit1-label">ft-lbs</label></div>
-                    <div class="equals-sign">⇌</div>
-                    <div class="converter-input-group"><input type="number" id="unit2-input"><label
-                            id="unit2-label">Nm</label></div>
-                </div>
-            </div>
 
-            <!-- Symptom Analyzer -->
-            <div id="symptom-analyzer-panel" class="sidebar-panel">
-                <h2 class="panel-title">Symptom Analyzer</h2>
-                <p class="panel-subtitle">Select observed symptoms to diagnose potential issues.</p>
-                <div id="symptom-selector"></div>
-                <button id="diagnose-btn">Analyze Symptoms</button>
-                <div id="diagnosis-results" style="display: none;">
-                    <h3>Potential Causes:</h3>
-                    <ul id="diagnosis-list"></ul>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" id="mobile-menu-btn" class="inline-flex items-center justify-center p-3 text-hazard-alert bg-black border-2 border-hazard-alert rounded-full animate-pulse focus:outline-none focus:ring-2 focus:ring-hazard-toxic shadow-[0_0_15px_rgba(255,0,60,0.8)]">
+                        <svg class="block h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
-    <button id="sidebar-open-btn" class="sidebar-toggle-btn open-btn">🔧</button>
 
-    <div id="enter-overlay">
-        <canvas id="enter-shader-canvas"></canvas>
-
-        <!-- New Mechanical Shutter Wrapper -->
-        <div id="shutter-wrapper">
-            <div class="shutter-blade shutter-top"></div>
-            <div class="shutter-blade shutter-bottom"></div>
+        <div class="md:hidden hidden absolute w-full left-0 mt-4 px-4 h-screen" id="mobile-menu">
+            <div class="glass-panel p-6 space-y-4 h-[80vh] flex flex-col justify-center border-4 border-hazard-alert animate-breathe">
+                <h3 class="text-center text-hazard-toxic font-fever text-3xl mb-8 tracking-widest">SELECT SECTOR</h3>
+                <a href="#auto"    class="mobile-link text-white hover:text-hazard-alert  block px-3 py-4 text-3xl font-black uppercase tracking-widest text-center border-y border-hazard-dark">MECHANICAL</a>
+                <a href="#roofing" class="mobile-link text-white hover:text-hazard-toxic  block px-3 py-4 text-3xl font-black uppercase tracking-widest text-center border-b border-hazard-dark">STRUCTURAL</a>
+                <a href="tel:7245051350" class="mobile-link text-black bg-hazard-alert block px-3 py-6 text-4xl font-black uppercase tracking-widest text-center mt-8 transform -skew-x-6 shadow-[10px_10px_0px_0px_rgba(234,179,8,1)]">
+                    724-505-1350
+                </a>
+            </div>
         </div>
+    </nav>
 
-        <!-- New HUD Telemetry Overlay -->
-        <div id="hud-overlay">
-            <div class="hud-scanline"></div>
-            <div class="hud-corner top-left glitch">
-                <span class="hud-label">System Status</span>
-                <span class="hud-value" id="hud-status">DIAGNOSING...</span>
-            </div>
-            <div class="hud-corner top-right">
-                <span class="hud-label">Engine Specs</span>
-                <span class="hud-value" id="hud-specs">V8 TWIN-TURBO</span>
-            </div>
-            <div class="hud-corner bottom-left glitch">
-                <span class="hud-label">Vitals / TEMP</span>
-                <span class="hud-value" id="hud-vitals">92°C | 65 PSI</span>
-            </div>
-            <div class="hud-corner bottom-right">
-                <span class="hud-label">VIN Decoder</span>
-                <span class="hud-value" id="hud-vin">1GCEC19... [DECODING]</span>
-            </div>
-            <div class="hud-status-bar">
-                <div class="hud-progress" id="hud-progress-bar"></div>
-            </div>
+    <!-- ══ HERO ══ -->
+    <main id="home" class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden min-h-screen flex items-center justify-center">
+        <div class="absolute top-1/4 -left-10 text-9xl font-fever text-hazard-rust/20 -rotate-90 pointer-events-none select-none">BREAKDOWN</div>
+        <div class="absolute bottom-1/4 -right-10 text-9xl font-display font-black text-hazard-toxic/10 rotate-45 pointer-events-none select-none mix-blend-overlay">COLLAPSE</div>
 
-            <!-- New Spaceship Diagnostics Alert Panel -->
-            <div id="hud-alerts-panel">
-                <div class="alert-header">DIAGNOSTIC FEED // ERROR LOG</div>
-                <div id="alert-feed"></div>
-            </div>
+        <div class="max-w-7xl mx-auto px-4 relative z-10 w-full animate-breathe">
+            <div class="text-center flex flex-col items-center">
 
-            <div class="hud-reticle"></div>
+                <div class="inline-flex flex-col items-center gap-2 mb-8 transform -rotate-2">
+                    <span class="bg-hazard-alert text-white px-4 py-1 text-sm font-black tracking-[0.3em] uppercase animate-shake">CRITICAL FAILURE DETECTED</span>
+                    <span class="text-hazard-yellow text-xs font-sans tracking-widest">DEPLOYING IMMEDIATE FIXTURES</span>
+                </div>
+
+                <h1 class="text-6xl md:text-8xl font-display font-black tracking-tighter mb-4 leading-none uppercase drop-shadow-[0_0_20px_rgba(0,0,0,1)]">
+                    <span class="block text-white text-glitch-layer mb-2" data-text="WE SALVAGE">WE SALVAGE</span>
+                    <span class="block text-hazard-yellow scale-y-150 transform inline-block">THE BROKEN.</span>
+                </h1>
+
+                <p class="mt-8 text-xl md:text-3xl text-gray-300 mb-12 font-bold max-w-3xl mx-auto border-4 border-black bg-black/60 p-4 shadow-[10px_10px_0px_0px_rgba(255,0,60,0.8)] backdrop-blur-sm">
+                    Wheels or Walls. We drag the repair bay into the nightmare. 24/7 Operations.
+                </p>
+
+                <div class="flex flex-col w-full sm:w-auto gap-6 sm:px-0 px-4">
+                    <a href="tel:7245051350" class="group relative overflow-hidden bg-hazard-yellow text-black px-10 py-6 font-black uppercase tracking-widest text-3xl border-4 border-black hover:bg-white transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(234,179,8,0.5)]">
+                        <span class="relative z-10 flex items-center justify-center gap-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            724 505 1350
+                        </span>
+                        <div class="absolute inset-0 bg-hazard-alert translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-0"></div>
+                    </a>
+                </div>
+            </div>
         </div>
-
-        <div class="enter-content">
-            <h1 class="enter-title">DAMION'S <span class="highlight">24/7</span></h1>
-            <p class="enter-subtitle">MOBILE AUTOMOTIVE SOLUTIONS</p>
-            <div class="enter-divider"></div>
-            <p class="enter-status">READY FOR INITIALIZATION</p>
-            <button id="enter-btn" class="enter-button">START SYSTEM</button>
-        </div>
-    </div>
-
-
-
-    <header class="header" id="header">
-        <div class="nav-container">
-            <a href="#home" class="logo">DAMIONS<span>24/7</span><img src="v8.png" alt="V8 Engine" class="logo-img"></a>
-            <nav class="nav-links">
-                <a href="#services">Services</a>
-                <a href="#why-us">Why Us</a>
-                <a href="#news">News</a>
-                <a href="#contact">Contact</a>
-                <a href="tools/toolbox.html" class="nav-link">Toolbox</a>
-                <a href="resources.html">Resources</a>
-                <a href="s2.html">S2</a>
-                <a href="https://partlydecent.github.io/Ordinary-Garage-3d/" target="_blank">3D Garage</a>
-                <div class="dropdown media-dropdown">
-                    <a href="#" class="dropbtn media-dropbtn">Media</a>
-                    <div class="dropdown-content media-dropdown-content">
-                        <a href="mediaviewer.html?folder=1" target="_blank">Media Folder 1</a>
-                        <a href="mediaviewer.html?folder=2" target="_blank">Media Folder 2</a>
-                        <a href="mediaviewer.html?folder=3" target="_blank">Media Folder 3</a>
-                        <a href="mediaviewer.html?folder=4" target="_blank">Media Folder 4</a>
-                        <a href="mediaviewer.html?folder=5" target="_blank">Media Folder 5</a>
-                    </div>
-                </div>
-                <div class="dropdown products-dropdown">
-                    <a href="#" class="dropbtn products-dropbtn">Products</a>
-                    <div class="dropdown-content" id="products-dropdown-content">
-                        <!-- Populated by main.js -->
-                        <a href="Products/Homestead1.html">Homestead 1</a>
-                        <a href="Products/hantu-raya.html">Hantu Raya</a>
-                    </div>
-                </div>
-                <div class="dropdown">
-                    <a href="#" class="dropbtn">Games</a>
-                    <div class="dropdown-content">
-                        <a href="videos/game1.html">Game 1</a>
-                        <a href="videos/game2.html">Game 2</a>
-                        <a href="videos/game3.html">Game 3</a>
-                        <a href="videos/game4.html">Game 4</a>
-                        <a href="videos/game5.html">Game 5</a>
-                        <a href="videos/game6.html">Game 6</a>
-                        <a href="videos/game7.html">Game 7</a>
-                        <a href="videos/game8.html">Game 8</a>
-                        <a href="videos/game9.html">Game 9</a>
-                        <a href="videos/game10.html">Game 10</a>
-                        <a href="videos/game11.html">Game 11</a>
-                        <a href="videos/game12.html">Game 12</a>
-                        <a href="videos/game13.html">Game 13</a>
-                        <a href="videos/game14.html">Game 14</a>
-                        <a href="videos/game15.html">Game 15</a>
-                        <a href="videos/game16.html">Game 16</a>
-                        <a href="videos/game17.html">Game 17</a>
-                        <a href="videos/game18.html">Game 18</a>
-                        <a href="videos/game19.html">Game 19</a>
-                        <a href="videos/game20.html">Game 20</a>
-                        <a href="videos/game21.html">Game 21</a>
-                        <a href="videos/game22.html">Game 22</a>
-                        <a href="videos/game23.html">Game 23</a>
-                        <a href="videos/game24.html">Game 24</a>
-                        <a href="videos/game25.html">Game 25</a>
-                        <a href="videos/game26.html">Game 26</a>
-                        <a href="videos/game27.html">Game 27</a>
-                        <a href="videos/game28.html">Game 28</a>
-                        <a href="videos/game29.html">Game 29</a>
-                        <a href="videos/game30.html">Game 30</a>
-                    </div>
-                </div>
-            </nav>
-            <button class="menu-toggle" id="menuToggle">☰</button>
-        </div>
-    </header>
-
-    <div class="rolling-banner">
-        <div class="orange-rail"></div>
-        <canvas id="rolling-banner-canvas"></canvas>
-    </div>
-
-    <main class="main-content">
-        <section class="hero" id="home">
-            <canvas id="hero-shader-canvas"></canvas>
-            <!-- <div id="hero-slideshow-container"></div> REMOVED for shader -->
-            <!-- <canvas id="hero-shader-canvas"></canvas> --> <!-- Replaced by slideshow -->
-            <div class="hero-content animate-on-scroll">
-                <h1>Damion: Your 24/7 Mobile Mechanic Solution</h1>
-                <p>I provide expert auto repair and maintenance, wherever you are. Professional, reliable service that
-                    comes
-                    directly to you, day or night.</p>
-                <a href="#services" class="cta-button">View My Services</a>
-            </div>
-        </section>
-
-        <section class="section" id="services">
-
-            <div class="container">
-                <h2 class="section-title">Superior Mobility</h2>
-                <p class="section-subtitle">Comprehensive automotive care delivered directly to your location, 24 hours
-                    a day.</p>
-                <div class="services-grid">
-                    <div class="service-card animate-on-scroll"
-                        data-tooltip="System Interrupt Handler: Rapid deployment protocol for critical system failures. On-site diagnostics and hardware intervention.">
-                        <div class="service-icon">🚨</div>
-                        <h3>Emergency Roadside Assistance</h3>
-                        <p>Breakdowns, jump starts, lockouts, and more. I provide rapid-response emergency support to
-                            get you moving again.</p>
-                    </div>
-                    <div class="service-card animate-on-scroll"
-                        data-tooltip="ECU Deep Scan: Accessing proprietary diagnostic ports to analyze fault codes, sensor data streams, and network communication errors.">
-                        <div class="service-icon">🔍</div>
-                        <h3>Advanced On-site Diagnostics</h3>
-                        <p>Using state-of-the-art diagnostic tools, I accurately identify complex issues right where
-                            you are, saving you a trip to the shop.</p>
-                    </div>
-                    <div class="service-card animate-on-scroll"
-                        data-tooltip="Kinetic Dampening & Friction Systems: Calibration and replacement of hydraulic actuators, friction pads, and adaptive suspension components.">
-                        <div class="service-icon">🛑</div>
-                        <h3>Brake & Suspension Services</h3>
-                        <p>Complete brake inspection, pad/rotor replacement, and suspension repairs. Your safety is my
-                            number one priority.</p>
-                    </div>
-                    <div class="service-card animate-on-scroll"
-                        data-tooltip="Powerplant Core Maintenance: Servicing of primary and secondary power units, including internal combustion engines and hybrid electric drivetrains.">
-                        <div class="service-icon">⚙️</div>
-                        <h3>Engine & Transmission Repair</h3>
-                        <p>From minor fixes to major repairs, Damion handles all engine and
-                            transmission issues with expertise.</p>
-                    </div>
-                    <div class="service-card animate-on-scroll"
-                        data-tooltip="Power Cell & Circuitry Integrity: On-site analysis of power storage cells, parasitic draw tracing, and repair of high-voltage circuit pathways.">
-                        <div class="service-icon">🔋</div>
-                        <h3>Electrical & Battery Service</h3>
-                        <p>Fast on-site battery testing and replacement, plus diagnosis and repair of complex vehicle
-                            electrical systems.</p>
-                    </div>
-                    <div class="service-card animate-on-scroll">
-                        <div class="service-icon">🚛</div>
-                        <h3>Fleet Maintenance</h3>
-                        <p>Customized maintenance programs designed to keep your business fleet reliable, minimize
-                            downtime, and reduce costs.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="why-us">
-
-            <div class="container">
-                <h2 class="section-title">The Damions 24/7 Advantage</h2>
-                <p class="section-subtitle">I am committed to providing an unmatched level of convenience, expertise,
-                    and transparent service.</p>
-                <div class="feature-grid">
-                    <div class="feature-item animate-on-scroll"
-                        data-tooltip="Temporal Anomaly: My operational cycle is not bound by standard solar rotations. Service available at all temporal coordinates.">
-                        <div class="feature-icon">🕒</div>
-                        <h3>Available Around the Clock</h3>
-                        <p>Car trouble doesn't wait for business hours. That's why I'm on call 24 hours a day, 7 days
-                            a week.</p>
-                    </div>
-                    <div class="feature-item animate-on-scroll"
-                        data-tooltip="Field Operatives: All technicians are certified by the Cybernetic Automotive Guild and equipped with neural-link diagnostic interfaces.">
-                        <div class="feature-icon">🛠️</div>
-                        <h3>Certified Expertise</h3>
-                        <p>Damion is an experienced, certified professional equipped with the latest tools and
-                            knowledge.</p>
-                    </div>
-                    <div class="feature-item animate-on-scroll"
-                        data-tooltip="Data Transparency Protocol: All work orders and cost estimates are provided upfront with no hidden fees.">
-                        <div class="feature-icon">🛡️</div>
-                        <h3>Transparent Estimates</h3>
-                        <p>No surprises. I provide clear, upfront cost estimates before any work begins so you know
-                            exactly what to expect.</p>
-                    </div>
-                    <div class="feature-item animate-on-scroll"
-                        data-tooltip="Personal Deployment: Damion's mobile unit is dispatched to your precise coordinates, bypassing traditional service infrastructure.">
-                        <div class="feature-icon">📍</div>
-                        <h3>We Come to You</h3>
-                        <p>Save time and hassle. I perform repairs at your home, office, or roadside, eliminating the
-                            need for a tow.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="video-promo">
-
-            <div class="container">
-                <h2 class="section-title">A Glimpse Into My Work</h2>
-                <p class="section-subtitle">Watch Damion in action, providing top-tier service on the
-                    go.</p>
-                <div class="video-container" style="text-align: center;">
-                    <video width="80%" controls autoplay muted loop
-                        style="border-radius: 15px; box-shadow: var(--shadow-lg);">
-                        <source src="videos/vid1.mp4" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="news">
-
-            <div class="container">
-                <h2 class="section-title">Automotive News & Info</h2>
-                <p class="section-subtitle">Stay informed with the latest trends, maintenance tips, and news from the
-                    automotive world.</p>
-                <div class="news-grid">
-                    <div class="news-card animate-on-scroll">
-                        <div class="news-image"
-                            style="background-image: url('https://images.unsplash.com/photo-1617551139495-30472f859292?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDR8fGV2JTIwY2hhcmdpbmd8ZW58MHx8fHwxNjE5NzgxMTU4&ixlib=rb-1.2.1&q=80&w=400');">
-                        </div>
-                        <div class="news-content">
-                            <h3>The Future is Electric: Are You Ready?</h3>
-                            <p class="news-meta">Sep 12, 2025 | Tech Trends</p>
-                            <p class="news-excerpt">Electric vehicles are transforming the industry. I break down what
-                                you need to know about EV maintenance.</p>
-                            <a href="#" class="read-more-btn">Read More →</a>
-                        </div>
-                    </div>
-                    <div class="news-card animate-on-scroll">
-                        <div class="news-image"
-                            style="background-image: url('https://images.unsplash.com/photo-1599493356243-a2d95c721a11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGNhciUyMGVuZ2luZXxlbnwwfHx8fDE2MTk3ODEyMzA&ixlib=rb-1.2.1&q=80&w=400');">
-                        </div>
-                        <div class="news-content">
-                            <h3>5 Signs Your Engine Needs a Check-Up</h3>
-                            <p class="news-meta">Sep 05, 2025 | Maintenance Tips</p>
-                            <p class="news-excerpt">Don't ignore the warning signs. Learn to spot potential engine
-                                trouble before it becomes a major problem.</p>
-                            <a href="#" class="read-more-btn">Read More →</a>
-                        </div>
-                    </div>
-                    <div class="news-card animate-on-scroll">
-                        <div class="news-image"
-                            style="background-image: url('https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDF8fGNhcnxlbnwwfHx8fDE2MTk3ODEyNTc&ixlib=rb-1.2.1&q=80&w=400');">
-                        </div>
-                        <div class="news-content">
-                            <h3>Choosing the Right Tires for the Season</h3>
-                            <p class="news-meta">Aug 28, 2025 | Buyer's Guide</p>
-                            <p class="news-excerpt">Your tires are critical for safety and performance. Our guide helps
-                                you select the perfect set for any weather.</p>
-                            <a href="#" class="read-more-btn">Read More →</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" id="slideshow-section">
-
-            <div class="container">
-                <h2 class="section-title">Background Slideshow</h2>
-                <p class="section-subtitle">A slideshow of background images.</p>
-                <canvas id="hero-slideshow-canvas" style="width: 100%; height: 400px;"></canvas>
-            </div>
-        </section>
-
-        <section class="section" id="videoplayer-section">
-
-            <div class="container">
-                <h2 class="section-title">Video Player</h2>
-                <p class="section-subtitle">A selection of our videos.</p>
-                <div id="video-player-container"></div>
-            </div>
-        </section>
-
     </main>
 
-    <section class="section" id="facts" style="display:none;">
-
-        <div class="container">
-            <h2 class="section-title">Automotive Facts & Repairability Insights</h2>
-            <p class="section-subtitle">Knowledge is power. Here are some facts and tricks to help you understand your
-                vehicle better.</p>
-            <div class="feature-grid">
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">⚠️</div>
-                    <h3>The Check Engine Light</h3>
-                    <p>A loose gas cap can trigger the Check Engine Light. Always tighten it until it clicks. If the
-                        light is flashing, it indicates a serious misfire that requires immediate attention.</p>
+    <!-- ══ MECHANICAL SECTION ══ -->
+    <section id="auto" class="py-24 relative z-10 border-t-8 border-hazard-alert bg-black/80 backdrop-blur-sm overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20rem] font-black text-white/5 font-display pointer-events-none">01</div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 gs-reveal">
+                <div class="inline-block bg-hazard-alert text-black px-8 py-2 mb-4 font-black text-xl uppercase tracking-[0.2em] transform rotate-2">SECTOR: MECHANICAL</div>
+                <h2 class="font-display text-5xl md:text-7xl font-black mb-4 uppercase drop-shadow-[0_5px_5px_rgba(0,0,0,1)]">
+                    <span class="text-white">ROADSIDE</span>
+                    <span class="text-hazard-toxic block mt-2">EXTRACTION</span>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+                <div class="bg-gradient-to-br from-black to-gray-900 p-8 border-l-8 border-hazard-yellow relative gs-reveal transform hover:-translate-y-2 transition-transform shadow-[0_10px_30px_rgba(234,179,8,0.2)]">
+                    <h3 class="text-3xl font-black text-white mb-4 font-display uppercase tracking-widest border-b-2 border-gray-800 pb-4">DIAGNOSTICS &amp; PURGE</h3>
+                    <p class="text-gray-400 text-lg leading-relaxed font-bold">Connecting directly to your vehicle's nervous system. We isolate terminal engine codes, execute fluid purges, and force system overrides right where you broke down.</p>
                 </div>
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Right to Repair</h3>
-                    <p>We advocate for your right to choose who repairs your vehicle. Modern cars require complex tools,
-                        but legislation is helping ensure independent shops have access.</p>
+                <div class="bg-gradient-to-bl from-black to-gray-900 p-8 border-r-8 border-hazard-alert relative gs-reveal transform hover:-translate-y-2 transition-transform shadow-[0_10px_30px_rgba(255,0,60,0.2)]">
+                    <h3 class="text-3xl font-black text-white mb-4 font-display uppercase tracking-widest border-b-2 border-gray-800 pb-4">HARDWARE RIP &amp; REPLACE</h3>
+                    <p class="text-gray-400 text-lg leading-relaxed font-bold">Alternators, starters, batteries, brakes. If it's dead, we rip it out. We bring the heavy machinery to your coordinates and bolt in survival.</p>
                 </div>
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">👃</div>
-                    <h3>Diagnostic Smells</h3>
-                    <p>Unusual smells can tell a story. The sweet smell of maple syrup often indicates a coolant leak,
-                        while burning carpet can point to an issue with your brakes.</p>
-                </div>
-                <div class="feature-item animate-on-scroll">
-                    <div class="feature-icon">💧</div>
-                    <h3>Hygroscopic Fluids</h3>
-                    <p>Brake fluid naturally absorbs water from the air over time, which can lead to corrosion and
-                        reduced performance. It should be flushed and replaced every 2-3 years.</p>
-                </div>
+            </div>
+            <div class="mt-16 text-center gs-reveal">
+                <p class="text-hazard-yellow font-black text-2xl tracking-widest mb-6">IMMEDIATE MECHANICAL DISPATCH</p>
+                <a href="tel:7245051350" class="inline-block bg-black text-hazard-yellow border-4 border-hazard-yellow px-12 py-4 text-4xl font-black tracking-tighter hover:bg-hazard-yellow hover:text-black transition-colors animate-pulse">724.505.1350</a>
             </div>
         </div>
     </section>
 
-    <section class="section" id="engine-bay">
-
-        <div class="container">
-            <h2 class="section-title">The Interactive Engine Bay</h2>
-            <p class="section-subtitle">Explore the heart of the machine and uncover the secrets of the internal
-                combustion engine.</p>
-
-            <div class="engine-history">
-                <h3>A Spark of Genius: The Internal Combustion Story</h3>
-                <p>The internal combustion engine (ICE) is a heat engine that converts chemical energy into mechanical
-                    energy. The story of the ICE is a fascinating journey of innovation, with key contributions from
-                    inventors like Nicolaus Otto, who in 1876, created the first successful four-stroke engine, and Karl
-                    Benz, who developed the first automobile powered by an ICE in 1886. This invention revolutionized
-                    transportation and paved the way for the modern world.</p>
-            </div>
-
-            <div class="interactive-engine-diagram" style="position: relative;">
-                <canvas id="engine-bay-canvas"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3; pointer-events: none;"></canvas>
-                <h3 style="position: relative; z-index: 1;">Explore the V8</h3>
-                <div class="engine-v8">
-                    <img src="v8.png" alt="V8 Engine Diagram" usemap="#v8map">
-                    <map name="v8map">
-                        <area shape="rect" coords="150,100,250,150" href="#" alt="Cylinder Head" title="Cylinder Head"
-                            data-info="The cylinder head sits above the cylinders and houses the valvetrain, including the valves and spark plugs.">
-                        <area shape="rect" coords="100,150,300,250" href="#" alt="Engine Block" title="Engine Block"
-                            data-info="The engine block is the main structure of the engine, containing the cylinders and other major components.">
-                        <area shape="rect" coords="180,250,220,300" href="#" alt="Crankshaft" title="Crankshaft"
-                            data-info="The crankshaft converts the linear motion of the pistons into rotational motion.">
-                    </map>
-                    <p class="engine-info-box"></p>
+    <!-- ══ ROOFING SECTION ══ -->
+    <section id="roofing" class="py-32 relative z-10 border-t-8 border-hazard-toxic bg-[#0a0a05]/90 backdrop-blur-md">
+        <div class="hazard-stripes absolute top-0 left-0 w-full h-4 opacity-50"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row gap-16 items-center">
+                <div class="lg:w-1/2 w-full gs-reveal order-2 lg:order-1 text-center lg:text-left">
+                    <div class="inline-block bg-hazard-toxic text-black px-6 py-2 mb-6 font-black text-xl uppercase tracking-[0.2em] transform -rotate-1">SECTOR: STRUCTURAL</div>
+                    <h2 class="font-display text-5xl md:text-7xl font-black mb-8 uppercase text-white leading-tight">
+                        ATMOSPHERIC <br>
+                        <span class="text-hazard-toxic text-glitch-layer" data-text="BREACH SEALING">BREACH SEALING</span>
+                    </h2>
+                    <div class="space-y-6 text-left">
+                        <div class="bg-black p-6 border-2 border-hazard-dark hover:border-hazard-toxic transition-colors relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 w-16 h-full bg-hazard-toxic/10 skew-x-12 transform origin-bottom group-hover:scale-x-150 transition-transform"></div>
+                            <h4 class="text-2xl font-black text-white font-display uppercase tracking-widest mb-2">Emergency Tarping</h4>
+                            <p class="text-gray-400 text-lg font-bold">Halt total flooding. We deploy heavy-duty containment barriers over structural wounds instantly.</p>
+                        </div>
+                        <div class="bg-black p-6 border-2 border-hazard-dark hover:border-hazard-yellow transition-colors relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 w-16 h-full bg-hazard-yellow/10 skew-x-12 transform origin-bottom group-hover:scale-x-150 transition-transform"></div>
+                            <h4 class="text-2xl font-black text-white font-display uppercase tracking-widest mb-2">Full Reconstruction</h4>
+                            <p class="text-gray-400 text-lg font-bold">Massive failure requires complete teardown. Full roof replacements executed with militant precision.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="engine-quiz">
-                <div id="quiz-app" class="quiz-container">
-                    <div class="quiz-start-screen">
-                        <h3>Master Mechanic Challenge</h3>
-                        <p>Test your knowledge of engines, history, and diagnostics.</p>
-                        <button id="start-quiz-btn" class="cta-button">Start Engine</button>
+                <div class="lg:w-1/2 w-full flex justify-center gs-reveal order-1 lg:order-2">
+                    <div class="relative w-full max-w-md aspect-square border-8 border-hazard-toxic/50 p-4 bg-black/60 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(57,255,20,0.15)] animate-[spin_60s_linear_infinite]">
+                        <div class="absolute inset-4 border-4 border-dashed border-hazard-yellow/40 rounded-full animate-[spin_20s_linear_infinite_reverse]"></div>
+                        <div class="absolute inset-12 border-2 border-hazard-alert/60 rounded-full animate-ping"></div>
+                        <div class="text-center animate-[spin_60s_linear_infinite_reverse]">
+                            <svg class="w-32 h-32 text-hazard-toxic mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            <div class="text-3xl font-black text-white tracking-widest font-display">ROOFING</div>
+                            <div class="text-hazard-toxic font-bold text-xl mt-2">724-505-1350</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="section" id="service-area">
-
-        <div class="container">
-            <h2 class="section-title">24/7 Operational Zone</h2>
-            <p class="section-subtitle">I am always on patrol, ensuring rapid response times across the
-                entire metropolitan area and its surrounding sectors.</p>
-            <div class="map-container">
-                <img src="assets/images/map.png" alt="Service Area Map" class="map-image">
-                <div class="map-point" style="top: 40%; left: 50%;"></div>
-                <div class="map-point" style="top: 60%; left: 35%;"></div>
-                <div class="map-point" style="top: 30%; left: 65%;"></div>
-                <div class="map-point" style="top: 75%; left: 55%;"></div>
-                <div class="map-scanline"></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="faq">
-
-        <div class="container">
-            <h2 class="section-title">Frequently Asked Questions</h2>
-            <p class="section-subtitle">Accessing our knowledge base for common inquiries. Select a query to expand.</p>
-            <div class="faq-accordion">
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>How fast can you get to me?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>My average response time within the primary metro zone is 35 minutes. This can vary based on
-                            traffic and my current operational load. I always prioritize emergency calls to minimize
-                            your wait.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Are your prices competitive with traditional shops?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Yes. As a solo operator, I have significantly lower overhead than a garage or large fleet. I
-                            pass those savings directly to you. You also save on towing fees. I provide a transparent
-                            estimate before any work begins.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>What kind of repairs can you do on-site?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>My mobile unit is equipped to handle approximately 85% of all common vehicle repairs. This
-                            includes diagnostics, brake jobs, alternator/starter replacement, battery service, fluid
-                            changes, and much more. For major engine work, I can refer you to trusted partners.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <span>Do you work on all makes and models?</span>
-                        <span class="faq-icon">+</span>
-                    </button>
-                    <div class="faq-answer">
-                        <p>I service a vast range of vehicles, including domestic, European, and Asian makes. I am
-                            equipped with multi-brand diagnostic tools and have extensive experience
-                            across different manufacturers. I am also an expert in classic cars, diesel engines,
-                            and high-performance vehicles.</p>
-                    </div>
+    <!-- ══ CONTACT SECTION ══ -->
+    <section id="contact" class="py-24 relative z-10 border-y-8 border-hazard-yellow bg-black">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-[#0a0a05] p-8 md:p-12 border-4 border-hazard-yellow relative overflow-hidden shadow-[15px_15px_0px_0px_rgba(234,179,8,1)] transform md:-skew-x-2">
+                <div class="relative z-10 text-center">
+                    <h2 class="text-5xl md:text-7xl font-display font-black text-white mb-6 uppercase tracking-tighter text-glitch-layer" data-text="TRANSMIT">TRANSMIT</h2>
+                    <a href="tel:7245051350" class="block bg-hazard-alert text-white py-6 mb-12 font-black text-5xl md:text-6xl hover:bg-white hover:text-black transition-colors transform hover:scale-105 shadow-[0_0_30px_rgba(255,0,60,0.6)] font-display tracking-widest">
+                        724 505 1350
+                    </a>
+                    <form id="dispatch-form" class="text-left max-w-2xl mx-auto space-y-6 transform md:skew-x-2">
+                        <div id="form-msg" class="hidden bg-hazard-toxic text-black p-4 font-black text-center text-xl uppercase tracking-widest animate-pulse">TRANSMISSION RECEIVED. DISPATCH EN ROUTE.</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm text-hazard-yellow uppercase tracking-[0.2em] mb-2 font-black">OPERATIVE ID</label>
+                                <input type="text" required class="w-full bg-black border-2 border-gray-800 focus:border-hazard-yellow text-white px-6 py-4 text-xl outline-none transition-colors font-bold" placeholder="NAME">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-hazard-yellow uppercase tracking-[0.2em] mb-2 font-black">COMLINK</label>
+                                <input type="tel" required class="w-full bg-black border-2 border-gray-800 focus:border-hazard-yellow text-white px-6 py-4 text-xl outline-none transition-colors font-bold" placeholder="PHONE">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-hazard-toxic uppercase tracking-[0.2em] mb-2 font-black">SECTOR REQUIRED</label>
+                            <select class="w-full bg-black border-2 border-gray-800 focus:border-hazard-toxic text-white px-6 py-4 text-xl outline-none transition-colors font-bold appearance-none cursor-pointer">
+                                <option>MECHANICAL - EMERGENCY ROADSIDE</option>
+                                <option>MECHANICAL - DIAGNOSTICS</option>
+                                <option>STRUCTURAL - EMERGENCY TARPING</option>
+                                <option>STRUCTURAL - FULL RECONSTRUCTION</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-transparent border-4 border-hazard-yellow text-hazard-yellow hover:bg-hazard-yellow hover:text-black font-display font-black text-2xl uppercase tracking-widest py-6 transition-colors duration-300 relative overflow-hidden group">
+                            <span class="relative z-10">INITIALIZE UPLOAD</span>
+                            <div class="absolute inset-0 bg-hazard-yellow translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 z-0"></div>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </section>
 
-    <footer class="footer">
-        <div class="container">
-            <a href="#home" class="logo">DAMIONS<span>24/7</span></a>
-            <ul class="footer-links">
-                <li><a href="#services">Services</a></li>
-                <li><a href="#why-us">Why Us</a></li>
-                <li><a href="#news">News</a></li>
-                <li><a href="#service-area">Service Area</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <div class="footer-controls">
-                <button id="mute-btn" class="cta-button secondary" title="Toggle Music">🔊</button>
+    <!-- ══ FOOTER ══ -->
+    <footer class="bg-black pt-16 pb-8 relative z-10 border-t-2 border-gray-900">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h2 class="font-display font-black text-4xl text-gray-600 mb-6 uppercase tracking-widest">DAMION'S <span class="text-hazard-alert">247</span></h2>
+            <p class="text-gray-500 text-lg font-bold mb-8">MOBILE MECHANICS // EMERGENCY ROOFING</p>
+            <div class="text-white font-black text-3xl mb-12 tracking-widest border-y border-gray-800 py-4 inline-block">
+                724 505 1350
             </div>
-            <img src="assets/images/banner.jpeg" alt="Banner" class="footer-banner">
-            <p class="copyright">&copy; 2025 Damions 24/7 Mobile Mechanics. All Rights Reserved.</p>
-            <p style="font-size: 0.7rem; opacity: 0.5; margin-top: 5px;">Developed using experimental AI tools from
-                Google's advanced beta testing program.</p>
+            <p class="text-gray-800 text-xs font-black tracking-[0.3em] uppercase mb-16">SYSTEM.ONLINE // ALL RIGHTS RESERVED 2026 // NO ESCAPE</p>
+
+            <!-- ══ BACKEND PORTAL BUTTON ══ -->
+            <div class="backend-section">
+                <p class="font-display text-xs tracking-[0.4em] uppercase text-gray-600 mb-6">
+                    ⚙ RESTRICTED ACCESS ⚙
+                </p>
+                <a id="backend-btn" href="backend.html">
+                    <span class="btn-icon">⚙</span>
+                    <span>BACKEND</span>
+                    <span class="btn-icon">⚙</span>
+                </a>
+                <p class="text-gray-800 text-xs tracking-widest mt-6 font-bold uppercase">
+                    FULL SYSTEM DASHBOARD &amp; DIAGNOSTICS HUB
+                </p>
+            </div>
         </div>
     </footer>
 
-    <div id="info-popup" class="info-popup">
-        <!-- ... popup content ... -->
-        <div class="popup-content">
-            <span class="close-btn">&times;</span>
-            <div class="popup-header">
-                <span class="popup-icon">💡</span>
-                <h3 id="popup-title"></h3>
-            </div>
-            <p id="popup-text"></p>
-            <div class="popup-buttons">
-                <button id="next-tip-btn" class="cta-button">Next Tip</button>
-                <button id="dont-show-btn" class="cta-button secondary">Don't Show Again</button>
-            </div>
-        </div>
-    </div>
+    <!-- ══ SCRIPTS ══ -->
+    <script>
+        // Glitch on tap
+        const addGlitch = () => {
+            document.body.classList.remove('screen-glitch');
+            void document.body.offsetWidth;
+            document.body.classList.add('screen-glitch');
+        };
+        document.body.addEventListener('click',      () => { if (typeof playGlitchBlip === 'function') playGlitchBlip(); addGlitch(); });
+        document.body.addEventListener('touchstart', () => { if (typeof playGlitchBlip === 'function') playGlitchBlip(); addGlitch(); }, { passive: true });
 
+        // ── Web Audio ──
+        let audioCtx, isAudioInit = false;
 
+        const playRetroTone = (freq, type, time, vol) => {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + time);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + time);
+        };
 
-    <audio id="hover-audio" src="./videos/impact.mp3" preload="auto"></audio>
-    <audio id="background-music" src="./assets/music/bg.wav" loop preload="auto"></audio>
+        const playStartupChime = () => {
+            playRetroTone(300, 'square', 0.1, 0.1);
+            setTimeout(() => playRetroTone(400, 'square', 0.1, 0.1), 120);
+            setTimeout(() => playRetroTone(500, 'square', 0.1, 0.1), 240);
+            setTimeout(() => playRetroTone(800, 'square', 0.3, 0.1), 360);
+        };
 
-    <script src="mobile.js"></script>
-    <script src="tooltips.js"></script>
-    <script src="ShaderLibrary.js"></script>
-    <!-- Three.js Dependencies for 3D Cursor -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script> -->
-    <!-- <script src="cursor_3d.js"></script> -->
+        const playGlitchBlip = () => {
+            if (isAudioInit) playRetroTone(Math.random() * 200 + 100, 'sawtooth', 0.08, 0.05);
+        };
 
-    <script src="unified_shader.js"></script>
-    <script src="rolling_banner_shader.js"></script>
-    <script src="main.js"></script>
-    <script src="videoplayer.js"></script>
-    <script src="hero_slideshow.js"></script>
-    <script src="enter_shader.js"></script>
-    <script src="tentacle_overlay.js"></script>
-    <script src="voice_narrator.js"></script>
-    <script src="intro.js"></script>
-    <script src="live.js"></script>
-    <script src="fact.js"></script>
-    <script src="hero_shader.js"></script>
-    <script src="ui_effects.js"></script>
+        const initAudio = () => {
+            if (isAudioInit) return;
+            isAudioInit = true;
+            try {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AC();
+                setTimeout(playStartupChime, 100);
+                setTimeout(() => {
+                    const msg = new SpeechSynthesisUtterance();
+                    msg.text = "Hello. Call 7 2 4. 5 0 5. 1 3 5 0. if you need any work done. thanks.";
+                    msg.pitch = 0.7; msg.rate = 0.85; msg.volume = 1;
+                    window.speechSynthesis.speak(msg);
+                }, 1500);
+            } catch (e) {}
+        };
 
-    <script src="shader.js"></script> <!-- Keep for hero if still used -->
+        // ── Form ──
+        document.getElementById('dispatch-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('form-msg');
+            msg.classList.remove('hidden');
+            setTimeout(() => { msg.classList.add('hidden'); e.target.reset(); }, 4000);
+        });
+
+        // ── Three.js ──
+        const initThreeJS = () => {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            let currentFogHue = 0.15;
+            scene.background = new THREE.Color().setHSL(currentFogHue, 0.8, 0.05);
+            scene.fog = new THREE.FogExp2(scene.background, 0.05);
+
+            const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 100);
+            const renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(0.7);
+            container.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const pointLight = new THREE.PointLight(0xff003c, 5, 30);
+            scene.add(pointLight);
+
+            // Railing
+            const railMat = new THREE.MeshStandardMaterial({ color: 0xcc4400, roughness: 0.9, metalness: 0.2 });
+            const railingGroup = new THREE.Group();
+            const topRail = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,40,8), railMat);
+            topRail.rotation.z = Math.PI / 2; topRail.position.set(0,-3.5,-4); railingGroup.add(topRail);
+            const midRail = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,40,8), railMat);
+            midRail.rotation.z = Math.PI / 2; midRail.position.set(0,-4.8,-4); railingGroup.add(midRail);
+            for (let i = -15; i <= 15; i += 4) {
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,8,8), railMat);
+                post.position.set(i,-6,-4); railingGroup.add(post);
+            }
+            scene.add(railingGroup);
+
+            // Pipe
+            const pipeBody = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,12,16), railMat);
+            pipeBody.rotation.z = Math.PI/3; pipeBody.rotation.x = Math.PI/6; pipeBody.position.set(8,-5,-7);
+            const holeMat = new THREE.MeshBasicMaterial({ color: 0x050500 });
+            const pipeHole = new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,12.1,16), holeMat);
+            pipeHole.rotation.copy(pipeBody.rotation); pipeHole.position.copy(pipeBody.position);
+            scene.add(pipeBody); scene.add(pipeHole);
+
+            // Steam
+            const leakOrigin = new THREE.Vector3(4.5,-2.5,-5);
+            const leakLight = new THREE.PointLight(0xff8800,4,12); leakLight.position.copy(leakOrigin); scene.add(leakLight);
+            const steamCanvas = document.createElement('canvas'); steamCanvas.width = steamCanvas.height = 32;
+            const sCtx = steamCanvas.getContext('2d');
+            const grad = sCtx.createRadialGradient(16,16,0,16,16,16);
+            grad.addColorStop(0,'rgba(255,255,255,1)'); grad.addColorStop(1,'rgba(255,255,255,0)');
+            sCtx.fillStyle = grad; sCtx.fillRect(0,0,32,32);
+            const steamTex = new THREE.CanvasTexture(steamCanvas);
+            const steamParticles = [];
+            for (let i = 0; i < 35; i++) {
+                const sm = new THREE.SpriteMaterial({ map: steamTex, color: 0xcccccc, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+                const s = new THREE.Sprite(sm);
+                s.position.copy(leakOrigin);
+                s.userData = { life: Math.random(), speedY: Math.random()*0.04+0.02, speedX: (Math.random()-0.5)*0.03-0.02 };
+                scene.add(s); steamParticles.push(s);
+            }
+
+            // Gears
+            const gears = [];
+            const gearMat  = new THREE.MeshStandardMaterial({ color:0x332200, metalness:0.9, roughness:0.8, wireframe:true });
+            const solidMat = new THREE.MeshStandardMaterial({ color:0x550000, metalness:0.5, roughness:1 });
+            const isMob = window.innerWidth < 768;
+            for (let i = 0; i < (isMob ? 30 : 70); i++) {
+                const r = Math.random()*3+1;
+                const g = new THREE.Mesh(new THREE.TorusGeometry(r,r*0.4,4,isMob?8:12), Math.random()>0.5?gearMat:solidMat);
+                g.position.set((Math.random()-0.5)*50,(Math.random()-0.5)*80+30,(Math.random()-0.5)*40-10);
+                g.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+                g.userData = { speedY: Math.random()*0.1+0.05, rotSpeedX:(Math.random()-0.5)*0.1, rotSpeedY:(Math.random()-0.5)*0.1 };
+                scene.add(g); gears.push(g);
+            }
+
+            camera.position.z = 10;
+            let targetX = 0, targetY = 0;
+            const hwX = window.innerWidth/2, hwY = window.innerHeight/2;
+            document.addEventListener('mousemove', e => { targetX=(e.clientX-hwX)*0.005; targetY=(e.clientY-hwY)*0.005; });
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', e => {
+                    if (e.gamma!==null&&e.beta!==null) { targetX=e.gamma*0.05; targetY=(e.beta-45)*0.05; }
+                }, true);
+            }
+
+            const clock = new THREE.Clock();
+            const animate = () => {
+                requestAnimationFrame(animate);
+                const t = clock.getElapsedTime();
+                camera.position.x += (targetX - camera.position.x)*0.1;
+                camera.position.y += (-targetY - camera.position.y)*0.1;
+                camera.rotation.z = Math.sin(t*0.5)*0.15;
+                camera.lookAt(scene.position);
+
+                currentFogHue = (currentFogHue + 0.0005) % 1;
+                const nc = new THREE.Color().setHSL(currentFogHue, 0.8, 0.08);
+                scene.background = nc; scene.fog.color = nc;
+
+                pointLight.position.x = Math.sin(t)*15;
+                pointLight.position.y = Math.cos(t*1.5)*15;
+                pointLight.intensity  = 2 + Math.sin(t*10)*3;
+
+                gears.forEach(g => {
+                    g.position.y -= g.userData.speedY;
+                    g.rotation.x += g.userData.rotSpeedX;
+                    g.rotation.y += g.userData.rotSpeedY;
+                    const sc = 1 + Math.sin(t*2+g.position.x)*0.2;
+                    g.scale.set(sc,sc,sc);
+                    if (g.position.y < -30) { g.position.y=50; g.position.x=(Math.random()-0.5)*50; }
+                });
+
+                steamParticles.forEach(s => {
+                    s.userData.life += 0.004;
+                    if (s.userData.life > 1) {
+                        s.userData.life = 0; s.position.copy(leakOrigin);
+                        s.position.x += (Math.random()-0.5)*1.5; s.position.y += (Math.random()-0.5)*1.5; s.scale.set(1,1,1);
+                    }
+                    s.position.y += s.userData.speedY; s.position.x += s.userData.speedX;
+                    const sc = 1 + s.userData.life*12; s.scale.set(sc,sc,1);
+                    s.material.opacity = s.userData.life < 0.2 ? (s.userData.life/0.2)*0.5 : (1-s.userData.life)*0.5;
+                });
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth/window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        // ── Init ──
+        window.onload = () => {
+            const loader = document.getElementById('loader');
+            const startExperience = () => {
+                document.removeEventListener('click',      startExperience);
+                document.removeEventListener('touchstart', startExperience);
+                initAudio();
+                loader.style.transform = 'scale(1.5)';
+                loader.style.opacity   = '0';
+                setTimeout(() => { loader.style.display='none'; initThreeJS(); initGSAP(); }, 500);
+            };
+            document.addEventListener('click',      startExperience);
+            document.addEventListener('touchstart', startExperience, { passive: true });
+
+            const btn  = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            btn.addEventListener('click', () => { menu.classList.toggle('hidden'); addGlitch(); });
+            menu.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => menu.classList.add('hidden')));
+        };
+
+        const initGSAP = () => {
+            gsap.registerPlugin(ScrollTrigger);
+            document.querySelectorAll('.gs-reveal').forEach(el => {
+                gsap.fromTo(el,
+                    { scale:0.8, opacity:0, rotation: Math.random()*10-5 },
+                    { scale:1, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.7)',
+                      scrollTrigger: { trigger:el, start:'top 85%', toggleActions:'play none none reverse' }
+                    }
+                );
+            });
+        };
+    </script>
 </body>
-
 </html>

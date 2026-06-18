@@ -113,14 +113,39 @@ class AutomotiveFactConsole {
 
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
+        
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
+            this.handleMobileState();
+        });
 
         // Listen for fact triggers from live.js
         window.addEventListener('automotive-fact-triggered', (e) => {
             this.triggerFact(e.detail.text, e.detail.sourceX, e.detail.sourceY);
         });
 
+        this.isLooping = true;
+        this.handleMobileState();
+
         requestAnimationFrame((t) => this.tick(t));
+    }
+
+    handleMobileState() {
+        const isMobile = window.innerWidth <= 1024;
+        if (isMobile) {
+            if (this.container) {
+                this.container.style.display = 'none';
+            }
+            this.isLooping = false;
+        } else {
+            if (this.container) {
+                this.container.style.display = 'block';
+            }
+            if (!this.isLooping) {
+                this.isLooping = true;
+                requestAnimationFrame((t) => this.tick(t));
+            }
+        }
     }
 
     resizeCanvas() {
@@ -178,6 +203,8 @@ class AutomotiveFactConsole {
     }
 
     tick(time) {
+        if (!this.isLooping) return;
+
         if (!this.lastTime) this.lastTime = time;
         const delta = time - this.lastTime;
         this.lastTime = time;

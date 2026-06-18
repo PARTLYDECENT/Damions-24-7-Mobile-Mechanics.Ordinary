@@ -369,8 +369,11 @@
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(texUniform, 0);
 
+    const isMobile = () => window.innerWidth <= 1024;
+
     // --- Resize Engine ---
     function resize() {
+        if (isMobile()) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = canvas.clientWidth * dpr;
         canvas.height = canvas.clientHeight * dpr;
@@ -379,16 +382,35 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // --- Render Loop ---
-    const startTime = performance.now();
+    // --- Render Loop (Translator-aware, capped at 30 FPS) ---
+    const startTime   = performance.now();
+    const TARGET_INTERVAL = 1000 / 30; // 30 FPS cap — banner doesn't need 60
+    let   lastRenderTime  = 0;
+
     function render(now) {
+        requestAnimationFrame(render); // Always re-schedule, but gate work inside
+
+        if (isMobile()) return; // CSS marquee handles mobile
+
+        // Frame-rate cap — skip if too soon
+        if (now - lastRenderTime < TARGET_INTERVAL) return;
+        lastRenderTime = now;
+
+        // Pause when tab is hidden
+        if (document.hidden) return;
+
         const time = (now - startTime) * 0.001;
 
-        // Redraw scrolled text and re-upload texture to GPU
-        renderTextTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // Native upload flip
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas);
+        // Only re-upload CPU text texture if the worker isn't handling it
+        const workerActive = window.TranslatorBannerWorker && window.TranslatorBannerWorker.active;
+        if (!workerActive) {
+            renderTextTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textCanvas);
+        }
+        // If worker IS active, it renders into the OffscreenCanvas and
+        // the GPU texture update is skipped here (worker manages its own surface).
 
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -397,8 +419,6 @@
         gl.uniform2f(resUniform, canvas.width, canvas.height);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-        requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
 
