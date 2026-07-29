@@ -953,22 +953,23 @@
                 <div class="mobile-quote-content">
                     <div class="modal-header">
                         <h2>Quick Quote Request</h2>
-                        <button class="close-modal-btn" onclick="document.getElementById('mobile-quote-modal').style.display='none'">&times;</button>
+                        <button class="close-modal-btn" aria-label="Close modal" onclick="document.getElementById('mobile-quote-modal').style.display='none'">&times;</button>
                     </div>
                     <form id="mobile-quote-form" onsubmit="handleQuoteSubmit(event)">
                         <div class="form-group">
                             <label for="quote-name">Your Name</label>
-                            <input type="text" id="quote-name" required placeholder="e.g. John Doe">
+                            <input type="text" id="quote-name" required autocomplete="name" inputmode="text" placeholder="e.g. John Doe">
                         </div>
                         <div class="form-group">
                             <label for="quote-phone">Phone Number</label>
-                            <input type="tel" id="quote-phone" required placeholder="e.g. 123-456-7890">
+                            <input type="tel" id="quote-phone" required autocomplete="tel" inputmode="tel" placeholder="e.g. (724) 505-1350">
                         </div>
                         <div class="form-group">
                             <label for="quote-service">Required Service</label>
                             <select id="quote-service" required>
                                 <option value="mechanics">🔧 24/7 Mobile Mechanic</option>
                                 <option value="roofing">🏠 Roofing Solutions</option>
+                                <option value="diagnostics">⚙️ On-Site Diagnostics</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -986,6 +987,12 @@
                 </div>
             `;
             document.body.appendChild(modal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
 
             window.handleQuoteSubmit = (e) => {
                 e.preventDefault();

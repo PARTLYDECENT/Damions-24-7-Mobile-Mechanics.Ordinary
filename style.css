@@ -1681,6 +1681,30 @@ img { max-width: 100%; display: block; }
 /* ── Mobile (≤768px) ── */
 @media (max-width: 768px) {
 
+    /* Prevent iOS auto-zoom on input focus by setting font-size: 16px minimum */
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="email"],
+    select,
+    textarea,
+    .field-input,
+    .field-select {
+        font-size: 16px !important;
+        touch-action: manipulation;
+    }
+
+    /* Active touch feedback for cards and buttons */
+    .cta-button:active,
+    .service-card:active,
+    .feature-item:active,
+    .service-tab-btn:active,
+    .answer-btn:active,
+    .news-card:active {
+        transform: scale(0.98) !important;
+        opacity: 0.95;
+    }
+
     /* Banner */
     :root { --banner-h: 48px; }
 

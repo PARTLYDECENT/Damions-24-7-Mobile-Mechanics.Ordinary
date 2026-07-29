@@ -3,16 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Damion's 24/7 | Mobile Mechanics &amp; Emergency Roofing</title>
-    <meta name="description" content="Damion's 24/7 Mobile Mechanics and Emergency Roofing. On-site repairs, diagnostics, and emergency response. Call (724) 505-1350 anytime.">
-    <meta name="theme-color" content="#0a0a05">
+    <title>Damion's 24/7 | Premium Mobile Mechanics & Extraction</title>
+    <meta name="description" content="Damion's 24/7 Mobile Mechanics. High-end on-site diagnostics and extraction.">
+    <meta name="theme-color" content="#050505">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Creepster&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js & Post-Processing Stack -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    
+    <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
+    <link rel="stylesheet" href="style.css">
     <script>
         tailwind.config = {
             theme: {
@@ -20,35 +31,13 @@
                     fontFamily: {
                         sans: ['Rajdhani', 'sans-serif'],
                         display: ['Orbitron', 'sans-serif'],
-                        fever: ['Creepster', 'cursive'],
                     },
                     colors: {
-                        hazard: {
-                            yellow: '#facc15', main: '#eab308', dark: '#854d0e',
-                            rust: '#9a3412', bg: '#0a0a05', alert: '#ff003c', toxic: '#39ff14',
-                            orange: '#f97316', deepOrange: '#c2410c'
-                        }
-                    },
-                    animation: {
-                        'breathe': 'breathe 6s ease-in-out infinite',
-                        'shake':   'shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite',
-                        'flare':   'flare 3s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        breathe: {
-                            '0%,100%': { transform: 'scale(1)' },
-                            '50%':     { transform: 'scale(1.015)' },
-                        },
-                        shake: {
-                            '10%,90%': { transform: 'translate3d(-1px,0,0)' },
-                            '20%,80%': { transform: 'translate3d(2px,0,0)' },
-                            '30%,50%,70%': { transform: 'translate3d(-3px,0,0)' },
-                            '40%,60%': { transform: 'translate3d(3px,0,0)' }
-                        },
-                        flare: {
-                            '0%,100%': { boxShadow: '0 0 20px #f97316, 0 0 60px #f9731640' },
-                            '50%':     { boxShadow: '0 0 40px #facc15, 0 0 100px #facc1560' },
-                        }
+                        obsidian: '#050505',
+                        amber: '#ff6600',
+                        amberGlow: '#ff4400',
+                        steel: '#888888',
+                        carbon: '#111111'
                     }
                 }
             }
@@ -57,1358 +46,461 @@
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-
+        
         :root {
-            --orange:      #f97316;
-            --orange-deep: #c2410c;
-            --orange-glow: rgba(249,115,22,0.4);
-            --yellow:      #facc15;
-            --red:         #ff003c;
-            --toxic:       #39ff14;
-            --bg:          #0a0a05;
+            --amber: #ff6600;
+            --amber-deep: #cc4400;
+            --obsidian: #050505;
+            --glass: rgba(10, 10, 10, 0.45);
+            --glass-border: rgba(255, 102, 0, 0.15);
         }
-
-        html { scroll-behavior: smooth; }
 
         body {
-            background: var(--bg);
+            background: var(--obsidian);
             color: #d6d3d1;
             overflow-x: hidden;
-            overscroll-behavior: none;
             font-family: 'Rajdhani', sans-serif;
+            margin: 0;
         }
 
-        /* ── CANVAS ── */
         #canvas-container {
             position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: -2; pointer-events: none;
         }
 
-        /* ── OVERLAYS ── */
-        .fever-layer {
-            position: fixed; inset: 0; z-index: -1;
-            pointer-events: none; mix-blend-mode: overlay;
-            background: linear-gradient(135deg,
-                rgba(249,115,22,0.08),
-                rgba(194,65,12,0.12),
-                rgba(57,255,20,0.04));
-            animation: hueShift 20s infinite alternate linear;
-        }
-        @keyframes hueShift {
-            0%   { filter: hue-rotate(0deg) saturate(1.2); }
-            50%  { filter: hue-rotate(30deg) saturate(1.8); }
-            100% { filter: hue-rotate(-20deg) saturate(1.4); }
+        /* Cinematic Vignette */
+        .vignette {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%);
         }
 
-        .crt-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background:
-                linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.18) 50%),
-                linear-gradient(90deg, rgba(255,80,0,0.04), rgba(0,0,0,0.01), rgba(255,80,0,0.03));
-            background-size: 100% 3px, 3px 100%;
-            z-index: 9997; pointer-events: none; opacity: 0.5;
-        }
-
-        /* ── LOADER ── */
-        #loader {
-            position: fixed; inset: 0; background: #000;
-            z-index: 9999;
-            display: flex; justify-content: center; align-items: center; flex-direction: column;
-            transition: opacity 0.3s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1);
-        }
-        #loader-ring {
-            width: 120px; height: 120px;
-            border-radius: 50%;
-            border: 8px solid transparent;
-            border-top-color: var(--red);
-            border-right-color: var(--orange);
-            border-bottom-color: var(--yellow);
-            animation: loaderSpin 1s cubic-bezier(0.5,0,0.5,1) infinite;
-            box-shadow: 0 0 40px var(--orange-glow), inset 0 0 20px rgba(255,0,60,0.2);
-            margin-bottom: 32px;
-        }
-        @keyframes loaderSpin { to { transform: rotate(360deg); } }
-        #loader h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900; font-size: clamp(1.5rem, 5vw, 2.5rem);
-            letter-spacing: 0.4em; text-transform: uppercase; color: #fff;
-            text-shadow: 0 0 30px var(--orange);
-            margin-bottom: 12px;
-        }
-        #loader p {
-            color: var(--toxic); font-weight: 700;
-            letter-spacing: 0.2em; font-size: 1rem;
-            animation: loaderPulse 1.5s ease-in-out infinite;
-        }
-        @keyframes loaderPulse {
-            0%,100% { opacity: 1; text-shadow: 0 0 10px var(--toxic); }
-            50%      { opacity: 0.4; text-shadow: none; }
-        }
-
-        /* ── GLITCH TEXT ── */
-        .text-glitch {
-            position: relative; display: inline-block;
-        }
-        .text-glitch::before, .text-glitch::after {
-            content: attr(data-text);
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; opacity: 0.75;
-        }
-        .text-glitch::before {
-            left: 2px; text-shadow: -2px 0 #ff003c;
-            clip: rect(24px,550px,90px,0);
-            animation: ga2 3.5s infinite linear alternate-reverse;
-        }
-        .text-glitch::after {
-            left: -2px; text-shadow: -2px 0 #0ff;
-            clip: rect(85px,550px,140px,0);
-            animation: ga1 2.8s infinite linear alternate-reverse;
-        }
-        @keyframes ga1 {
-            0%   { clip: rect(13px,9999px,83px,0); }
-            25%  { clip: rect(65px,9999px,11px,0); }
-            50%  { clip: rect(41px,9999px,99px,0); }
-            75%  { clip: rect(93px,9999px,14px,0); }
-            100% { clip: rect(51px,9999px,34px,0); }
-        }
-        @keyframes ga2 {
-            0%   { clip: rect(29px,9999px,8px,0);  }
-            25%  { clip: rect(14px,9999px,96px,0); }
-            50%  { clip: rect(85px,9999px,45px,0); }
-            75%  { clip: rect(6px, 9999px,12px,0); }
-            100% { clip: rect(32px,9999px,78px,0); }
-        }
-
-        /* ── SCREEN GLITCH (click only) ── */
-        .screen-glitch { animation: screenTear 0.25s cubic-bezier(0.25,0.46,0.45,0.94) both; }
-        @keyframes screenTear {
-            0%   { transform: skew(0deg); filter: blur(0); }
-            20%  { transform: skew(-8deg)  translate(-8px,4px);  filter: blur(3px) hue-rotate(80deg); }
-            50%  { transform: skew(6deg)   translate(8px,-4px);  filter: blur(1px) invert(0.3); }
-            75%  { transform: skew(-3deg)  translate(-3px,1px);  filter: blur(0); }
-            100% { transform: skew(0deg); filter: blur(0); }
-        }
-
-        /* ── NAV ── */
+        /* Sophisticated Glassmorphism Nav */
         #navbar {
-            position: fixed; top: 0; width: 100%;
-            z-index: 100;
-            padding: 0;
-            transition: background 0.4s, backdrop-filter 0.4s;
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            border-bottom: 1px solid transparent;
         }
         #navbar.scrolled {
-            background: rgba(10,10,5,0.92);
-            backdrop-filter: blur(20px);
-            border-bottom: 2px solid var(--orange-deep);
+            background: var(--glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
+
         .nav-inner {
-            max-width: 1400px; margin: 0 auto;
-            padding: 0 24px;
-            height: 72px;
-            display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 2px dashed rgba(249,115,22,0.3);
+            max-width: 1400px; margin: 0 auto; padding: 0 24px;
+            height: 80px; display: flex; align-items: center; justify-content: space-between;
         }
-        .nav-logo { display: flex; flex-direction: column; gap: 2px; text-decoration: none; }
-        .nav-logo-top {
+        
+        .nav-logo {
             font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: 1.1rem; letter-spacing: 0.1em;
-            color: var(--orange); text-shadow: 0 0 15px var(--orange-glow);
+            font-size: 1.2rem; letter-spacing: 0.2em; color: #fff; text-decoration: none;
         }
-        .nav-logo-badge {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: 1.4rem; letter-spacing: 0.05em;
-            background: var(--red); color: #000;
-            padding: 2px 8px; transform: rotate(1deg);
-            display: inline-block; line-height: 1.2;
-        }
-        .nav-links { display: flex; align-items: center; gap: 8px; }
+        .nav-logo span { color: var(--amber); }
+
+        .nav-links { display: flex; align-items: center; gap: 32px; }
         .nav-link {
-            font-family: 'Rajdhani', sans-serif; font-weight: 700;
-            font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase;
-            color: #ccc; text-decoration: none;
-            padding: 8px 14px;
-            border: 1px solid transparent;
-            transition: color 0.2s, border-color 0.2s;
+            font-weight: 600; font-size: 0.85rem; letter-spacing: 0.2em;
+            text-transform: uppercase; color: #888; text-decoration: none;
+            transition: color 0.3s;
         }
-        .nav-link:hover { color: var(--orange); border-color: var(--orange-deep); }
-        .nav-cta {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: 0.85rem; letter-spacing: 0.1em;
-            color: #000; background: var(--orange);
-            border: 3px solid #000;
-            padding: 10px 20px; text-decoration: none;
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-            box-shadow: 4px 4px 0 var(--orange-deep);
-            animation: flare 3s ease-in-out infinite;
-        }
-        .nav-cta:hover { background: var(--yellow); box-shadow: 6px 6px 0 var(--red); }
+        .nav-link:hover { color: #fff; }
 
-        /* ── MOBILE NAV ── */
-        #mobile-menu-btn {
-            display: none; flex-direction: column; gap: 5px;
-            background: none; border: 2px solid var(--orange);
-            padding: 10px; cursor: pointer;
-        }
-        #mobile-menu-btn span {
-            display: block; width: 24px; height: 2px;
-            background: var(--orange); transition: all 0.3s;
-        }
-        #mobile-menu {
-            display: none; position: fixed; inset: 0;
-            background: rgba(10,10,5,0.97); backdrop-filter: blur(20px);
-            z-index: 99; flex-direction: column;
-            align-items: center; justify-content: center; gap: 32px;
-        }
-        #mobile-menu.open { display: flex; }
-        .mobile-nav-link {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: 2rem; letter-spacing: 0.15em;
-            color: #fff; text-decoration: none; text-transform: uppercase;
-            transition: color 0.2s;
-        }
-        .mobile-nav-link:hover { color: var(--orange); }
-        #mobile-close {
-            position: absolute; top: 24px; right: 24px;
-            font-size: 2rem; color: var(--orange);
-            background: none; border: none; cursor: pointer; line-height: 1;
-        }
-
-        /* ── HERO ── */
-        #home {
-            min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            padding: 120px 24px 80px;
+        /* Elegant CTA Button */
+        .cta-premium {
             position: relative; overflow: hidden;
+            font-family: 'Orbitron', sans-serif; font-weight: 700;
+            font-size: 0.85rem; letter-spacing: 0.15em; color: var(--amber);
+            border: 1px solid var(--amber); padding: 12px 28px;
+            text-decoration: none; text-transform: uppercase;
+            background: rgba(255, 102, 0, 0.05);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            border-radius: 4px;
         }
-        .hero-tag {
-            display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
-            margin-bottom: 32px; transform: rotate(-1.5deg);
+        .cta-premium:hover {
+            background: var(--amber); color: #000;
+            box-shadow: 0 0 30px rgba(255, 102, 0, 0.4);
         }
-        .hero-alert {
-            background: var(--red); color: #fff;
-            font-family: 'Rajdhani', sans-serif; font-weight: 700;
-            font-size: 0.75rem; letter-spacing: 0.35em; text-transform: uppercase;
-            padding: 6px 16px; animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both infinite;
+
+        /* Hero Typography */
+        #home {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 120px 24px 80px; position: relative;
         }
         .hero-sub {
-            color: var(--orange); font-size: 0.7rem;
-            letter-spacing: 0.3em; text-transform: uppercase;
+            color: var(--amber); font-weight: 600; font-size: 0.8rem;
+            letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 24px;
+            display: block; text-align: center;
         }
         .hero-h1 {
             font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: clamp(3rem, 10vw, 7rem);
-            line-height: 0.95; text-transform: uppercase;
-            text-align: center; margin-bottom: 24px;
-        }
-        .hero-h1 .line1 {
-            display: block; color: #fff;
-            text-shadow: 0 2px 0 #333, 0 0 40px rgba(255,255,255,0.1);
-        }
-        .hero-h1 .line2 {
-            display: block;
-            background: linear-gradient(135deg, var(--orange) 0%, var(--yellow) 60%, var(--orange) 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 20px var(--orange-glow));
+            font-size: clamp(2.5rem, 8vw, 6.5rem); line-height: 1.05;
+            text-transform: uppercase; text-align: center; margin-bottom: 32px;
+            color: #fff; text-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
         .hero-desc {
-            font-size: clamp(1rem, 2.5vw, 1.4rem); font-weight: 600;
-            color: #aaa; max-width: 680px; text-align: center;
-            line-height: 1.5; margin: 0 auto 48px;
-            border-left: 4px solid var(--orange-deep);
-            padding-left: 20px; text-align: left;
-        }
-        .hero-cta-row {
-            display: flex; flex-wrap: wrap; gap: 16px;
-            justify-content: center; align-items: center;
-        }
-        .cta-primary {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: clamp(1.1rem, 3vw, 1.5rem);
-            letter-spacing: 0.08em; text-transform: uppercase;
-            color: #000; background: var(--orange);
-            border: 4px solid #000; text-decoration: none;
-            padding: 20px 40px; display: inline-flex; align-items: center; gap: 12px;
-            position: relative; overflow: hidden;
-            box-shadow: 6px 6px 0 var(--orange-deep), 0 0 40px var(--orange-glow);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .cta-primary:hover { transform: translate(-3px,-3px); box-shadow: 9px 9px 0 var(--orange-deep), 0 0 60px var(--orange-glow); }
-        .cta-primary:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--orange-deep); }
-        .cta-primary .fill {
-            position: absolute; inset: 0; background: var(--yellow);
-            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
-            z-index: 0;
-        }
-        .cta-primary:hover .fill { transform: translateY(0); }
-        .cta-primary > * { position: relative; z-index: 1; }
-
-        .cta-secondary {
-            font-family: 'Rajdhani', sans-serif; font-weight: 700;
-            font-size: 1rem; letter-spacing: 0.2em; text-transform: uppercase;
-            color: var(--orange); text-decoration: none;
-            border: 2px solid var(--orange-deep);
-            padding: 18px 32px;
-            transition: background 0.2s, color 0.2s;
-        }
-        .cta-secondary:hover { background: var(--orange-deep); color: #fff; }
-
-        /* ── STATS BAR ── */
-        .stats-bar {
-            background: linear-gradient(90deg, rgba(194,65,12,0.15), rgba(249,115,22,0.08), rgba(194,65,12,0.15));
-            border-top: 2px solid var(--orange-deep); border-bottom: 2px solid var(--orange-deep);
-            padding: 20px 24px; display: flex; justify-content: center;
-            flex-wrap: wrap; gap: 0;
-            position: relative; z-index: 10;
-        }
-        .stat-item {
-            text-align: center; padding: 12px 32px;
-            border-right: 1px solid rgba(249,115,22,0.2);
-        }
-        .stat-item:last-child { border-right: none; }
-        .stat-num {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: clamp(1.4rem, 4vw, 2.2rem); color: var(--orange);
-            display: block; line-height: 1;
-            text-shadow: 0 0 20px var(--orange-glow);
-        }
-        .stat-label {
-            font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
-            color: #666; display: block; margin-top: 4px;
+            font-size: clamp(0.95rem, 1.5vw, 1.2rem); font-weight: 400;
+            color: #aaa; max-width: 600px; text-align: center;
+            line-height: 1.6; margin: 0 auto 48px; letter-spacing: 0.05em;
         }
 
-        /* ── SECTIONS ── */
-        .section-badge {
-            font-family: 'Orbitron', sans-serif; font-size: 0.7rem;
-            font-weight: 700; letter-spacing: 0.35em; text-transform: uppercase;
-            display: inline-block; padding: 6px 16px; margin-bottom: 16px;
-        }
-        .section-title {
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: clamp(2rem, 6vw, 4.5rem);
-            text-transform: uppercase; line-height: 1;
-        }
-
-        /* ── SERVICE CARDS ── */
+        /* Premium Service Cards */
         .service-card {
-            background: linear-gradient(135deg, #0d0d06 0%, #111108 100%);
-            border: 1px solid rgba(249,115,22,0.15);
-            padding: 36px; position: relative;
-            overflow: hidden;
-            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-        }
-        .service-card::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 4px; height: 100%;
-            background: linear-gradient(to bottom, var(--orange), var(--orange-deep));
-            transition: width 0.3s;
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 40px; position: relative; overflow: hidden;
+            border-radius: 4px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .service-card:hover {
-            border-color: rgba(249,115,22,0.5);
-            transform: translateY(-6px);
-            box-shadow: 0 20px 60px rgba(249,115,22,0.15), 0 0 0 1px rgba(249,115,22,0.2);
-        }
-        .service-card:hover::before { width: 6px; }
-        .service-card-num {
-            position: absolute; top: 16px; right: 20px;
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: 5rem; color: rgba(249,115,22,0.06);
-            line-height: 1; pointer-events: none;
+            border-color: var(--glass-border);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px rgba(255,102,0,0.1);
         }
         .service-card h3 {
             font-family: 'Orbitron', sans-serif; font-weight: 700;
-            font-size: 1.1rem; letter-spacing: 0.1em;
-            text-transform: uppercase; color: #fff;
-            margin-bottom: 12px; padding-bottom: 12px;
-            border-bottom: 1px solid rgba(249,115,22,0.15);
+            font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase;
+            color: #fff; margin-bottom: 16px;
         }
-        .service-card p { color: #888; line-height: 1.7; font-size: 1rem; }
+        .service-card p { color: #888; line-height: 1.6; font-size: 0.95rem; }
 
-        /* ── ROOFING RADIAL ── */
-        .roofing-radial {
-            width: min(400px, 85vw); aspect-ratio: 1;
-            border-radius: 50%;
-            border: 6px solid rgba(57,255,20,0.25);
-            background: radial-gradient(circle, rgba(57,255,20,0.04) 0%, transparent 70%);
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-            animation: roofSpin 80s linear infinite;
-            box-shadow: 0 0 80px rgba(57,255,20,0.08), inset 0 0 40px rgba(57,255,20,0.04);
-        }
-        @keyframes roofSpin { to { transform: rotate(360deg); } }
-        .roofing-radial .ring1 {
-            position: absolute; inset: 16px;
-            border: 3px dashed rgba(249,115,22,0.25);
-            border-radius: 50%;
-            animation: roofSpin 25s linear infinite reverse;
-        }
-        .roofing-radial .ring2 {
-            position: absolute; inset: 48px;
-            border: 1px solid rgba(255,0,60,0.4);
-            border-radius: 50%;
-            animation: roofPulse 2s ease-in-out infinite;
-        }
-        @keyframes roofPulse {
-            0%,100% { opacity: 0.4; transform: scale(0.96); }
-            50%      { opacity: 1;   transform: scale(1.04); }
-        }
-        .roofing-center { animation: roofSpin 80s linear infinite reverse; text-align: center; }
-
-        /* ── CONTACT CARD ── */
-        .contact-card {
-            background: linear-gradient(135deg, #0a0a05 0%, #0d0d08 100%);
-            border: 2px solid rgba(249,115,22,0.3);
-            padding: clamp(32px,6vw,64px);
-            position: relative; overflow: hidden;
-            box-shadow: 16px 16px 0 rgba(194,65,12,0.4), -2px -2px 0 rgba(249,115,22,0.1);
-        }
-        .contact-card::after {
-            content: ''; position: absolute;
-            top: 0; left: -100%; width: 60%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(249,115,22,0.03), transparent);
-            animation: cardShine 5s linear infinite;
-        }
-        @keyframes cardShine { to { left: 200%; } }
-
-        /* ── FORM ── */
-        .field-label {
-            display: block; font-size: 0.7rem; letter-spacing: 0.3em;
-            text-transform: uppercase; color: var(--orange);
-            font-weight: 700; margin-bottom: 8px;
-        }
+        /* Form Styling */
         .field-input, .field-select {
-            width: 100%; background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(249,115,22,0.2);
-            color: #fff; padding: 14px 18px; font-size: 1rem;
-            font-family: 'Rajdhani', sans-serif; font-weight: 600;
-            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-            appearance: none;
+            width: 100%; background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 16px 20px; font-size: 16px !important;
+            font-family: 'Rajdhani', sans-serif; font-weight: 500;
+            outline: none; transition: all 0.3s;
+            border-radius: 2px;
+            touch-action: manipulation;
         }
         .field-input:focus, .field-select:focus {
-            border-color: var(--orange);
-            box-shadow: 0 0 0 3px rgba(249,115,22,0.15), inset 0 0 10px rgba(249,115,22,0.05);
+            border-color: var(--amber); background: rgba(0,0,0,0.6);
+            box-shadow: inset 0 0 20px rgba(255,102,0,0.05);
         }
-        .field-input::placeholder { color: #444; }
-
-        /* ── HAZARD STRIPES ── */
-        .hazard-stripe {
-            background: repeating-linear-gradient(
-                45deg, transparent, transparent 8px,
-                rgba(249,115,22,0.15) 8px, rgba(249,115,22,0.15) 16px
-            );
-        }
-
-        /* ── GLASS PANEL ── */
-        .glass-panel {
-            background: rgba(10,10,5,0.7); backdrop-filter: blur(16px);
-            border: 1px solid rgba(249,115,22,0.3);
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 0 40px rgba(249,115,22,0.1);
-        }
-
-        /* ── BACKEND BUTTON ── */
-        #backend-btn {
-            display: inline-flex; align-items: center; gap: 14px;
-            position: relative; overflow: hidden;
-            font-family: 'Orbitron', sans-serif; font-weight: 900;
-            font-size: clamp(0.9rem, 2.5vw, 1.2rem); letter-spacing: 0.3em;
-            text-transform: uppercase; color: #000;
-            background: linear-gradient(135deg, var(--orange) 0%, var(--yellow) 100%);
-            border: 3px solid #000;
-            padding: 20px 52px; text-decoration: none;
-            box-shadow: 8px 8px 0 var(--orange-deep), 0 0 40px var(--orange-glow);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        #backend-btn:hover {
-            transform: translate(-4px,-4px);
-            box-shadow: 12px 12px 0 var(--red), 0 0 60px var(--orange-glow);
-        }
-        #backend-btn:active { transform: translate(2px,2px); box-shadow: 3px 3px 0 var(--red); }
-        #backend-btn::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, var(--red) 0%, var(--orange-deep) 100%);
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); z-index: 0;
-        }
-        #backend-btn:hover::before { transform: translateX(0); }
-        #backend-btn:hover { color: #fff; }
-        #backend-btn > * { position: relative; z-index: 1; }
-        #backend-btn .gear { font-size: 1.4rem; transition: transform 0.4s; display: inline-block; }
-        #backend-btn:hover .gear { transform: rotate(180deg); }
-        #backend-btn::after {
-            content: ''; position: absolute; top: -50%; left: 0; width: 100%; height: 30%;
-            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent);
-            animation: btnScan 4s linear infinite; z-index: 2; pointer-events: none;
-        }
-        @keyframes btnScan { 0% { top: -50%; } 100% { top: 150%; } }
-
-        .backend-zone {
-            border-top: 6px solid var(--orange-deep);
-            background: linear-gradient(to bottom, rgba(194,65,12,0.08), transparent);
-            padding: 64px 24px; text-align: center;
-        }
-
-        /* ── RESPONSIVE ── */
+        
         @media (max-width: 768px) {
-            .nav-links { display: none; }
-            #mobile-menu-btn { display: flex; }
-            .stat-item { padding: 10px 18px; }
-            .hero-desc { border-left: none; padding-left: 0; text-align: center; }
-            .hero-cta-row { flex-direction: column; align-items: stretch; }
-            .cta-primary { justify-content: center; }
-        }
-        @media (max-width: 480px) {
-            .stats-bar { gap: 0; }
-            .stat-item { padding: 8px 12px; border-right: none; border-bottom: 1px solid rgba(249,115,22,0.1); }
-            .stat-item:last-child { border-bottom: none; }
+            .nav-inner { padding: 0 16px; height: 70px; }
+            .field-input, .field-select { font-size: 16px !important; }
         }
     </style>
 </head>
-<body id="body-container">
+<body>
 
-    <div class="crt-overlay"></div>
-    <div class="fever-layer"></div>
-
-    <!-- ══ LOADER ══ -->
-    <div id="loader">
-        <div id="loader-ring"></div>
-        <h2 class="text-glitch" data-text="SYSTEM ONLINE">SYSTEM ONLINE</h2>
-        <p>TAP TO DEPLOY PROTOCOLS</p>
-        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(249,115,22,0.06) 0%, transparent 70%);pointer-events:none;animation:loaderPulse 2s ease-in-out infinite"></div>
-    </div>
-
-    <!-- ══ 3D CANVAS ══ -->
+    <div class="vignette"></div>
     <div id="canvas-container"></div>
 
-    <!-- ══ NAV ══ -->
-    <nav id="navbar">
-        <div class="nav-inner">
-            <a href="#" class="nav-logo">
-                <span class="nav-logo-top text-glitch" data-text="DAMION'S">DAMION'S</span>
-                <span class="nav-logo-badge">247</span>
-            </a>
-            <div class="nav-links">
-                <a href="#auto"    class="nav-link">Mechanical</a>
-                <a href="#roofing" class="nav-link">Structural</a>
+    <nav id="navbar" class="header">
+        <div class="nav-inner nav-container">
+            <a href="#" class="nav-logo logo">DAMION'S <span>24/7</span></a>
+            <div class="nav-links" id="navLinks">
+                <a href="#auto" class="nav-link">Mechanical</a>
+                <a href="#structural" class="nav-link">Structural</a>
                 <a href="#contact" class="nav-link">Dispatch</a>
-                <a href="tel:7245051350" class="nav-cta">724-505-1350</a>
+                <a href="backend.html" class="nav-link">Full Hub</a>
+                <a href="hub.html" class="nav-link">Digital Wrench</a>
             </div>
-            <button id="mobile-menu-btn" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+            <a href="tel:7245051350" class="cta-premium">724-505-1350</a>
         </div>
     </nav>
 
-    <!-- ══ MOBILE MENU ══ -->
-    <div id="mobile-menu">
-        <button id="mobile-close">✕</button>
-        <a href="#auto"    class="mobile-nav-link" data-close>Mechanical</a>
-        <a href="#roofing" class="mobile-nav-link" data-close>Structural</a>
-        <a href="#contact" class="mobile-nav-link" data-close>Dispatch</a>
-        <a href="tel:7245051350" class="mobile-nav-link" style="color:var(--orange);font-size:1.6rem;" data-close>
-            724 505 1350
-        </a>
-    </div>
-
-    <!-- ══ HERO ══ -->
     <main id="home">
-        <!-- Floating ghost text -->
-        <div style="position:absolute;top:20%;left:-40px;font-family:'Creepster',cursive;font-size:clamp(4rem,12vw,9rem);color:rgba(194,65,12,0.12);transform:rotate(-90deg);pointer-events:none;user-select:none;letter-spacing:0.05em;">BREAKDOWN</div>
-        <div style="position:absolute;bottom:15%;right:-40px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(3rem,10vw,7rem);color:rgba(249,115,22,0.06);transform:rotate(45deg);pointer-events:none;user-select:none;">COLLAPSE</div>
-
-        <div style="max-width:900px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;position:relative;z-index:10;">
-            <div class="hero-tag">
-                <span class="hero-alert">⚠ CRITICAL FAILURE DETECTED ⚠</span>
-                <span class="hero-sub">Deploying immediate response — 24 / 7 / 365</span>
-            </div>
-
-            <h1 class="hero-h1">
-                <span class="line1 text-glitch" data-text="WE SALVAGE">WE SALVAGE</span>
-                <span class="line2">THE BROKEN.</span>
-            </h1>
-
-            <p class="hero-desc">
-                Wheels or walls — we drag the full repair bay to your location.<br>
-                On-site diagnostics, emergency mechanical, roofing response.
+        <div style="max-width:900px;width:100%;margin:0 auto;position:relative;z-index:10;">
+            <span class="hero-sub">Rapid Deployment // Mobile Architecture</span>
+            <h1 class="hero-h1 gs-reveal">We Salvage<br>The Broken.</h1>
+            <p class="hero-desc gs-reveal" style="transition-delay: 0.1s;">
+                Engineering-grade mechanical repair and emergency structural response. We bring the full facility directly to your coordinates. 
             </p>
-
-            <div class="hero-cta-row">
-                <a href="tel:7245051350" class="cta-primary">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .95h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15.92z"></path></svg>
-                    <span>724 505 1350</span>
-                    <div class="fill"></div>
-                </a>
-                <a href="#auto" class="cta-secondary">See Services ↓</a>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;" class="gs-reveal" style="transition-delay: 0.2s;">
+                <a href="tel:7245051350" class="cta-premium" style="padding: 16px 40px; font-size: 1rem;">Initiate Uplink</a>
+                <a href="backend.html" class="cta-premium" style="padding: 16px 32px; font-size: 1rem; border-color: #00f2ea; color: #00f2ea;">Launch Full System</a>
             </div>
         </div>
     </main>
 
-    <!-- ══ STATS BAR ══ -->
-    <div class="stats-bar">
-        <div class="stat-item">
-            <span class="stat-num">24/7</span>
-            <span class="stat-label">Always On</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">&lt;35<small style="font-size:0.5em">min</small></span>
-            <span class="stat-label">Response</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">85%</span>
-            <span class="stat-label">On-Site Fix</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">100%</span>
-            <span class="stat-label">Upfront Pricing</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-num">1</span>
-            <span class="stat-label">Call Away</span>
-        </div>
-    </div>
-
-    <!-- ══ MECHANICAL ══ -->
-    <section id="auto" style="padding:96px 24px;position:relative;z-index:10;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);border-top:4px solid var(--red);">
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(8rem,20vw,18rem);color:rgba(249,115,22,0.03);pointer-events:none;user-select:none;">01</div>
+    <section id="auto" style="padding:120px 24px;position:relative;z-index:10;">
         <div style="max-width:1200px;margin:0 auto;">
-            <div style="text-align:center;margin-bottom:64px;" class="gs-reveal">
-                <span class="section-badge" style="background:rgba(255,0,60,0.15);color:var(--red);border:1px solid rgba(255,0,60,0.3);">SECTOR // MECHANICAL</span>
-                <h2 class="section-title" style="color:#fff;">
-                    ROADSIDE<br><span style="color:var(--toxic);">EXTRACTION</span>
+            <div style="text-align:center;margin-bottom:80px;" class="gs-reveal">
+                <h2 style="font-family:'Orbitron';font-weight:900;font-size:clamp(2rem,4vw,3rem);color:#fff;text-transform:uppercase;letter-spacing:0.1em;">
+                    Mechanical <span style="color:var(--amber);">Extraction</span>
                 </h2>
-                <div style="width:80px;height:3px;background:linear-gradient(90deg,var(--orange),transparent);margin:20px auto 0;"></div>
+                <div style="width:60px;height:2px;background:var(--amber);margin:24px auto 0;"></div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;">
                 <div class="service-card gs-reveal">
-                    <span class="service-card-num">01</span>
-                    <h3>Diagnostics &amp; Purge</h3>
-                    <p>Plug directly into your vehicle's nervous system. We isolate terminal engine codes, execute fluid purges, and force system overrides right where you broke down.</p>
+                    <h3>Diagnostics & Purge</h3>
+                    <p>Direct integration with your vehicle's ECU. We isolate terminal codes, execute fluid purges, and force system overrides directly on-site.</p>
                 </div>
                 <div class="service-card gs-reveal">
-                    <span class="service-card-num">02</span>
-                    <h3>Hardware Rip &amp; Replace</h3>
-                    <p>Alternators, starters, batteries, brakes. If it's dead, we rip it out. We bring the full parts arsenal to your coordinates and bolt in survival.</p>
+                    <h3>Hardware Rip & Replace</h3>
+                    <p>Alternators, starters, batteries, and brakes. We deploy the parts arsenal to your coordinates and bolt in survival.</p>
                 </div>
                 <div class="service-card gs-reveal">
-                    <span class="service-card-num">03</span>
-                    <h3>EV &amp; Hybrid Systems</h3>
-                    <p>High-voltage battery triage, charging system diagnostics, and hybrid module restoration — serviced on-site with proper safety protocol.</p>
+                    <h3>EV & Hybrid Systems</h3>
+                    <p>High-voltage architecture triage, charging module diagnostics, and restoration serviced with strict safety protocols.</p>
                 </div>
-                <div class="service-card gs-reveal">
-                    <span class="service-card-num">04</span>
-                    <h3>Fleet &amp; Diesel</h3>
-                    <p>Heavy diesel fleet calibrations, commercial vehicle emergency response. We keep your operation moving — down time is not an option.</p>
-                </div>
-            </div>
-            <div style="margin-top:64px;text-align:center;" class="gs-reveal">
-                <p style="color:var(--orange);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:0.3em;font-size:0.85rem;text-transform:uppercase;margin-bottom:20px;">IMMEDIATE MECHANICAL DISPATCH</p>
-                <a href="tel:7245051350" style="display:inline-block;font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.5rem,5vw,2.5rem);color:var(--orange);border:3px solid var(--orange-deep);padding:16px 48px;text-decoration:none;letter-spacing:0.05em;transition:all 0.2s;box-shadow:0 0 30px rgba(249,115,22,0.2);" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--orange)'">724.505.1350</a>
             </div>
         </div>
     </section>
 
-    <!-- ══ ROOFING ══ -->
-    <section id="roofing" style="padding:96px 24px;position:relative;z-index:10;background:rgba(10,10,5,0.85);backdrop-filter:blur(12px);border-top:4px solid var(--toxic);">
-        <div class="hazard-stripe" style="position:absolute;top:0;left:0;width:100%;height:6px;opacity:0.6;"></div>
-        <div style="max-width:1200px;margin:0 auto;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
-                <div class="gs-reveal" style="order:2;">
-                    <span class="section-badge" style="background:rgba(57,255,20,0.1);color:var(--toxic);border:1px solid rgba(57,255,20,0.3);">SECTOR // STRUCTURAL</span>
-                    <h2 class="section-title" style="color:#fff;margin-bottom:32px;">
-                        ATMOSPHERIC<br>
-                        <span class="text-glitch" style="color:var(--toxic);" data-text="BREACH SEALING">BREACH SEALING</span>
-                    </h2>
-                    <div style="display:flex;flex-direction:column;gap:16px;">
-                        <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(57,255,20,0.15);padding:24px;border-left:4px solid var(--toxic);transition:all 0.3s;" onmouseover="this.style.borderColor='var(--toxic)';this.style.background='rgba(57,255,20,0.05)'" onmouseout="this.style.borderColor='rgba(57,255,20,0.15)';this.style.background='rgba(0,0,0,0.5)'">
-                            <h4 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Emergency Tarping</h4>
-                            <p style="color:#777;font-size:0.95rem;line-height:1.6;">Halt total flooding. Heavy-duty containment barriers deployed over structural wounds within the hour.</p>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(249,115,22,0.15);padding:24px;border-left:4px solid var(--orange);transition:all 0.3s;" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(249,115,22,0.05)'" onmouseout="this.style.borderColor='rgba(249,115,22,0.15)';this.style.background='rgba(0,0,0,0.5)'">
-                            <h4 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Full Reconstruction</h4>
-                            <p style="color:#777;font-size:0.95rem;line-height:1.6;">Complete teardown to rebuild. Full roof replacements executed with militant precision and guaranteed materials.</p>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(255,0,60,0.15);padding:24px;border-left:4px solid var(--red);transition:all 0.3s;" onmouseover="this.style.borderColor='var(--red)';this.style.background='rgba(255,0,60,0.04)'" onmouseout="this.style.borderColor='rgba(255,0,60,0.15)';this.style.background='rgba(0,0,0,0.5)'">
-                            <h4 style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Storm Damage Response</h4>
-                            <p style="color:#777;font-size:0.95rem;line-height:1.6;">After the storm, we're first on scene. Rapid damage assessment, documentation, and immediate protection.</p>
-                        </div>
-                    </div>
+    <!-- Dispatch Section -->
+    <section id="contact" style="padding:120px 24px;position:relative;z-index:10;background:rgba(5,5,5,0.6);border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="max-width:700px;margin:0 auto;">
+            <div class="service-card gs-reveal">
+                <div style="text-align:center;margin-bottom:48px;">
+                    <h2 style="font-family:'Orbitron';font-weight:900;font-size:2rem;color:#fff;letter-spacing:0.1em;">DISPATCH HUB</h2>
                 </div>
-                <div class="gs-reveal" style="display:flex;justify-content:center;order:1;">
-                    <div class="roofing-radial">
-                        <div class="ring1"></div>
-                        <div class="ring2"></div>
-                        <div class="roofing-center">
-                            <svg width="80" height="80" style="color:var(--toxic);display:block;margin:0 auto 12px;" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                            <div style="font-family:'Orbitron',sans-serif;font-weight:900;color:#fff;letter-spacing:0.15em;font-size:1rem;">ROOFING</div>
-                            <div style="color:var(--toxic);font-size:0.85rem;margin-top:6px;letter-spacing:0.1em;">724-505-1350</div>
-                        </div>
+                <form id="dispatch-form" style="display:flex;flex-direction:column;gap:24px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:24px;">
+                        <input type="text" required class="field-input" autocomplete="name" inputmode="text" placeholder="Operative ID (Name)">
+                        <input type="tel" required class="field-input" autocomplete="tel" inputmode="tel" placeholder="Comlink (Phone)">
                     </div>
-                </div>
-            </div>
-        </div>
-        <!-- Responsive grid fix for mobile -->
-        <style>@media(max-width:768px){#roofing .gs-reveal[style*="grid-template-columns"]{display:block!important}#roofing .gs-reveal[style*="order:2"]{order:unset!important;margin-bottom:48px}}</style>
-    </section>
-
-    <!-- ══ CONTACT ══ -->
-    <section id="contact" style="padding:96px 24px;position:relative;z-index:10;background:rgba(0,0,0,0.9);border-top:4px solid var(--yellow);">
-        <div style="max-width:800px;margin:0 auto;">
-            <div class="contact-card gs-reveal">
-                <div style="text-align:center;margin-bottom:40px;">
-                    <span class="section-badge" style="background:rgba(250,204,21,0.1);color:var(--yellow);border:1px solid rgba(250,204,21,0.3);">OPEN CHANNEL</span>
-                    <h2 class="section-title text-glitch" data-text="TRANSMIT" style="color:#fff;">TRANSMIT</h2>
-                    <a href="tel:7245051350" style="display:block;margin-top:24px;background:var(--red);color:#fff;font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.8rem,6vw,3rem);letter-spacing:0.05em;padding:20px;text-decoration:none;box-shadow:0 0 40px rgba(255,0,60,0.4);transition:all 0.2s;" onmouseover="this.style.background='#fff';this.style.color='#000'" onmouseout="this.style.background='var(--red)';this.style.color='#fff'">
-                        724 505 1350
-                    </a>
-                </div>
-
-                <form id="dispatch-form" style="display:flex;flex-direction:column;gap:20px;">
-                    <div id="form-msg" style="display:none;background:var(--toxic);color:#000;padding:16px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.85rem;letter-spacing:0.2em;text-align:center;text-transform:uppercase;animation:loaderPulse 1.5s ease-in-out infinite">
-                        TRANSMISSION RECEIVED — DISPATCH EN ROUTE
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <div>
-                            <label class="field-label">Operative ID</label>
-                            <input type="text" required class="field-input" placeholder="Your Name">
-                        </div>
-                        <div>
-                            <label class="field-label">Comlink</label>
-                            <input type="tel" required class="field-input" placeholder="Phone Number">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="field-label">Sector Required</label>
-                        <select class="field-select">
-                            <option>MECHANICAL — Emergency Roadside</option>
-                            <option>MECHANICAL — Diagnostics &amp; Engine</option>
-                            <option>MECHANICAL — EV / Hybrid Systems</option>
-                            <option>STRUCTURAL — Emergency Tarping</option>
-                            <option>STRUCTURAL — Full Reconstruction</option>
-                            <option>STRUCTURAL — Storm Damage Response</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="field-label">Coordinates / Notes</label>
-                        <textarea class="field-input" rows="3" placeholder="Location, vehicle info, or damage description..." style="resize:vertical;"></textarea>
-                    </div>
-                    <button type="submit" style="background:transparent;border:3px solid var(--orange);color:var(--orange);font-family:'Orbitron',sans-serif;font-weight:900;font-size:1rem;letter-spacing:0.2em;text-transform:uppercase;padding:18px;cursor:pointer;position:relative;overflow:hidden;transition:color 0.3s;" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--orange)'">
-                        INITIALIZE UPLOAD
-                    </button>
+                    <select class="field-select">
+                        <option>Mechanical Extraction</option>
+                        <option>Structural Sealing</option>
+                        <option>Diagnostics</option>
+                    </select>
+                    <textarea class="field-input" rows="4" placeholder="Coordinates & Damage Report..."></textarea>
+                    <button type="submit" class="cta-premium" style="width:100%;padding:20px;font-size:1rem;margin-top:12px;">Transmit Data</button>
                 </form>
             </div>
         </div>
-        <style>@media(max-width:600px){#contact form>div:first-of-type{grid-template-columns:1fr!important}}</style>
     </section>
 
-    <!-- ══ FOOTER ══ -->
-    <footer style="background:#000;padding:64px 24px 0;border-top:1px solid #111;position:relative;z-index:10;">
-        <div style="max-width:1200px;margin:0 auto;text-align:center;">
-            <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.5rem,5vw,2.5rem);color:#222;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:12px;">
-                DAMION'S <span style="color:var(--red);">247</span>
-            </div>
-            <p style="color:#444;font-size:0.85rem;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:24px;">
-                MOBILE MECHANICS // EMERGENCY ROOFING
-            </p>
-            <div style="color:#fff;font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.2rem,4vw,2rem);letter-spacing:0.1em;padding:16px 0;border-top:1px solid #111;border-bottom:1px solid #111;margin-bottom:32px;">
-                724 505 1350
-            </div>
-            <p style="color:#222;font-size:0.65rem;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:0;">
-                SYSTEM.ONLINE // ALL RIGHTS RESERVED 2026 // NO ESCAPE
-            </p>
+    <footer style="background:#020202;padding:60px 24px;text-align:center;border-top:1px solid #111;">
+        <div style="font-family:'Orbitron';font-weight:900;font-size:1.5rem;letter-spacing:0.2em;color:#444;margin-bottom:16px;">
+            DAMION'S <span style="color:var(--amber);">24/7</span>
         </div>
-
-        <!-- BACKEND PORTAL -->
-        <div class="backend-zone">
-            <p style="font-family:'Orbitron',sans-serif;font-size:0.65rem;letter-spacing:0.5em;text-transform:uppercase;color:#333;margin-bottom:24px;">
-                ⚙ &nbsp; RESTRICTED ACCESS &nbsp; ⚙
-            </p>
-            <a id="backend-btn" href="backend.html">
-                <span class="gear">⚙</span>
-                <span>BACKEND</span>
-                <span class="gear">⚙</span>
-            </a>
-            <p style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;color:#333;margin-top:20px;">
-                FULL SYSTEM DASHBOARD &amp; DIAGNOSTICS HUB
-            </p>
-        </div>
+        <p style="color:#666;font-size:0.75rem;letter-spacing:0.4em;text-transform:uppercase;">Machine Code Philosophy // Ordinary Technology</p>
     </footer>
 
-    <!-- ══ SCRIPTS ══ -->
     <script>
-    // ── GLITCH (click only, never on scroll) ──
-    const addGlitch = () => {
-        document.body.classList.remove('screen-glitch');
-        void document.body.offsetWidth;
-        document.body.classList.add('screen-glitch');
-    };
-    document.body.addEventListener('click', () => {
-        if (typeof playGlitchBlip === 'function') playGlitchBlip();
-        addGlitch();
-    });
-
-    // ── NAV SCROLL EFFECT ──
+    // ── UI Interactions ──
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 60);
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
     }, { passive: true });
 
-    // ── MOBILE MENU ──
-    const mobileMenu = document.getElementById('mobile-menu');
-    document.getElementById('mobile-menu-btn').addEventListener('click', () => mobileMenu.classList.add('open'));
-    document.getElementById('mobile-close').addEventListener('click', () => mobileMenu.classList.remove('open'));
-    mobileMenu.querySelectorAll('[data-close]').forEach(l => l.addEventListener('click', () => mobileMenu.classList.remove('open')));
-
-    // ── FORM ──
-    document.getElementById('dispatch-form').addEventListener('submit', e => {
-        e.preventDefault();
-        const msg = document.getElementById('form-msg');
-        msg.style.display = 'block';
-        setTimeout(() => { msg.style.display = 'none'; e.target.reset(); }, 5000);
+    gsap.registerPlugin(ScrollTrigger);
+    document.querySelectorAll('.gs-reveal').forEach(el => {
+        gsap.fromTo(el, 
+            { y: 50, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } }
+        );
     });
 
-    // ── AUDIO ──
-    let audioCtx, isAudioInit = false;
-    const playRetroTone = (freq, type, dur, vol) => {
-        if (!audioCtx || audioCtx.state !== 'running') return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
-    };
-    const playGlitchBlip = () => {
-        if (isAudioInit) playRetroTone(Math.random() * 200 + 100, 'sawtooth', 0.06, 0.04);
-    };
-    const initAudio = () => {
-        if (isAudioInit) return; isAudioInit = true;
-        try {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            [0,120,240,360].forEach((d,i) => setTimeout(() =>
-                playRetroTone([300,400,500,800][i], 'square', 0.1, 0.08), d));
-            setTimeout(() => {
-                const u = new SpeechSynthesisUtterance();
-                u.text = "Hello. Call 7 2 4. 5 0 5. 1 3 5 0 for mobile mechanics or emergency roofing. We come to you.";
-                u.pitch = 0.75; u.rate = 0.88; u.volume = 0.9;
-                window.speechSynthesis.speak(u);
-            }, 1800);
-        } catch(e) {}
-    };
-
     // ══════════════════════════════════════════════════
-    //  THREE.JS — ADVANCED INDUSTRIAL SCENE
+    //  THREE.JS — FLUID MATRIX & PHYSICAL PIPELINE
     // ══════════════════════════════════════════════════
     const initThreeJS = () => {
         const container = document.getElementById('canvas-container');
         const W = window.innerWidth, H = window.innerHeight;
         const isMob = W < 768;
 
-        // ── Scene ──
         const scene = new THREE.Scene();
-        let fogHue = 0.05; // Deep orange hue
-        const fogColor = new THREE.Color().setHSL(fogHue, 0.9, 0.06);
-        scene.background = fogColor;
-        scene.fog = new THREE.FogExp2(fogColor, isMob ? 0.03 : 0.022);
+        // Deep cinematic background
+        scene.fog = new THREE.FogExp2(0x050505, isMob ? 0.025 : 0.015);
 
-        // ── Renderer ──
-        const renderer = new THREE.WebGLRenderer({ antialias: !isMob });
+        const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 200);
+        camera.position.set(0, 1, 14);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
         renderer.setSize(W, H);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMob ? 1.2 : 1.8));
-        renderer.shadowMap.enabled = !isMob;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.9;
+        renderer.toneMappingExposure = 1.2;
         container.appendChild(renderer.domElement);
 
-        // ── Camera ──
-        const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 200);
-        camera.position.set(0, 2, 12);
+        // ── POST-PROCESSING: UNREAL BLOOM ──
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(W, H), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.2;
+        bloomPass.strength = 1.8; // Sexy, intense glow
+        bloomPass.radius = 0.5;
 
-        // ═══════════════════════════════════
-        //  LIGHTING — Layered industrial rig
-        // ═══════════════════════════════════
-        // Ambient — deep warm fill
-        scene.add(new THREE.AmbientLight(0x1a0800, 1.5));
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
 
-        // Key light — orange industrial
-        const keyLight = new THREE.PointLight(0xff6600, 8, 40);
-        keyLight.position.set(-8, 6, 4);
-        if (!isMob) keyLight.castShadow = true;
+        // ── LIGHTING (Studio Setup) ──
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.PointLight(0xff6600, 15, 50);
+        keyLight.position.set(-5, 5, 5);
         scene.add(keyLight);
 
-        // Fill — cool blue rim
-        const fillLight = new THREE.PointLight(0x0044ff, 2, 30);
-        fillLight.position.set(10, 3, -5);
+        const fillLight = new THREE.PointLight(0x0044ff, 8, 50); // Cinematic teal/blue fill
+        fillLight.position.set(8, -2, 2);
         scene.add(fillLight);
 
-        // Pipe leak light — hot orange
-        const leakLight = new THREE.PointLight(0xff8800, 12, 18);
-        leakLight.position.set(5, -1.5, -4);
-        scene.add(leakLight);
-
-        // Strobe — danger alert red
-        const strobeLight = new THREE.PointLight(0xff003c, 0, 25);
-        strobeLight.position.set(0, 8, 2);
-        scene.add(strobeLight);
-
-        // Top-down fluorescent
-        const topLight = new THREE.DirectionalLight(0xffa040, 0.6);
-        topLight.position.set(0, 20, 0);
-        scene.add(topLight);
-
-        // ═══════════════════════════════════
-        //  MATERIALS — Shared
-        // ═══════════════════════════════════
-        const orangeMat = new THREE.MeshStandardMaterial({
-            color: 0xcc4400, roughness: 0.5, metalness: 0.8,
-            emissive: 0x220800, emissiveIntensity: 0.3
-        });
-        const rustMat = new THREE.MeshStandardMaterial({
-            color: 0x7a3010, roughness: 0.95, metalness: 0.3,
-            emissive: 0x100500
-        });
-        const darkMetal = new THREE.MeshStandardMaterial({
-            color: 0x1a1205, roughness: 0.7, metalness: 0.9
-        });
-        const goldMat = new THREE.MeshStandardMaterial({
-            color: 0xe8a020, roughness: 0.3, metalness: 0.95,
-            emissive: 0x503000, emissiveIntensity: 0.4
-        });
-        const glowOrange = new THREE.MeshStandardMaterial({
-            color: 0xff6600, roughness: 0.2, metalness: 0.1,
-            emissive: 0xff4400, emissiveIntensity: 1.5
+        // ── MATERIALS (Physical & Photorealistic) ──
+        const metalMat = new THREE.MeshPhysicalMaterial({
+            color: 0x111111,
+            metalness: 1.0,
+            roughness: 0.2,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            emissive: 0x000000
         });
 
-        // ═══════════════════════════════════
-        //  RAILING SYSTEM — Full industrial catwalk
-        // ═══════════════════════════════════
-        const railGroup = new THREE.Group();
+        const coreGlowMat = new THREE.MeshStandardMaterial({
+            color: 0xff6600,
+            emissive: 0xff3300,
+            emissiveIntensity: 4.0 // Drives the bloom
+        });
 
-        // Helper: create a cylinder segment
-        const pipe = (r, len, mat, rx=0, ry=0, rz=0, px=0, py=0, pz=0) => {
-            const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), mat);
-            m.rotation.set(rx, ry, rz); m.position.set(px, py, pz);
-            if (!isMob) m.castShadow = true;
-            return m;
-        };
-
-        // Top rail — heavy pipe
-        railGroup.add(pipe(0.28, 60, orangeMat, 0, 0, Math.PI/2, 0, -2.8, -5));
-        // Mid rail
-        railGroup.add(pipe(0.14, 60, orangeMat, 0, 0, Math.PI/2, 0, -4.0, -5));
-        // Bottom kick rail
-        railGroup.add(pipe(0.09, 60, rustMat,   0, 0, Math.PI/2, 0, -5.0, -5));
-
-        // Vertical posts — spaced evenly, alternating full/short
-        for (let i = -22; i <= 22; i += 3.5) {
-            const tall = (Math.abs(i) % 7 < 0.1); // Every other double-height
-            const h = tall ? 3.5 : 2.5;
-            railGroup.add(pipe(0.18, h, orangeMat, 0, 0, 0, i, -3.8 + h/2 - 2.8, -5));
-
-            // Cross-brace diagonal between posts
-            if (i < 22) {
-                const brace = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.05, 0.05, 3.6, 6),
-                    rustMat
-                );
-                brace.position.set(i + 1.75, -3.9, -5);
-                brace.rotation.z = Math.PI / 4;
-                railGroup.add(brace);
-
-                const brace2 = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.05, 0.05, 3.6, 6),
-                    rustMat
-                );
-                brace2.position.set(i + 1.75, -3.9, -5);
-                brace2.rotation.z = -Math.PI / 4;
-                railGroup.add(brace2);
-            }
-
-            // Bolt caps on post tops
-            const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.15, 8), goldMat);
-            cap.position.set(i, -2.75, -5);
-            railGroup.add(cap);
-        }
-
-        scene.add(railGroup);
-
-        // ═══════════════════════════════════
-        //  BROKEN PIPE — Main feature
-        // ═══════════════════════════════════
+        // ── GEOMETRY: The Main Pipe Architecture ──
         const pipeGroup = new THREE.Group();
-
-        // Main pipe body — thick orange
-        const mainPipe = new THREE.Mesh(
-            new THREE.CylinderGeometry(1.6, 1.6, 14, 20), orangeMat
-        );
-        mainPipe.rotation.set(Math.PI/5, 0, Math.PI/3.5);
-        mainPipe.position.set(9, -4, -8);
-        if (!isMob) mainPipe.castShadow = true;
+        
+        const mainPipe = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 16, 32), metalMat);
+        mainPipe.rotation.set(Math.PI / 4, 0, Math.PI / 3);
+        mainPipe.position.set(5, -2, -6);
         pipeGroup.add(mainPipe);
 
-        // Dark hollow interior
-        const pipeHole = new THREE.Mesh(
-            new THREE.CylinderGeometry(1.42, 1.42, 14.2, 20),
-            new THREE.MeshBasicMaterial({ color: 0x020100 })
-        );
-        pipeHole.rotation.copy(mainPipe.rotation);
-        pipeHole.position.copy(mainPipe.position);
-        pipeGroup.add(pipeHole);
+        // Inner hollow void
+        const innerPipe = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 16.2, 32), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        innerPipe.rotation.copy(mainPipe.rotation);
+        innerPipe.position.copy(mainPipe.position);
+        pipeGroup.add(innerPipe);
 
-        // Flange rings on the pipe
-        [-5, 0, 5].forEach(off => {
-            const flange = new THREE.Mesh(new THREE.TorusGeometry(1.7, 0.22, 10, 24), goldMat);
-            flange.rotation.copy(mainPipe.rotation);
-            // Offset along pipe axis
-            const axis = new THREE.Vector3(Math.sin(Math.PI/3.5), Math.cos(Math.PI/3.5), 0).normalize();
-            flange.position.copy(mainPipe.position).addScaledVector(axis, off * 0.5);
-            pipeGroup.add(flange);
-        });
-
-        // Glowing breach ring at break point
-        const breachGlow = new THREE.Mesh(
-            new THREE.TorusGeometry(1.55, 0.1, 10, 28), glowOrange
-        );
+        // Glowing Breach Ring
+        const breachGlow = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.1, 16, 32), coreGlowMat);
         breachGlow.rotation.copy(mainPipe.rotation);
-        breachGlow.position.set(5, -2, -5.5);
+        breachGlow.position.set(2, -0.5, -4.5);
         pipeGroup.add(breachGlow);
 
         scene.add(pipeGroup);
 
-        // ═══════════════════════════════════
-        //  STEAM PARTICLES — Volumetric puffs
-        // ═══════════════════════════════════
-        const steamCanvas = document.createElement('canvas');
-        steamCanvas.width = steamCanvas.height = 64;
-        const sctx = steamCanvas.getContext('2d');
-        const sg = sctx.createRadialGradient(32,32,0, 32,32,32);
-        sg.addColorStop(0, 'rgba(255,200,100,0.9)');
-        sg.addColorStop(0.3, 'rgba(255,160,60,0.5)');
-        sg.addColorStop(1, 'rgba(255,100,0,0)');
-        sctx.fillStyle = sg; sctx.fillRect(0,0,64,64);
-        const steamTex = new THREE.CanvasTexture(steamCanvas);
+        // ══════════════════════════════════════════════════
+        //  FLUID MATRIX SYSTEM — Shader-driven Data State
+        // ══════════════════════════════════════════════════
+        // Replaces falling gears with a sleek, self-organizing particle matrix governed by Antigravity
+        
+        const particleCount = isMob ? 800 : 2500;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const randoms = new Float32Array(particleCount);
 
-        const STEAM_COUNT = isMob ? 20 : 45;
-        const steamParticles = [];
-        const leakOrigin = new THREE.Vector3(4.8, -1.8, -5);
-
-        for (let i = 0; i < STEAM_COUNT; i++) {
-            const sm = new THREE.SpriteMaterial({
-                map: steamTex, transparent: true, opacity: 0,
-                blending: THREE.AdditiveBlending, depthWrite: false
-            });
-            const s = new THREE.Sprite(sm);
-            s.position.copy(leakOrigin);
-            s.userData = {
-                life: Math.random(),
-                vy: Math.random() * 0.05 + 0.025,
-                vx: (Math.random() - 0.5) * 0.04,
-                vz: (Math.random() - 0.5) * 0.03,
-                maxScale: Math.random() * 5 + 3,
-            };
-            scene.add(s);
-            steamParticles.push(s);
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 30;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+            randoms[i] = Math.random();
         }
 
-        // ═══════════════════════════════════
-        //  FALLING OBJECTS — Gears, coins, bolts, wrenches
-        // ═══════════════════════════════════
-        const fallers = [];
-        const TOTAL = isMob ? 40 : 90;
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1));
 
-        // Shared geometries
-        const geoGear    = new THREE.TorusGeometry(1, 0.38, 6, 16);
-        const geoGearBig = new THREE.TorusGeometry(1.8, 0.55, 8, 20);
-        const geoCoin    = new THREE.CylinderGeometry(1, 1, 0.2, 18);
-        const geoBolt    = new THREE.CylinderGeometry(0.15, 0.15, 1.4, 6);
-        const geoBoltHead = new THREE.CylinderGeometry(0.4, 0.4, 0.25, 6);
-        const geoNut     = new THREE.TorusGeometry(0.35, 0.14, 6, 6);
-        const geoWasher  = new THREE.TorusGeometry(0.5, 0.1, 6, 16);
-        const geoShard   = new THREE.TetrahedronGeometry(0.5, 0);
+        const fluidShaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uColor1: { value: new THREE.Color(0xff6600) }, // Amber
+                uColor2: { value: new THREE.Color(0x0044ff) }  // Teal
+            },
+            vertexShader: `
+                uniform float uTime;
+                attribute float aRandom;
+                varying float vElevation;
 
-        const matWire    = new THREE.MeshStandardMaterial({ color:0x2a1500, metalness:0.9, roughness:0.8, wireframe:true });
-        const matSolid   = new THREE.MeshStandardMaterial({ color:0x3d1800, metalness:0.7, roughness:0.9 });
-        const matGold    = new THREE.MeshStandardMaterial({ color:0xe8a020, metalness:0.95, roughness:0.25, emissive:0x301200, emissiveIntensity:0.3 });
-        const matRust    = new THREE.MeshStandardMaterial({ color:0x7a2800, metalness:0.4, roughness:0.98 });
-        const matChrome  = new THREE.MeshStandardMaterial({ color:0x888888, metalness:1.0, roughness:0.1 });
-        const matBoltMat = new THREE.MeshStandardMaterial({ color:0xcc6600, metalness:0.9, roughness:0.3 });
+                void main() {
+                    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+                    
+                    // Antigravity Wave Math (Fluid Matrix)
+                    float elevation = sin(modelPosition.x * 0.5 + uTime * 0.8) * 
+                                      cos(modelPosition.z * 0.3 + uTime * 0.5) * 2.0;
+                    
+                    // Add micro-drifting based on random seed
+                    modelPosition.y += elevation + (sin(uTime * aRandom * 2.0) * 1.5);
+                    modelPosition.x += cos(uTime * aRandom) * 0.5;
 
-        // Coin face texture
-        const coinFaceCanvas = document.createElement('canvas');
-        coinFaceCanvas.width = coinFaceCanvas.height = 128;
-        const cfc = coinFaceCanvas.getContext('2d');
-        cfc.fillStyle = '#e8a020'; cfc.beginPath(); cfc.arc(64,64,64,0,Math.PI*2); cfc.fill();
-        cfc.strokeStyle = '#c07010'; cfc.lineWidth = 8;
-        cfc.beginPath(); cfc.arc(64,64,50,0,Math.PI*2); cfc.stroke();
-        cfc.fillStyle = '#c07010'; cfc.font = 'bold 52px serif'; cfc.textAlign = 'center';
-        cfc.textBaseline = 'middle'; cfc.fillText('$', 64, 64);
-        const coinFaceTex = new THREE.CanvasTexture(coinFaceCanvas);
-        const matCoinFace = new THREE.MeshStandardMaterial({ map: coinFaceTex, metalness: 0.9, roughness: 0.2 });
-        const matCoinEdge = new THREE.MeshStandardMaterial({ color: 0xd09010, metalness: 0.9, roughness: 0.4 });
+                    vElevation = elevation;
 
-        const coinMats = [matCoinEdge, matCoinFace, matCoinFace];
+                    vec4 viewPosition = viewMatrix * modelPosition;
+                    vec4 projectedPosition = projectionMatrix * viewPosition;
 
-        const spawnFaller = (i) => {
-            const type = i % 7; // 0:gear, 1:gearBig, 2:coin, 3:bolt, 4:nut, 5:washer, 6:shard
-            let mesh;
+                    gl_Position = projectedPosition;
+                    
+                    // Point size scaling based on depth and screen
+                    gl_PointSize = (4.0 * aRandom + 2.0) * (15.0 / -viewPosition.z);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor1;
+                uniform vec3 uColor2;
+                varying float vElevation;
 
-            if (type === 0) {
-                mesh = new THREE.Mesh(geoGear, Math.random()>0.5 ? matWire : matSolid);
-            } else if (type === 1) {
-                mesh = new THREE.Mesh(geoGearBig, matRust);
-            } else if (type === 2) {
-                mesh = new THREE.Mesh(geoCoin, coinMats);
-            } else if (type === 3) {
-                // Bolt assembly
-                const grp = new THREE.Group();
-                grp.add(new THREE.Mesh(geoBolt, matBoltMat));
-                const head = new THREE.Mesh(geoBoltHead, matChrome);
-                head.position.y = 0.75; grp.add(head);
-                mesh = grp;
-            } else if (type === 4) {
-                mesh = new THREE.Mesh(geoNut, matChrome);
-            } else if (type === 5) {
-                mesh = new THREE.Mesh(geoWasher, matBoltMat);
-            } else {
-                mesh = new THREE.Mesh(geoShard, matRust);
-            }
+                void main() {
+                    // Make points circular instead of square
+                    float distanceToCenter = distance(gl_PointCoord, vec2(0.5));
+                    if(distanceToCenter > 0.5) discard;
 
-            const scale = 0.4 + Math.random() * (type === 1 ? 2.5 : type === 2 ? 1.5 : 1.2);
-            mesh.scale.setScalar(scale);
-            mesh.position.set(
-                (Math.random() - 0.5) * 55,
-                (Math.random() - 0.5) * 80 + 35,
-                (Math.random() - 0.5) * 35 - 8
-            );
-            mesh.rotation.set(
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2
-            );
-            if (!isMob && type < 3) mesh.castShadow = true;
+                    // Interpolate color based on the wave elevation
+                    float mixStrength = (vElevation + 2.0) / 4.0;
+                    vec3 color = mix(uColor2, uColor1, mixStrength);
+                    
+                    // Add core glow to particles
+                    float alpha = 1.0 - (distanceToCenter * 2.0);
 
-            mesh.userData = {
-                type,
-                vy:   0.04 + Math.random() * 0.12,
-                rx:   (Math.random() - 0.5) * 0.06,
-                ry:   (Math.random() - 0.5) * 0.06,
-                rz:   (Math.random() - 0.5) * 0.04,
-                wobble: Math.random() * Math.PI * 2,
-                wobbleSpeed: Math.random() * 0.03 + 0.01,
-                wobbleAmp: (Math.random() - 0.5) * 0.015,
-                // Coins spin flat
-                coinSpin: type === 2 ? (Math.random() * 0.1 + 0.05) : 0,
-            };
-            scene.add(mesh);
-            fallers.push(mesh);
-        };
+                    gl_FragColor = vec4(color, alpha * 0.8);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
 
-        for (let i = 0; i < TOTAL; i++) spawnFaller(i);
+        const fluidMatrix = new THREE.Points(geometry, fluidShaderMaterial);
+        scene.add(fluidMatrix);
 
-        // ═══════════════════════════════════
-        //  SPARK PARTICLES — From breach
-        // ═══════════════════════════════════
-        const SPARK_COUNT = isMob ? 12 : 30;
-        const sparks = [];
-
-        const sparkGeo = new THREE.SphereGeometry(0.04, 4, 4);
-        const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-
-        for (let i = 0; i < SPARK_COUNT; i++) {
-            const s = new THREE.Mesh(sparkGeo, sparkMat.clone());
-            s.userData = {
-                life: Math.random(),
-                vx: (Math.random() - 0.5) * 0.25,
-                vy: (Math.random() - 0.5) * 0.25,
-                vz: (Math.random() - 0.5) * 0.2,
-                gravity: 0.008,
-            };
-            s.position.copy(leakOrigin);
-            scene.add(s); sparks.push(s);
-        }
-
-        // ═══════════════════════════════════
-        //  CAMERA PARALLAX
-        // ═══════════════════════════════════
+        // ── MOUSE PARALLAX ──
         let targetCamX = 0, targetCamY = 0;
         document.addEventListener('mousemove', e => {
-            targetCamX = (e.clientX / window.innerWidth  - 0.5) * 4;
-            targetCamY = (e.clientY / window.innerHeight - 0.5) * 2;
-        }, { passive: true });
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', e => {
-                if (e.gamma != null) { targetCamX = e.gamma * 0.06; targetCamY = (e.beta - 45) * 0.04; }
-            }, true);
-        }
+            targetCamX = (e.clientX / W - 0.5) * 2;
+            targetCamY = (e.clientY / H - 0.5) * 2;
+        });
 
-        // ═══════════════════════════════════
-        //  ANIMATION LOOP
-        // ═══════════════════════════════════
+        // ── ANIMATION LOOP ──
         const clock = new THREE.Clock();
-        let frame = 0;
 
         const animate = () => {
             requestAnimationFrame(animate);
             const t = clock.getElapsedTime();
-            frame++;
 
-            // Fog color cycle — slow orange→red→amber
-            fogHue = 0.04 + Math.sin(t * 0.04) * 0.03;
-            const nc = new THREE.Color().setHSL(fogHue, 0.9, 0.05 + Math.sin(t*0.1)*0.01);
-            scene.background = nc; scene.fog.color = nc;
+            // Fluid Matrix Evolution
+            fluidShaderMaterial.uniforms.uTime.value = t;
+            fluidMatrix.rotation.y = t * 0.05;
 
-            // Camera sway
-            camera.position.x += (targetCamX - camera.position.x) * 0.04;
-            camera.position.y += (-targetCamY + 2 - camera.position.y) * 0.04;
-            camera.rotation.z = Math.sin(t * 0.3) * 0.04;
-            camera.lookAt(0, -1, 0);
+            // Camera Smoothing
+            camera.position.x += (targetCamX - camera.position.x) * 0.05;
+            camera.position.y += (-targetCamY + 1 - camera.position.y) * 0.05;
+            camera.lookAt(0, 0, 0);
 
-            // Lights
-            keyLight.position.x = Math.sin(t * 0.5) * 12;
-            keyLight.position.z = Math.cos(t * 0.3) * 6;
-            keyLight.intensity  = 6 + Math.sin(t * 0.8) * 2;
+            // Lighting Dynamics
+            keyLight.intensity = 15 + Math.sin(t * 2) * 5;
+            breachGlow.material.emissiveIntensity = 4 + Math.sin(t * 3) * 1.5;
 
-            // Strobe — irregular pulse
-            strobeLight.intensity = Math.max(0, Math.sin(t * 7) * Math.sin(t * 3.3)) * 6;
-
-            // Breach glow pulse
-            breachGlow.material.emissiveIntensity = 1 + Math.sin(t * 4) * 0.6;
-            leakLight.intensity = 10 + Math.sin(t * 5) * 4;
-
-            // Railing ambient sway
-            railGroup.position.x = Math.sin(t * 0.15) * 0.3;
-
-            // ── FALLING OBJECTS ──
-            fallers.forEach(obj => {
-                const d = obj.userData;
-                obj.position.y  -= d.vy;
-                obj.rotation.x  += d.rx;
-                obj.rotation.y  += d.ry + (d.coinSpin);
-                obj.rotation.z  += d.rz;
-                d.wobble += d.wobbleSpeed;
-                obj.position.x  += Math.sin(d.wobble) * d.wobbleAmp;
-
-                // Subtle depth-based scale (parallax pop)
-                const depthFactor = 1 + (obj.position.z + 8) * 0.01;
-                obj.scale.setScalar(obj.scale.x > 0 ? obj.scale.x * (1 + Math.sin(t * 1.5 + d.wobble) * 0.002) : 1);
-
-                // Reset when below view
-                if (obj.position.y < -32) {
-                    obj.position.y = 55 + Math.random() * 20;
-                    obj.position.x = (Math.random() - 0.5) * 55;
-                }
-            });
-
-            // ── STEAM ──
-            steamParticles.forEach(s => {
-                s.userData.life += 0.003;
-                if (s.userData.life > 1) {
-                    s.userData.life = 0;
-                    s.position.copy(leakOrigin);
-                    s.position.x += (Math.random() - 0.5) * 1.2;
-                    s.position.y += (Math.random() - 0.5) * 0.8;
-                    s.scale.set(0.5, 0.5, 1);
-                }
-                s.position.y += s.userData.vy;
-                s.position.x += s.userData.vx;
-                s.position.z += s.userData.vz;
-                const sc = 0.5 + s.userData.life * s.userData.maxScale;
-                s.scale.set(sc, sc, 1);
-                // Color transition orange→white→transparent
-                const life = s.userData.life;
-                if (life < 0.15) {
-                    s.material.opacity = (life / 0.15) * 0.7;
-                } else if (life < 0.6) {
-                    s.material.opacity = 0.7 - (life - 0.15) * 0.4;
-                } else {
-                    s.material.opacity = Math.max(0, 0.52 - (life - 0.6) * 1.3);
-                }
-            });
-
-            // ── SPARKS ──
-            if (frame % 2 === 0) { // Update sparks every other frame
-                sparks.forEach(s => {
-                    s.userData.life += 0.025;
-                    if (s.userData.life > 1) {
-                        s.userData.life = 0;
-                        s.position.copy(leakOrigin);
-                        s.userData.vx = (Math.random() - 0.5) * 0.3;
-                        s.userData.vy = (Math.random() - 0.3) * 0.3;
-                        s.userData.vz = (Math.random() - 0.5) * 0.2;
-                    }
-                    s.position.x += s.userData.vx;
-                    s.position.y += s.userData.vy;
-                    s.position.z += s.userData.vz;
-                    s.userData.vy -= s.userData.gravity; // Gravity
-                    // Fade and scale down
-                    const l = s.userData.life;
-                    const sc = Math.max(0.01, (1 - l) * 0.8);
-                    s.scale.setScalar(sc);
-                    // Color shift white→orange→dark
-                    const col = new THREE.Color().setHSL(0.07 - l * 0.07, 1, 0.5 + (1-l)*0.4);
-                    s.material.color = col;
-                });
-            }
-
-            renderer.render(scene, camera);
+            // Render via Composer (Activates Bloom)
+            composer.render();
         };
         animate();
 
-        // ── RESIZE ──
         window.addEventListener('resize', () => {
-            const w = window.innerWidth, h = window.innerHeight;
-            camera.aspect = w / h;
+            camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(w, h);
-        }, { passive: true });
-    };
-
-    // ── INIT SEQUENCE ──
-    window.addEventListener('load', () => {
-        const loader = document.getElementById('loader');
-        const start = () => {
-            document.removeEventListener('click',      start);
-            document.removeEventListener('touchstart', start);
-            initAudio();
-            loader.style.transform = 'scale(1.6)';
-            loader.style.opacity   = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                initThreeJS();
-                initGSAP();
-            }, 600);
-        };
-        document.addEventListener('click',      start);
-        document.addEventListener('touchstart', start, { passive: true });
-    });
-
-    // ── GSAP SCROLL REVEALS ──
-    const initGSAP = () => {
-        gsap.registerPlugin(ScrollTrigger);
-        document.querySelectorAll('.gs-reveal').forEach(el => {
-            gsap.fromTo(el,
-                { y: 40, opacity: 0, scale: 0.92 },
-                {
-                    y: 0, opacity: 1, scale: 1,
-                    duration: 0.7, ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: el, start: 'top 88%',
-                        toggleActions: 'play none none reverse'
-                    }
-                }
-            );
-        });
-
-        // Stats counter animation
-        document.querySelectorAll('.stat-num').forEach(el => {
-            ScrollTrigger.create({
-                trigger: el, start: 'top 90%', once: true,
-                onEnter: () => el.style.textShadow = '0 0 30px #f97316'
-            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
         });
     };
+
+    window.addEventListener('DOMContentLoaded', initThreeJS);
     </script>
+    <script src="mobile.js"></script>
 </body>
 </html>
