@@ -5,7 +5,7 @@
 
 class VoiceNarrator {
     constructor() {
-        this.narratorText = "Welcome to Damion's 24/7 Mobile Automotive and Professional Roofing Solutions. Whether you need an emergency roadside mechanic or expert roof leak repair, I come directly to your location, day or night. Select a service below or tap the hotline to connect with me immediately. Professional assistance is just one call away.";
+        this.narratorText = "Welcome to Damion's 24/7 Mobile Mechanics. We are professional mobile mechanics, and we will come directly to your location day or night! Emergency repairs, diagnostics, and roadside assistance delivered right to you.";
         this.synth = window.speechSynthesis;
         this.utterance = null;
         this.words = [];
@@ -15,6 +15,7 @@ class VoiceNarrator {
         this.isMuted = localStorage.getItem('musicMuted') === 'true';
         this.voiceMode = 'standard'; // 'standard' or 'robotic'
         this.isPlaying = false;
+        this.hasTriggeredFirstTouch = false;
         
         // Canvas Animation Properties
         this.canvas = null;
@@ -29,6 +30,33 @@ class VoiceNarrator {
         this.parseWords();
         this.initCanvas();
         this.initAudioMuteObserver();
+        this.initFirstTouchTrigger();
+    }
+
+    /**
+     * Attach first-touch / interaction listener so TTS speaks on the user's initial screen tap/click
+     */
+    initFirstTouchTrigger() {
+        const handleFirstInteraction = () => {
+            if (this.hasTriggeredFirstTouch) return;
+            this.hasTriggeredFirstTouch = true;
+            
+            // Remove interaction listeners
+            ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'click'].forEach(evtType => {
+                window.removeEventListener(evtType, handleFirstInteraction, { capture: true });
+            });
+            
+            // Execute speech synthesis on first touch
+            if (!this.isPlaying && !this.isMuted) {
+                setTimeout(() => {
+                    this.speak();
+                }, 150);
+            }
+        };
+
+        ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'click'].forEach(evtType => {
+            window.addEventListener(evtType, handleFirstInteraction, { capture: true, once: true });
+        });
     }
 
     /**
@@ -208,7 +236,15 @@ class VoiceNarrator {
     /**
      * Main action to speak the text using SpeechSynthesis Utterance
      */
-    speak() {
+    speak(customText) {
+        if (customText) {
+            this.narratorText = customText;
+            this.parseWords();
+            if (this.subtitlesContainer) {
+                this.subtitlesContainer.innerHTML = this.words.map((w, idx) => `<span id="narrator-word-${idx}">${w.text}</span>`).join(' ');
+            }
+        }
+
         // Cancel ongoing speak requests
         this.synth.cancel();
         
@@ -351,3 +387,4 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 600); // Slight delay after warp transition completes
     };
 });
+

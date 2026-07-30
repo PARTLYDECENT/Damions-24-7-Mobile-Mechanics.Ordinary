@@ -1133,6 +1133,32 @@
         parent.appendChild(banner);
     }
 
+    function initFirstTouchSpeech() {
+        let touched = false;
+        const onFirstTouch = () => {
+            if (touched) return;
+            touched = true;
+
+            ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'click'].forEach(evt => {
+                window.removeEventListener(evt, onFirstTouch, { capture: true });
+            });
+
+            if (window.CyberNarrator && !window.CyberNarrator.isPlaying) {
+                window.CyberNarrator.speak();
+            } else if ('speechSynthesis' in window && !window.speechSynthesis.speaking) {
+                const text = "Welcome to Damion's 24/7 Mobile Mechanics. We are mobile mechanics, and we will come directly to your location!";
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.pitch = 1.0;
+                msg.rate = 1.0;
+                window.speechSynthesis.speak(msg);
+            }
+        };
+
+        ['touchstart', 'touchend', 'pointerdown', 'mousedown', 'click'].forEach(evt => {
+            window.addEventListener(evt, onFirstTouch, { capture: true, once: true });
+        });
+    }
+
     // ─── INIT ────────────────────────────────────────
     function init() {
         // Always inject CSS (it's gated by @media queries)
@@ -1140,6 +1166,7 @@
         fixViewportHeight();
         preventOverflow();
         initMobileBanner();
+        initFirstTouchSpeech();
 
         // Only run interactive JS on mobile
         if (isMobile() || isTouchDevice()) {

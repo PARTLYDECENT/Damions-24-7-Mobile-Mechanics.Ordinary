@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural 3D Outrigger Boat</title>
+    
+    <!-- Load Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom styles to ensure full-screen canvas without scrollbars -->
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87ceeb;
+            font-family: 'Inter', sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #ui-layer {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+    
+    <!-- Load Three.js and OrbitControls from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none p-4 flex flex-col justify-between">
+        <div>
+            <h1 class="text-4xl font-extrabold text-white drop-shadow-lg tracking-tight">Ordinary Motors x1</h1>
+            <p class="text-white/90 drop-shadow font-medium mt-1">Procedural 3D Barrel Boat Simulation</p>
+        </div>
+    </div>
+
+    <!-- Three.js Application Logic -->
+    <script>
+        const scene = new THREE.Scene();
+        // Set sky color and a fog to blend the ocean into the horizon
+        const skyColor = 0x87ceeb;
+        scene.background = new THREE.Color(skyColor);
+        scene.fog = new THREE.FogExp2(skyColor, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 10, 16);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // OrbitControls for mouse interaction
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1; // Prevent looking from underneath the ocean
+        controls.minDistance = 5;
+        controls.maxDistance = 50;
+        controls.autoRotate = true; // Slowly spin around the boat
+        controls.autoRotateSpeed = 0.8;
+
+        // Hemisphere light for soft ambient sky/ground illumination
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        scene.add(hemiLight);
+
+        // Main directional sun light casting sharp shadows
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(30, 40, 20);
+        dirLight.castShadow = true;
+        
+        // Fine-tune shadow map resolution and frustum for crisp shadows on the boat
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 100;
+        const shadowBound = 20;
+        dirLight.shadow.camera.left = -shadowBound;
+        dirLight.shadow.camera.right = shadowBound;
+        dirLight.shadow.camera.top = shadowBound;
+        dirLight.shadow.camera.bottom = -shadowBound;
+        scene.add(dirLight);
+
+        // Outer blue barrel hull
+        const outerMat = new THREE.MeshStandardMaterial({ 
+            color: 0x1d4ed8, // Tailwind blue-700
+            side: THREE.FrontSide, 
+            roughness: 0.6,
+            metalness: 0.1
+        });
+        
+        // Inner wooden texture of the barrel
+        const innerMat = new THREE.MeshStandardMaterial({ 
+            color: 0xc27a3f, 
+            side: THREE.BackSide, // Only visible from the inside
+            roughness: 0.8 
+        });
+        
+        // Structural wood for rims, seats, and struts
+        const woodMat = new THREE.MeshStandardMaterial({ 
+            color: 0x8b4513, 
+            roughness: 0.9 
+        });
+        
+        // Shiny metal for the barrel hoops
+        const metalMat = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc, 
+            metalness: 0.8, 
+            roughness: 0.2, 
+            side: THREE.DoubleSide 
+        });
+        
+        // Painted or distinct material for the outrigger floats
+        const outriggerMat = new THREE.MeshStandardMaterial({ 
+            color: 0xe5e7eb, // Light grey/white
+            roughness: 0.4 
+        });
+
+        const boatGroup = new THREE.Group();
+
+        // 1. The Main Hull (Half Cylinders)
+        // We use two half cylinders: a slightly larger outer blue one, and an inner wooden one.
+        const hullRadiusOuter = 1.5;
+        const hullRadiusInner = 1.45;
+        const hullLength = 5.5;
+        
+        // true = openEnded, Math.PI = sweep 180 degrees
+        const outerGeo = new THREE.CylinderGeometry(hullRadiusOuter, hullRadiusOuter, hullLength, 64, 1, true, 0, Math.PI);
+        const outerHull = new THREE.Mesh(outerGeo, outerMat);
+        // Rotate so the curve is pointing down and the flat open cut is facing up
+        outerHull.rotation.set(Math.PI / 2, -Math.PI / 2, 0);
+        outerHull.castShadow = true;
+        outerHull.receiveShadow = true;
+        boatGroup.add(outerHull);
+
+        const innerGeo = new THREE.CylinderGeometry(hullRadiusInner, hullRadiusInner, hullLength - 0.1, 64, 1, true, 0, Math.PI);
+        const innerHull = new THREE.Mesh(innerGeo, innerMat);
+        innerHull.rotation.set(Math.PI / 2, -Math.PI / 2, 0);
+        innerHull.receiveShadow = true;
+        boatGroup.add(innerHull);
+
+        // 2. End Caps (Half Circles) to close the barrel
+        const capGeoOuter = new THREE.CircleGeometry(hullRadiusOuter, 64, Math.PI, Math.PI);
+        const capGeoInner = new THREE.CircleGeometry(hullRadiusInner, 64, Math.PI, Math.PI);
+
+        // Front Caps
+        const capFrontOuter = new THREE.Mesh(capGeoOuter, outerMat);
+        capFrontOuter.position.z = hullLength / 2;
+        capFrontOuter.castShadow = true;
+        capFrontOuter.receiveShadow = true;
+        boatGroup.add(capFrontOuter);
+
+        const capFrontInner = new THREE.Mesh(capGeoInner, innerMat);
+        capFrontInner.position.z = (hullLength / 2) - 0.05;
+        capFrontInner.receiveShadow = true;
+        boatGroup.add(capFrontInner);
+
+        // Back Caps (Rotated 180 on Y to flip normals outward/inward)
+        const capBackOuter = new THREE.Mesh(capGeoOuter, outerMat);
+        capBackOuter.position.z = -hullLength / 2;
+        capBackOuter.rotation.y = Math.PI;
+        capBackOuter.castShadow = true;
+        capBackOuter.receiveShadow = true;
+        boatGroup.add(capBackOuter);
+
+        const capBackInner = new THREE.Mesh(capGeoInner, innerMat);
+        capBackInner.position.z = -(hullLength / 2) + 0.05;
+        capBackInner.rotation.y = Math.PI;
+        capBackInner.receiveShadow = true;
+        boatGroup.add(capBackInner);
+
+        // 3. Wooden Rims to hide the seam between inner and outer hulls
+        const rimSideGeo = new THREE.BoxGeometry(0.06, hullLength, 0.05);
+        const rimFrontGeo = new THREE.BoxGeometry(hullRadiusOuter * 2, 0.05, 0.06);
+
+        const rimRight = new THREE.Mesh(rimSideGeo, woodMat);
+        rimRight.rotation.x = Math.PI / 2;
+        rimRight.position.set(1.475, 0, 0);
+        rimRight.castShadow = true;
+        boatGroup.add(rimRight);
+
+        const rimLeft = new THREE.Mesh(rimSideGeo, woodMat);
+        rimLeft.rotation.x = Math.PI / 2;
+        rimLeft.position.set(-1.475, 0, 0);
+        rimLeft.castShadow = true;
+        boatGroup.add(rimLeft);
+
+        const rimFront = new THREE.Mesh(rimFrontGeo, woodMat);
+        rimFront.position.set(0, 0, hullLength / 2);
+        rimFront.castShadow = true;
+        boatGroup.add(rimFront);
+
+        const rimBack = new THREE.Mesh(rimFrontGeo, woodMat);
+        rimBack.position.set(0, 0, -hullLength / 2);
+        rimBack.castShadow = true;
+        boatGroup.add(rimBack);
+
+        // 4. Metal Hoops to reinforce the barrel look
+        const hoopGeo = new THREE.TorusGeometry(hullRadiusOuter, 0.04, 16, 64, Math.PI);
+        const createHoop = (zOffset) => {
+            const hoop = new THREE.Mesh(hoopGeo, metalMat);
+            hoop.rotation.z = Math.PI; // Flip to match the bottom curve of the barrel
+            hoop.position.z = zOffset;
+            hoop.castShadow = true;
+            return hoop;
+        };
+        // Add 3 hoops spaced along the shortened barrel
+        boatGroup.add(createHoop(2));
+        boatGroup.add(createHoop(0));
+        boatGroup.add(createHoop(-2));
+
+        // Add some wooden seats/decking inside
+        const seatGeo = new THREE.BoxGeometry(2.6, 0.05, 0.8);
+        const seat1 = new THREE.Mesh(seatGeo, woodMat);
+        seat1.position.set(0, -0.7, 1.5);
+        seat1.castShadow = true;
+        seat1.receiveShadow = true;
+        boatGroup.add(seat1);
+
+        const seat2 = new THREE.Mesh(seatGeo, woodMat);
+        seat2.position.set(0, -0.7, -1.5);
+        seat2.castShadow = true;
+        // seat2.receiveShadow = true;
+        // boatGroup.add(seat2);
+
+        // 5. Outrigger Floats
+        const outriggerLen = 5.5;
+        const outriggerRad = 0.25;
+        // Composite shape: Cylinder with rounded sphere ends
+        const outGeo = new THREE.CylinderGeometry(outriggerRad, outriggerRad, outriggerLen, 32);
+        const sphereGeo = new THREE.SphereGeometry(outriggerRad, 32, 16);
+
+        function createOutriggerFloat() {
+            const group = new THREE.Group();
+            const cyl = new THREE.Mesh(outGeo, outriggerMat);
+            cyl.rotation.x = Math.PI / 2;
+            cyl.castShadow = true;
+            cyl.receiveShadow = true;
+            
+            const s1 = new THREE.Mesh(sphereGeo, outriggerMat);
+            s1.position.z = outriggerLen / 2;
+            s1.castShadow = true;
+            s1.receiveShadow = true;
+            
+            const s2 = new THREE.Mesh(sphereGeo, outriggerMat);
+            s2.position.z = -outriggerLen / 2;
+            s2.castShadow = true;
+            s2.receiveShadow = true;
+            
+            group.add(cyl);
+            group.add(s1);
+            group.add(s2);
+            return group;
+        }
+
+        const floatRight = createOutriggerFloat();
+        floatRight.position.set(3.3, -1.25, 0); // Aligned bottom with barrel
+        boatGroup.add(floatRight);
+
+        const floatLeft = createOutriggerFloat();
+        floatLeft.position.set(-3.3, -1.25, 0); // Aligned bottom with barrel
+        boatGroup.add(floatLeft);
+
+        // 6. Angled Struts (Iakos) connecting hull to outriggers
+        function createAngledStrut(xStart, xEnd, yStart, yEnd, zPos) {
+            const dx = xEnd - xStart;
+            const dy = yEnd - yStart;
+            const length = Math.sqrt(dx*dx + dy*dy);
+            
+            const geo = new THREE.CylinderGeometry(0.06, 0.06, length, 16);
+            const mesh = new THREE.Mesh(geo, woodMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            // Position exactly halfway between start and end points
+            mesh.position.set((xStart + xEnd)/2, (yStart + yEnd)/2, zPos);
+            // Angle it to point from start to end
+            mesh.rotation.z = Math.atan2(dy, dx) - Math.PI/2; 
+            
+            return mesh;
+        }
+
+        // Connecting points: from raised rim of hull (y=0.2) down to outrigger float (y=-1.25)
+        boatGroup.add(createAngledStrut(1.4, 3.3, 0.2, -1.25, 2));
+        boatGroup.add(createAngledStrut(1.4, 3.3, 0.2, -1.25, -2));
+        boatGroup.add(createAngledStrut(-1.4, -3.3, 0.2, -1.25, 2));
+        boatGroup.add(createAngledStrut(-1.4, -3.3, 0.2, -1.25, -2));
+
+        // Horizontal cross beams over the top of the hull for structural integrity
+        const crossBeamGeo = new THREE.CylinderGeometry(0.08, 0.08, 2.9, 16);
+        const crossBeamFront = new THREE.Mesh(crossBeamGeo, woodMat);
+        crossBeamFront.rotation.z = Math.PI / 2;
+        crossBeamFront.position.set(0, 0.2, 2); // Lowered slightly to reduce arch
+        crossBeamFront.castShadow = true;
+        boatGroup.add(crossBeamFront);
+
+        const crossBeamBack = new THREE.Mesh(crossBeamGeo, woodMat);
+        crossBeamBack.rotation.z = Math.PI / 2;
+        crossBeamBack.position.set(0, 0.2, -2); // Lowered slightly to reduce arch
+        crossBeamBack.castShadow = true;
+        boatGroup.add(crossBeamBack);
+
+        const shadeGroup = new THREE.Group();
+        
+        // 2 Silver/Aluminum poles at the rear
+        const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8);
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.7, roughness: 0.3 });
+        
+        const p1 = new THREE.Mesh(poleGeo, poleMat); 
+        p1.position.set(1.4, 0.9, -2.4); 
+        p1.castShadow = true;
+        shadeGroup.add(p1);
+        
+        const p2 = new THREE.Mesh(poleGeo, poleMat); 
+        p2.position.set(-1.4, 0.9, -2.4); 
+        p2.castShadow = true;
+        shadeGroup.add(p2);
+        
+        // Retro flat canvas material
+        const canvasMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.9, side: THREE.DoubleSide });
+        
+        // Simple, flat shade cover attached to the two rear poles (cantilevered forward)
+        const flatShadeGeo = new THREE.BoxGeometry(2.9, 0.04, 2.0);
+        const flatShade = new THREE.Mesh(flatShadeGeo, canvasMat);
+        flatShade.position.set(0, 2.0, -1.4); // Extends forward from the back poles
+        flatShade.rotation.x = -0.08; // Very slight upward angle at the front, like a lawn chair shade awning
+        flatShade.castShadow = true;
+        shadeGroup.add(flatShade);
+
+        boatGroup.add(shadeGroup);
+
+        // Raise the entire boat so it floats correctly on the water plane without clipping inside
+        boatGroup.position.y = 1.6;
+        scene.add(boatGroup);
+
+        // High density plane to allow for smooth procedural vertex animation
+        const waterGeo = new THREE.PlaneGeometry(150, 150, 96, 96);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x0077be, // Ocean blue
+            transparent: true,
+            opacity: 0.9,
+            roughness: 0.1,
+            metalness: 0.5,
+            flatShading: false // Smooth wave appearance
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        // Lay the plane flat horizontally
+        water.rotation.x = -Math.PI / 2;
+        water.receiveShadow = true;
+        scene.add(water);
+
+        // Save original Z positions of the water for the animation logic
+        const baseZ = [];
+        const positionAttribute = water.geometry.attributes.position;
+        for (let i = 0; i < positionAttribute.count; i++) {
+            baseZ.push(positionAttribute.getZ(i));
+        }
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Hardcoded default values since UI controls were removed
+            const waveSpeed = 1.5;
+            const boatSpeed = 1.0;
+
+            // 1. Animate Boat Bobbing (Complex sine waves for organic motion)
+            // Base Y set to 1.6 so it floats perfectly in the water
+            boatGroup.position.y = 1.6 + Math.sin(elapsedTime * 2 * boatSpeed) * 0.1 + Math.sin(elapsedTime * 1.3 * boatSpeed) * 0.05;
+            boatGroup.rotation.z = Math.sin(elapsedTime * 1.5 * boatSpeed) * 0.05;
+            boatGroup.rotation.x = Math.sin(elapsedTime * 1.1 * boatSpeed) * 0.03;
+
+            // 2. Animate Ocean Waves via Vertex Displacement
+            const posAttr = water.geometry.attributes.position;
+            for (let i = 0; i < posAttr.count; i++) {
+                const x = posAttr.getX(i);
+                const y = posAttr.getY(i); // Local Y is World Z on a rotated plane
+                
+                // Combine overlapping sine/cosine waves for a rippling effect
+                const waveHeight = 
+                    Math.sin(x * 0.2 + elapsedTime * waveSpeed) * 0.2 +
+                    Math.cos(y * 0.2 + elapsedTime * waveSpeed * 0.8) * 0.2 +
+                    Math.sin((x + y) * 0.1 + elapsedTime * waveSpeed * 1.2) * 0.1;
+                
+                posAttr.setZ(i, baseZ[i] + waveHeight);
+            }
+            posAttr.needsUpdate = true;
+            // Recompute normals so the lighting/shadows accurately reflect the moving waves
+            water.geometry.computeVertexNormals();
+
+            // Update orbit controls (handles auto-rotation and damping)
+            controls.update();
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize dynamically
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start the simulation loop
+        animate();
+    </script>
+</body>
+</html>

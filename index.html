@@ -24,6 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="voice_narrator.css">
     <script>
         tailwind.config = {
             theme: {
@@ -202,6 +203,14 @@
                 <a href="#auto" class="nav-link">Mechanical</a>
                 <a href="#structural" class="nav-link">Structural</a>
                 <a href="#contact" class="nav-link">Dispatch</a>
+                <div class="dropdown products-dropdown">
+                    <a href="#" class="dropbtn products-dropbtn nav-link">Products</a>
+                    <div class="dropdown-content" id="products-dropdown-content">
+                        <a href="Products/Homestead1.html">Homestead 1</a>
+                        <a href="Products/hantu-raya.html">Hantu Raya</a>
+                        <a href="Products/x1.html">Ordinary Motors x1</a>
+                    </div>
+                </div>
                 <a href="backend.html" class="nav-link">Full Hub</a>
                 <a href="hub.html" class="nav-link">Digital Wrench</a>
             </div>
@@ -501,6 +510,7 @@
 
     window.addEventListener('DOMContentLoaded', initThreeJS);
     </script>
+    <script src="voice_narrator.js"></script>
     <script src="mobile.js"></script>
 </body>
 </html>

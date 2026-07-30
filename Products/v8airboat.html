@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural 3D Outrigger Boat</title>
+    
+    <!-- Load Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom styles to ensure full-screen canvas without scrollbars -->
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87ceeb;
+            font-family: 'Inter', sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #ui-layer {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+    
+    <!-- Load Three.js and OrbitControls from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none p-4 flex flex-col justify-between">
+        <div>
+            <h1 class="text-4xl font-extrabold text-white drop-shadow-lg tracking-tight">Ordinary Motors x1</h1>
+            <p class="text-white/90 drop-shadow font-medium mt-1">Procedural 3D Airboat Simulation</p>
+        </div>
+    </div>
+
+    <!-- Three.js Application Logic -->
+    <script>
+        const scene = new THREE.Scene();
+        // Set sky color and a fog to blend the ocean into the horizon
+        const skyColor = 0x87ceeb;
+        scene.background = new THREE.Color(skyColor);
+        scene.fog = new THREE.FogExp2(skyColor, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(12, 10, 16);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // OrbitControls for mouse interaction
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1; // Prevent looking from underneath the ocean
+        controls.minDistance = 5;
+        controls.maxDistance = 50;
+        controls.autoRotate = true; // Slowly spin around the boat
+        controls.autoRotateSpeed = 0.8;
+
+        // Hemisphere light for soft ambient sky/ground illumination
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+        scene.add(hemiLight);
+
+        // Main directional sun light casting sharp shadows
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(30, 40, 20);
+        dirLight.castShadow = true;
+        
+        // Fine-tune shadow map resolution and frustum for crisp shadows on the boat
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 100;
+        const shadowBound = 20;
+        dirLight.shadow.camera.left = -shadowBound;
+        dirLight.shadow.camera.right = shadowBound;
+        dirLight.shadow.camera.top = shadowBound;
+        dirLight.shadow.camera.bottom = -shadowBound;
+        scene.add(dirLight);
+
+        const boatGroup = new THREE.Group();
+
+        // Materials
+        const hullMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, metalness: 0.6, roughness: 0.3 }); // Aluminum
+        const cageMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.8, roughness: 0.2 }); // Dark Metal
+        const propMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.7 }); // Black carbon
+        const seatMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 }); // Black vinyl
+
+        // 1 & 2. Continuous Swooping Airboat Hull
+        const hullWidth = 3.6;
+        const wallHeight = 1.4;
+        const wallThickness = 0.1;
+        
+        const hLength = 5.0; // Flat bottom length
+        const bLength = 3.5; // Curved bow length
+        const tLen = hLength + bLength; // Total length: 8.5
+        const zOffset = -4.25; // Center the hull along Z
+        
+        // Outer Side Wall Profile (Smooth sweep up at the front)
+        const wallShape = new THREE.Shape();
+        wallShape.moveTo(0, 0); // Bottom rear
+        wallShape.lineTo(hLength, 0); // Flat bottom section
+        wallShape.quadraticCurveTo(hLength + 2.5, 0, tLen, wallHeight); // Swooping curved bow
+        wallShape.lineTo(0, wallHeight); // Top edge back to stern
+        wallShape.lineTo(0, 0); // Close shape
+        
+        const wallExtrude = { depth: wallThickness, bevelEnabled: false };
+        const wallGeo = new THREE.ExtrudeGeometry(wallShape, wallExtrude);
+        
+        // Inner Floor Profile (matches wall curve exactly but offset for floor thickness)
+        const floorShape = new THREE.Shape();
+        floorShape.moveTo(0, 0);
+        floorShape.lineTo(hLength, 0);
+        floorShape.quadraticCurveTo(hLength + 2.5, 0, tLen, wallHeight);
+        floorShape.lineTo(tLen - 0.4, wallHeight); // Top front lip
+        floorShape.quadraticCurveTo(hLength + 2.3, wallThickness, hLength, wallThickness); // Inner curved floor
+        floorShape.lineTo(0, wallThickness); // Inner flat floor
+        floorShape.lineTo(0, 0); // Close shape
+        
+        const floorExtrude = { depth: hullWidth - wallThickness * 2, bevelEnabled: false };
+        const floorGeo = new THREE.ExtrudeGeometry(floorShape, floorExtrude);
+        
+        // Construct Left Wall
+        const leftWall = new THREE.Mesh(wallGeo, hullMat);
+        leftWall.rotation.y = -Math.PI / 2; // Orient along Z axis
+        leftWall.position.set(hullWidth / 2, 0, zOffset);
+        leftWall.castShadow = true; leftWall.receiveShadow = true;
+        boatGroup.add(leftWall);
+        
+        // Construct Right Wall
+        const rightWall = new THREE.Mesh(wallGeo, hullMat);
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.position.set(-hullWidth / 2 + wallThickness, 0, zOffset);
+        rightWall.castShadow = true; rightWall.receiveShadow = true;
+        boatGroup.add(rightWall);
+        
+        // Construct Seamless Floor
+        const mainFloor = new THREE.Mesh(floorGeo, hullMat);
+        mainFloor.rotation.y = -Math.PI / 2;
+        mainFloor.position.set(hullWidth / 2 - wallThickness, 0, zOffset);
+        mainFloor.castShadow = true; mainFloor.receiveShadow = true;
+        boatGroup.add(mainFloor);
+        
+        // Transom (Back Wall Plate)
+        const backWallGeo = new THREE.BoxGeometry(hullWidth, wallHeight, wallThickness);
+        const backWall = new THREE.Mesh(backWallGeo, hullMat);
+        backWall.position.set(0, wallHeight / 2, zOffset + wallThickness / 2);
+        backWall.castShadow = true; backWall.receiveShadow = true;
+        boatGroup.add(backWall);
+
+        // 3. Engine Block & Mount (Overdone Blown V8)
+        const engineGroup = new THREE.Group();
+        engineGroup.position.set(0, wallThickness + 0.5, -2.3);
+        
+        // Solid engine mount frame
+        const engineMount = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.5), cageMat);
+        engineMount.castShadow = true;
+        engineGroup.add(engineMount);
+
+        // Custom Materials for the V8
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9, roughness: 0.1 });
+        const engineMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.7, roughness: 0.4 });
+        const redMat = new THREE.MeshStandardMaterial({ color: 0xd92626, roughness: 0.5 }); // Hot-rod red valve covers
+
+        // Main Engine Block Base
+        const blockY = 0.7; 
+        const engineBlock = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.7, 1.6), engineMat);
+        engineBlock.position.set(0, blockY, 0);
+        engineBlock.castShadow = true;
+        engineGroup.add(engineBlock);
+
+        // Valve Covers (The angled 'V' banks)
+        const coverGeo = new THREE.BoxGeometry(0.35, 0.35, 1.6);
+        const coverL = new THREE.Mesh(coverGeo, redMat);
+        coverL.position.set(-0.4, blockY + 0.3, 0);
+        coverL.rotation.z = Math.PI / 4;
+        coverL.castShadow = true;
+        engineGroup.add(coverL);
+        
+        const coverR = new THREE.Mesh(coverGeo, redMat);
+        coverR.position.set(0.4, blockY + 0.3, 0);
+        coverR.rotation.z = -Math.PI / 4;
+        coverR.castShadow = true;
+        engineGroup.add(coverR);
+
+        // Huge Chrome Supercharger / Blower
+        const blower = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 1.3), chromeMat);
+        blower.position.set(0, blockY + 0.45, 0);
+        blower.castShadow = true;
+        engineGroup.add(blower);
+
+        // "Bugcatcher" Intake Scoop
+        const scoopGeo = new THREE.BoxGeometry(0.7, 0.25, 0.6);
+        const scoop = new THREE.Mesh(scoopGeo, chromeMat);
+        scoop.position.set(0, blockY + 0.75, 0.25);
+        scoop.castShadow = true;
+        engineGroup.add(scoop);
+        
+        // Front Drive Belts & Pulleys
+        const pulleyGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.2, 16);
+        pulleyGeo.rotateX(Math.PI / 2); // Face forward
+        
+        const pulley1 = new THREE.Mesh(pulleyGeo, chromeMat);
+        pulley1.position.set(0, blockY + 0.45, 0.85); // Top pulley
+        engineGroup.add(pulley1);
+        
+        const pulley2 = new THREE.Mesh(pulleyGeo, chromeMat);
+        pulley2.position.set(0, blockY, 0.85); // Bottom pulley
+        engineGroup.add(pulley2);
+        
+        const belt = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 0.08), cageMat);
+        belt.position.set(0, blockY + 0.22, 0.85);
+        engineGroup.add(belt);
+
+        // Massive 8-Pipe "Zoomie" Exhaust Headers
+        const pipeGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.4, 16);
+        pipeGeo.translate(0, 0.7, 0); // Translate so it pivots and scales from the engine block connection
+        
+        for (let i = 0; i < 4; i++) {
+            const zOffset = 0.5 - (i * 0.35); // Space 4 pipes along the block
+            
+            // Left bank pipes
+            const pipeL = new THREE.Mesh(pipeGeo, chromeMat);
+            pipeL.position.set(-0.55, blockY + 0.15, zOffset);
+            pipeL.rotation.z = Math.PI / 3;  // Blast out to the side
+            pipeL.rotation.x = -Math.PI / 6; // Angle back towards the fan
+            pipeL.castShadow = true;
+            engineGroup.add(pipeL);
+
+            // Right bank pipes
+            const pipeR = new THREE.Mesh(pipeGeo, chromeMat);
+            pipeR.position.set(0.55, blockY + 0.15, zOffset);
+            pipeR.rotation.z = -Math.PI / 3;
+            pipeR.rotation.x = -Math.PI / 6;
+            pipeR.castShadow = true;
+            engineGroup.add(pipeR);
+        }
+        
+        boatGroup.add(engineGroup);
+
+        // 4. Heavy-Duty Fan Cage
+        const cageRadius = 2.0;
+        const cageY = wallThickness + 2.0;
+        const cageZ = -3.3;
+        const cageGroup = new THREE.Group();
+        cageGroup.position.set(0, cageY, cageZ);
+        
+        const ringOuter = new THREE.Mesh(new THREE.TorusGeometry(cageRadius, 0.03, 16, 64), cageMat);
+        const ringMid = new THREE.Mesh(new THREE.TorusGeometry(cageRadius * 0.66, 0.02, 16, 48), cageMat);
+        const ringInner = new THREE.Mesh(new THREE.TorusGeometry(cageRadius * 0.33, 0.02, 16, 32), cageMat);
+        ringOuter.castShadow = true; ringMid.castShadow = true; ringInner.castShadow = true;
+        cageGroup.add(ringOuter, ringMid, ringInner);
+
+        // 8 Wireframe cage struts
+        const strutGeo = new THREE.CylinderGeometry(0.015, 0.015, cageRadius * 2);
+        for (let i = 0; i < 8; i++) {
+            const strut = new THREE.Mesh(strutGeo, cageMat);
+            strut.rotation.z = (Math.PI / 8) * i;
+            strut.castShadow = true;
+            cageGroup.add(strut);
+        }
+        boatGroup.add(cageGroup);
+
+        // 5. Original 3-Blade Fan
+        const propellerGroup = new THREE.Group();
+        propellerGroup.position.set(0, cageY, cageZ + 0.15);
+        
+        // Simple Hub
+        const hubGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.4, 16);
+        hubGeo.rotateX(Math.PI / 2); // Point forward
+        const hub = new THREE.Mesh(hubGeo, propMat);
+        hub.castShadow = true;
+        propellerGroup.add(hub);
+
+        // 3 Standard Blades
+        const bladeLength = cageRadius * 0.9; // Safely inside the cage
+        const bladeGeo = new THREE.BoxGeometry(0.2, bladeLength, 0.05);
+        bladeGeo.translate(0, bladeLength / 2, 0); // Pivot at the base (hub)
+        
+        for (let i = 0; i < 3; i++) {
+            const blade = new THREE.Mesh(bladeGeo, propMat);
+            blade.rotation.z = (Math.PI * 2 / 3) * i; 
+            blade.rotation.y = Math.PI / 8; // Simple pitch angle to grab air
+            blade.castShadow = true;
+            propellerGroup.add(blade);
+        }
+        boatGroup.add(propellerGroup);
+
+        // 6. Air Rudders (Twin tall rudders)
+        const rudderGeo = new THREE.BoxGeometry(0.04, cageRadius * 2.1, 0.8);
+        const rudderL = new THREE.Mesh(rudderGeo, hullMat);
+        rudderL.position.set(-0.8, cageY, cageZ - 0.6);
+        rudderL.castShadow = true;
+        boatGroup.add(rudderL);
+
+        const rudderR = new THREE.Mesh(rudderGeo, hullMat);
+        rudderR.position.set(0.8, cageY, cageZ - 0.6);
+        rudderR.castShadow = true;
+        boatGroup.add(rudderR);
+
+        // Connect rudders with a mechanical control rod
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.6), cageMat);
+        rod.rotation.z = Math.PI / 2;
+        rod.position.set(0, cageY - 1.0, cageZ - 0.8);
+        boatGroup.add(rod);
+
+        // 7. Raised Driver Console & Seating (moved inside walled hull)
+        const consoleZ = 0.5;
+        const consoleRaise = 0.5; // Raised to see over the new taller walls
+        
+        // Stand for the console
+        const consoleStand = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0 + consoleRaise, 1.2), hullMat);
+        consoleStand.position.set(0, wallThickness + (1.0 + consoleRaise) / 2, consoleZ);
+        consoleStand.castShadow = true;
+        boatGroup.add(consoleStand);
+
+        // Seat Cushion
+        const seatBase = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.6), seatMat);
+        seatBase.position.set(0, wallThickness + 1.05 + consoleRaise, consoleZ + 0.2);
+        seatBase.castShadow = true;
+        boatGroup.add(seatBase);
+        
+        // Seat Back
+        const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.1), seatMat);
+        seatBack.position.set(0, wallThickness + 1.45 + consoleRaise, consoleZ - 0.05);
+        seatBack.castShadow = true;
+        boatGroup.add(seatBack);
+        
+        // Steering Sticks (Dual tank-style levers for airboat)
+        const stickGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.6);
+        const stickL = new THREE.Mesh(stickGeo, cageMat);
+        stickL.position.set(-0.6, wallThickness + 1.3 + consoleRaise, consoleZ + 0.4);
+        stickL.rotation.x = -Math.PI / 6; // Angled towards driver
+        boatGroup.add(stickL);
+        
+        const stickR = new THREE.Mesh(stickGeo, cageMat);
+        stickR.position.set(0.6, wallThickness + 1.3 + consoleRaise, consoleZ + 0.4);
+        stickR.rotation.x = -Math.PI / 6;
+        boatGroup.add(stickR);
+
+        // Attach propeller to boat group so we can animate it easily
+        boatGroup.userData.propeller = propellerGroup;
+
+        // Position on the water surface (Airboats skim flat)
+        boatGroup.position.y = 0.05;
+        scene.add(boatGroup);
+
+        // High density plane to allow for smooth procedural vertex animation
+        const waterGeo = new THREE.PlaneGeometry(150, 150, 96, 96);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x0077be, // Ocean blue
+            transparent: true,
+            opacity: 0.9,
+            roughness: 0.1,
+            metalness: 0.5,
+            flatShading: false // Smooth wave appearance
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        // Lay the plane flat horizontally
+        water.rotation.x = -Math.PI / 2;
+        water.receiveShadow = true;
+        scene.add(water);
+
+        // Save original Z positions of the water for the animation logic
+        const baseZ = [];
+        const positionAttribute = water.geometry.attributes.position;
+        for (let i = 0; i < positionAttribute.count; i++) {
+            baseZ.push(positionAttribute.getZ(i));
+        }
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            
+            // Hardcoded default values since UI controls were removed
+            const waveSpeed = 1.5;
+            const boatSpeed = 1.0;
+
+            // 1. Animate Boat Bobbing (Airboats are flat and skim, so less roll/pitch)
+            boatGroup.position.y = 0.05 + Math.sin(elapsedTime * 2 * boatSpeed) * 0.04;
+            boatGroup.rotation.z = Math.sin(elapsedTime * 1.5 * boatSpeed) * 0.015;
+            boatGroup.rotation.x = Math.sin(elapsedTime * 1.1 * boatSpeed) * 0.02;
+
+            // Spin the giant fan
+            if (boatGroup.userData.propeller) {
+                boatGroup.userData.propeller.rotation.z -= 0.6; 
+            }
+
+            // 2. Animate Ocean Waves via Vertex Displacement
+            const posAttr = water.geometry.attributes.position;
+            for (let i = 0; i < posAttr.count; i++) {
+                const x = posAttr.getX(i);
+                const y = posAttr.getY(i); // Local Y is World Z on a rotated plane
+                
+                // Combine overlapping sine/cosine waves for a rippling effect
+                const waveHeight = 
+                    Math.sin(x * 0.2 + elapsedTime * waveSpeed) * 0.2 +
+                    Math.cos(y * 0.2 + elapsedTime * waveSpeed * 0.8) * 0.2 +
+                    Math.sin((x + y) * 0.1 + elapsedTime * waveSpeed * 1.2) * 0.1;
+                
+                posAttr.setZ(i, baseZ[i] + waveHeight);
+            }
+            posAttr.needsUpdate = true;
+            // Recompute normals so the lighting/shadows accurately reflect the moving waves
+            water.geometry.computeVertexNormals();
+
+            // Update orbit controls (handles auto-rotation and damping)
+            controls.update();
+
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize dynamically
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start the simulation loop
+        animate();
+    </script>
+</body>
+</html>
